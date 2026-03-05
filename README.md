@@ -196,11 +196,17 @@ Del análisis anterior se identifican dos vacíos no resueltos por las solucione
 El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo real en cada frame del juego:
 
 **1. Captura de pantalla:** La librería mss captura el contenido de la ventana del emulador directamente desde la memoria de video. La ventana se detecta automáticamente por nombre usando pygetwindow, refrescando las coordenadas cada 60 frames para adaptarse si el usuario mueve la ventana.
+
 **2. Preprocesamiento:** el frame capturado se convierte al espacio de representación más adecuado según la técnica de detección a aplicar. Se realizan operaciones de limpieza y acondicionamiento de la imagen para mejorar la precisión de las detecciones.
+
 **3. Limpieza de máscara:** Se aplica erosión morfológica para eliminar píxeles de ruido sueltos, seguida de dilatación para restaurar el tamaño original de los objetos reales. Esto reduce significativamente los falsos positivos sin afectar los elementos de interés.
+
 **4. Extracción de características:** Se detectan contornos en la máscara binaria resultante. Para cada contorno se calcula su área, bounding box, proporción ancho/alto y posición en el frame. Los elementos se filtran por área relativa al tamaño del frame (independiente de la resolución), proporción y zona Y.
+
 **5. Construcción del estado:** Los elementos que pasan los filtros se clasifican por tipo (coleccionables, obstáculos, personaje). Esta información constituye la representación del estado del entorno para el módulo de decisión.
+
 **6. Módulo de decisión:** Un sistema de reglas predefinidas analiza el estado actual y determina la acción a ejecutar en el siguiente ciclo. Las reglas consideran la posición relativa de obstáculos respecto al personaje y la presencia de bananas en altura.
+
 **7. Ejecución de acción:** El módulo de control traduce la decisión en una entrada de teclado simulada mediante pyautogui: salto, planeo, bajada o embestida. Las acciones se envían al emulador independientemente de qué ventana tenga el foco.
 
 ---
