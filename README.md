@@ -46,8 +46,6 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 
 ### 3.1 Restricciones Técnicas
 
-### 3.1 Restricciones Técnicas
-
 - El sistema no tendrá acceso a la memoria interna del juego ni a su motor.
 - No se modificará el cliente del videojuego en ninguna forma.
 - La interacción con el juego será exclusivamente mediante captura de pantalla (screen grabbing con mss) y simulación de entradas por teclado (pyautogui).
@@ -109,7 +107,7 @@ Diseñar e implementar un sistema autónomo que juegue Banana Kong en tiempo rea
 - Desarrollar un pipeline de visión por computador clásica capaz de detectar los elementos relevantes del juego mediante las técnicas más adecuadas según las características visuales de cada elemento.
 - Construir un módulo de decisión basado en reglas que determine la acción óptima a partir del estado visual detectado.
 - Implementar un módulo de control que traduzca las decisiones en entradas de teclado simuladas sobre el emulador.
-- Validar el sistema alcanzando un puntaje mínimo de 6000 puntos en múltiples ejecuciones consecutivas.
+- Validar el sistema utilizando metricas de desempeño.
 
 ---
 
@@ -244,7 +242,7 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 - Respuesta automática del bot ante obstáculos detectados sin intervención humana.
 - Ejecución correcta de las cuatro entradas simuladas: salto, planeo, bajada y embestida.
 - Ciclo percepción–decisión–acción sin bloqueos ni retrasos críticos que afecten el juego.
-- Se satisfacen las metricas de exito.
+- Metricas de exito: Se obtiene un resultado satiscatorio referente a las metricas de desempeño (elementos identificados, tiempo de supervivencia, puntaje obtenido, etc).
 - Resultados reproducibles en múltiples ejecuciones bajo condiciones similares.
 
 ---
@@ -285,17 +283,22 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 ---
 
-<!--
 ## 12. Referencias
 
-[1] arturfog, “Chrome Dino game bot using OpenCV and mss,” GitHub, 2021.
+[1] arturfog, “Chrome Dino game bot using OpenCV and mss,” GitHub, 2021. [Online]. Available https://github.com/arturfog/dino
+
 [2] N. Bergeron, “SerpentAI — Game Agent Framework,” GitHub, 2017. [Online]. Available: https://github.com/SerpentAI/SerpentAI
+
 [3] G. Bradski and A. Kaehler, Learning OpenCV: Computer Vision with the OpenCV Library. Sebastopol, CA: O’Reilly Media, 2008.
+
 [4] T. Butnaru, “mss — An ultra-fast cross-platform multiple screenshots module in pure Python,” 2019. [Online]. Available: https://python-mss.readthedocs.io/
-[5] GeeksforGeeks, “Building a Chrome Dino bot using Python and OpenCV,” 2023.
-[6] GitHub, “Topics: game-bot,” 2023. [Online]. Available: https://github.com/topics/game-bot
-[7] LearnOpenCV, “Chrome Dino Game Bot with OpenCV and Python,” 2022. [Online]. Available: https://learnopencv.com/chrome-dino-game-bot/
-[8] I. Millington and J. Funge, Artificial Intelligence for Games, 2nd ed. Burlington, MA: Morgan Kaufmann, 2009.
-[9] V. Mnih et al., “Human-level control through deep reinforcement learning,” Nature, vol. 518, pp. 529–533, Feb. 2015.
-[10] J. Redmon, S. Divvala, R. Girshick, and A. Farhadi, “You only look once: Unified, real-time object detection,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Las Vegas, NV, 2016, pp. 779–788.
--->
+
+[5] GeeksforGeeks, “Building a Chrome Dino bot using Python and OpenCV,” 2023. [Online]. Available: https://www.geeksforgeeks.org/python/automate-chrome-dino-game-using-python/
+
+[6] LearnOpenCV, “Chrome Dino Game Bot with OpenCV and Python,” 2022. [Online]. Available: https://learnopencv.com/tag/chrome-dino-game-bot/
+
+[7] I. Millington and J. Funge, Artificial Intelligence for Games, 2nd ed. Burlington, MA: Morgan Kaufmann, 2009.
+
+[8] V. Mnih et al., “Human-level control through deep reinforcement learning,” Nature, vol. 518, pp. 529–533, Feb. 2015.
+
+[9] J. Redmon, S. Divvala, R. Girshick, and A. Farhadi, “You only look once: Unified, real-time object detection,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Las Vegas, NV, 2016, pp. 779–788.
