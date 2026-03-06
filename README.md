@@ -23,9 +23,9 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 
 ### 2.2 Problema
 
-¿Hasta qué punto es suficiente la visión por computador clásica, combinada con un sistema de decisión basado en reglas, para sostener el funcionamiento autónomo y continuo de un agente en un entorno visual dinámico y complejo, operando en tiempo real sin intervención humana?
+¿Qué tan efectiva es la combinación de técnicas de visión por computador clásica y un sistema de decisión basado en reglas para sostener el funcionamiento autónomo y continuo de un agente en un entorno visual dinámico y complejo?
 
-#### Este problema abarca los siguientes subproblemas técnicos:
+**Este problema abarca los siguientes subproblemas técnicos:**
 
 - Captura en tiempo real: obtener frames del emulador con latencia mínima manteniendo una tasa de actualización compatible con la dinámica del juego.
 - Percepción visual: identificar y localizar elementos de interés en la escena usando técnicas de visión por computador clásica, sin recurrir a redes neuronales.
@@ -43,8 +43,6 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 ---
 
 ## 3. Restricciones y supuestos de diseño
-
-### 3.1 Restricciones Técnicas
 
 ### 3.1 Restricciones Técnicas
 
@@ -101,7 +99,7 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 
 ### 5.1 Objetivo General
 
-Diseñar e implementar un sistema autónomo que juegue Banana Kong en tiempo real usando únicamente información visual capturada de la pantalla, que tome decisiones basadas en reglas predefinidas y ejecute acciones mediante simulación de controles por teclado, con el fin de maximizar el puntaje obtenido como métrica principal de desempeño.
+Diseñar e implementar un sistema autónomo que juegue el videojuego movil Banana Kong en tiempo real mediante el procesamiento de información visual capturada de la pantalla, tomando decisiones basadas en reglas predefinidas y ejecutando acciones a través de la simulación de controles de teclado, con el propósito de maximizar el puntaje obtenido como indicador principal de desempeño.
 
 ### 5.2 Objetivos Específicos
 
@@ -109,7 +107,7 @@ Diseñar e implementar un sistema autónomo que juegue Banana Kong en tiempo rea
 - Desarrollar un pipeline de visión por computador clásica capaz de detectar los elementos relevantes del juego mediante las técnicas más adecuadas según las características visuales de cada elemento.
 - Construir un módulo de decisión basado en reglas que determine la acción óptima a partir del estado visual detectado.
 - Implementar un módulo de control que traduzca las decisiones en entradas de teclado simuladas sobre el emulador.
-- Validar el sistema alcanzando un puntaje mínimo de 6000 puntos en múltiples ejecuciones consecutivas.
+- Validar el sistema utilizando metricas de desempeño.
 
 ---
 
@@ -131,7 +129,7 @@ Ambas soluciones dependen de posiciones fijas en pantalla y no construyen una re
 
 ### 6.2 Soluciones Open-Source
 
-En el ecosistema open-source destacan tres soluciones relevantes. El bot para Chrome Dino es el caso más documentado y comparable con este proyecto: usa mss para captura, OpenCV para detección de obstáculos y pyautogui para simulación de teclado. SerpentAI es un framework genérico para bots de videojuegos con soporte para detección por color, template matching y modelos de ML, usado para automatizar títulos como Shovel Knight. MAA automatiza el juego móvil Arknights en emulador Android usando OpenCV con detección visual clásica y reglas, alcanzando tasas de decisión de 10–30 acciones por segundo.
+En el ecosistema open-source destacan tres soluciones relevantes. El bot para Chrome Dino [1], [6], [5] es el caso más documentado y comparable con este proyecto: usa mss para captura, OpenCV para detección de obstáculos y pyautogui para simulación de teclado. SerpentAI [2] es un framework genérico para bots de videojuegos con soporte para detección por color, template matching y modelos de ML, usado para automatizar títulos como Shovel Knight. MAA automatiza el juego móvil Arknights en emulador Android usando OpenCV con detección visual clásica y reglas, alcanzando tasas de decisión de 10–30 acciones por segundo.
 
 #### ¿Cómo abordan el problema?
 
@@ -147,11 +145,11 @@ Desde el punto de vista arquitectural, los sistemas de automatización visual de
 
 #### Visión clásica + Reglas (este proyecto):
 
-Segmentación HSV, template matching u operaciones morfológicas para percepción; árboles de decisión o máquinas de estados para acción. Sin entrenamiento, bajo costo computacional, comportamiento determinista e interpretable. Sensible a variaciones visuales del entorno; requiere calibración manual por juego.
+Segmentación HSV, template matching u operaciones morfológicas para percepción; árboles de decisión o máquinas de estados para acción. Sin entrenamiento, bajo costo computacional, comportamiento determinista e interpretable. Sensible a variaciones visuales del entorno; requiere calibración manual por juego [3], [7].
 
 #### Detección con redes neuronales + Reglas:
 
-Modelos como YOLO para percepción; reglas para decisión. Alta precisión de detección, robusto ante variaciones visuales. Requiere dataset etiquetado y entrenamiento previo; mayor costo computacional en inferencia.
+Modelos como YOLO para percepción; reglas para decisión. Alta precisión de detección, robusto ante variaciones visuales. Requiere dataset etiquetado y entrenamiento previo; mayor costo computacional en inferencia [9].
 
 #### Visión clásica + Aprendizaje por Refuerzo:
 
@@ -159,7 +157,7 @@ Percepción clásica como preprocesamiento; agente RL para aprender la política
 
 #### End-to-end Deep RL (píxeles a acciones):
 
-El agente recibe píxeles crudos y aprende directamente la política óptima . Potencialmente más capaz pero con altísimo costo computacional y de entrenamiento; impracticable en recursos académicos estándar.
+El agente recibe píxeles crudos y aprende directamente la política óptima [8]. Potencialmente más capaz pero con altísimo costo computacional y de entrenamiento; impracticable en recursos académicos estándar.
 
 ### 6.4 Comparación de Soluciones
 
@@ -185,9 +183,11 @@ Aprende estrategias óptimas automáticamente. Alta escalabilidad. Requiere mile
 
 Del análisis anterior se identifican dos vacíos no resueltos por las soluciones existentes:
 
-- Vacío de percepción: Las soluciones open-source documentadas (Chrome Dino, SerpentAI) funcionan en escenas visualmente simples con fondo uniforme. No existe evidencia publicada de que la visión clásica (sin redes neuronales) sea suficientemente robusta para detectar múltiples elementos simultáneos en un fondo dinámico y complejo como el de Banana Kong, donde el fondo en movimiento comparte rangos de color con los objetos de interés.
-- Vacío de decisión: No existen trabajos que evalúen empíricamente la efectividad de un sistema de reglas predefinidas cuando la información del entorno proviene exclusivamente de percepción visual clásica en una escena dinámica. Se desconoce si los errores de percepción se acumulan de forma que degraden las decisiones por encima de un umbral crítico.
-  Estos vacíos justifican la necesidad de este proyecto: no se trata simplemente de implementar un bot, sino de evaluar empíricamente hasta dónde llegan las técnicas clásicas de visión por computador combinadas con un sistema de decisiones basado en reglas en un entorno visualmente desafiante, usando el puntaje del juego como métrica objetiva de desempeño del sistema completo.
+- **Vacío de percepción:** Las soluciones open-source documentadas (Chrome Dino, SerpentAI) funcionan en escenas visualmente simples con fondo uniforme. No existe evidencia publicada de que la visión clásica (sin redes neuronales) sea suficientemente robusta para detectar múltiples elementos simultáneos en un fondo dinámico y complejo como el de Banana Kong, donde el fondo en movimiento comparte rangos de color con los objetos de interés.
+
+- **Vacío de decisión:** No existen trabajos que evalúen empíricamente la efectividad de un sistema de reglas predefinidas cuando la información del entorno proviene exclusivamente de percepción visual clásica en una escena dinámica. Se desconoce si los errores de percepción se acumulan de forma que degraden las decisiones por encima de un umbral crítico.
+
+Estos vacíos justifican la necesidad de este proyecto: no se trata simplemente de implementar un bot, sino de evaluar empíricamente hasta dónde llegan las técnicas clásicas de visión por computador combinadas con un sistema de decisiones basado en reglas en un entorno visualmente desafiante, usando el puntaje del juego como métrica objetiva de desempeño del sistema completo.
 
 ---
 
@@ -217,7 +217,6 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 - Captura automática y continua de la pantalla del videojuego a través del emulador.
 - Detección en tiempo real de coleccionables, obstáculos y personaje principal relevantes para la navegación autónoma.
-- Filtrado de falsos positivos mediante criterios visuales configurables según las características de cada elemento del juego.
 - Clasificación de elementos detectados por tipo para construir el estado del entorno.
 - Toma de decisiones automática mediante reglas predefinidas basadas en el estado.
 - Simulación de entradas de teclado (salto, planeo, bajada, embestida) sobre el emulador.
@@ -242,7 +241,7 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 - Respuesta automática del bot ante obstáculos detectados sin intervención humana.
 - Ejecución correcta de las cuatro entradas simuladas: salto, planeo, bajada y embestida.
 - Ciclo percepción–decisión–acción sin bloqueos ni retrasos críticos que afecten el juego.
-- Se satisfacen las metricas de exito.
+- Metricas de exito: Se obtiene un resultado satiscatorio referente a las metricas de desempeño (elementos identificados, tiempo de supervivencia, puntaje obtenido, etc).
 - Resultados reproducibles en múltiples ejecuciones bajo condiciones similares.
 
 ---
@@ -250,12 +249,19 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 ## 10. Stack Tecnológico
 
 **Python 3.x:** Lenguaje principal del proyecto.
+
 **OpenCV (cv2):** Procesamiento de imágenes y visión por computador: conversión de espacios de color, operaciones morfológicas, detección de contornos.
+
 **mss:** Captura de pantalla de alto rendimiento (~1-2ms por frame) con acceso directo a la memoria de video.
+
 **numpy:** Manipulación eficiente de matrices de imágenes.
+
 **pygetwindow:** Detección automática de la ventana del emulador por nombre y obtención de coordenadas.
+
 **pyautogui:** Simulación de entradas de teclado sobre el emulador.
+
 **keyboard:** Detección global de teclas de control (pausar, salir) independientemente de qué ventana tenga el foco.
+
 **MuMu Player (Android):** Emulador Android que ejecuta Banana Kong a resolución 960x540.
 
 ---
@@ -263,27 +269,35 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 ## 11. Plan de Trabajo
 
 **Fase 1 — Captura y preprocesamiento:** Implementación del módulo de captura con detección automática de ventana. Conversión de espacios de color y limpieza morfológica de máscara.
-**Fase 2 — Detección de elementos:** Calibración de parámetros de detección para cada elemento del juego. Implementación y ajuste de criterios de filtrado. Validación con capturas estáticas.
+
+**Fase 2 — Detección de elementos:** Calibración de parámetros de detección para cada elemento del juego. Validación con capturas estáticas.
 
 **Fase 3 — Módulo de control:** Implementación de simulación de teclado sobre el emulador. Validación de las cuatro acciones disponibles (salto, planeo, bajada, embestida).
 
 **Fase 4 — Módulo de decisión:** Diseño e implementación de reglas predefinidas basadas en el estado visual. Pruebas de respuesta ante obstáculos y coleccionables.
+
 **Fase 5 — Integración y pruebas:** Integración del pipeline completo percepción–decisión–acción. Ajuste fino de parámetros. Medición del puntaje en múltiples ejecuciones.
+
 **Fase 6 — Documentación:** Redacción del informe técnico, análisis de resultados y preparación de la presentación.
 
 ---
 
-<!--
 ## 12. Referencias
 
-[1] arturfog, “Chrome Dino game bot using OpenCV and mss,” GitHub, 2021.
+[1] arturfog, “Chrome Dino game bot using OpenCV and mss,” GitHub, 2021. [Online]. Available https://github.com/arturfog/dino
+
 [2] N. Bergeron, “SerpentAI — Game Agent Framework,” GitHub, 2017. [Online]. Available: https://github.com/SerpentAI/SerpentAI
+
 [3] G. Bradski and A. Kaehler, Learning OpenCV: Computer Vision with the OpenCV Library. Sebastopol, CA: O’Reilly Media, 2008.
+
 [4] T. Butnaru, “mss — An ultra-fast cross-platform multiple screenshots module in pure Python,” 2019. [Online]. Available: https://python-mss.readthedocs.io/
-[5] GeeksforGeeks, “Building a Chrome Dino bot using Python and OpenCV,” 2023.
-[6] GitHub, “Topics: game-bot,” 2023. [Online]. Available: https://github.com/topics/game-bot
-[7] LearnOpenCV, “Chrome Dino Game Bot with OpenCV and Python,” 2022. [Online]. Available: https://learnopencv.com/chrome-dino-game-bot/
-[8] I. Millington and J. Funge, Artificial Intelligence for Games, 2nd ed. Burlington, MA: Morgan Kaufmann, 2009.
-[9] V. Mnih et al., “Human-level control through deep reinforcement learning,” Nature, vol. 518, pp. 529–533, Feb. 2015.
-[10] J. Redmon, S. Divvala, R. Girshick, and A. Farhadi, “You only look once: Unified, real-time object detection,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Las Vegas, NV, 2016, pp. 779–788.
--->
+
+[5] GeeksforGeeks, “Building a Chrome Dino bot using Python and OpenCV,” 2023. [Online]. Available: https://www.geeksforgeeks.org/python/automate-chrome-dino-game-using-python/
+
+[6] LearnOpenCV, “Chrome Dino Game Bot with OpenCV and Python,” 2022. [Online]. Available: https://learnopencv.com/tag/chrome-dino-game-bot/
+
+[7] I. Millington and J. Funge, Artificial Intelligence for Games, 2nd ed. Burlington, MA: Morgan Kaufmann, 2009.
+
+[8] V. Mnih et al., “Human-level control through deep reinforcement learning,” Nature, vol. 518, pp. 529–533, Feb. 2015.
+
+[9] J. Redmon, S. Divvala, R. Girshick, and A. Farhadi, “You only look once: Unified, real-time object detection,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), Las Vegas, NV, 2016, pp. 779–788.
