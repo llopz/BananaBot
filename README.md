@@ -131,7 +131,7 @@ Ambas soluciones dependen de posiciones fijas en pantalla y no construyen una re
 
 ### 6.2 Soluciones Open-Source
 
-En el ecosistema open-source destacan tres soluciones relevantes. El bot para Chrome Dino es el caso más documentado y comparable con este proyecto: usa mss para captura, OpenCV para detección de obstáculos y pyautogui para simulación de teclado. SerpentAI es un framework genérico para bots de videojuegos con soporte para detección por color, template matching y modelos de ML, usado para automatizar títulos como Shovel Knight. MAA automatiza el juego móvil Arknights en emulador Android usando OpenCV con detección visual clásica y reglas, alcanzando tasas de decisión de 10–30 acciones por segundo.
+En el ecosistema open-source destacan tres soluciones relevantes. El bot para Chrome Dino [1], [6], [5] es el caso más documentado y comparable con este proyecto: usa mss para captura, OpenCV para detección de obstáculos y pyautogui para simulación de teclado. SerpentAI [2] es un framework genérico para bots de videojuegos con soporte para detección por color, template matching y modelos de ML, usado para automatizar títulos como Shovel Knight. MAA automatiza el juego móvil Arknights en emulador Android usando OpenCV con detección visual clásica y reglas, alcanzando tasas de decisión de 10–30 acciones por segundo.
 
 #### ¿Cómo abordan el problema?
 
@@ -147,11 +147,11 @@ Desde el punto de vista arquitectural, los sistemas de automatización visual de
 
 #### Visión clásica + Reglas (este proyecto):
 
-Segmentación HSV, template matching u operaciones morfológicas para percepción; árboles de decisión o máquinas de estados para acción. Sin entrenamiento, bajo costo computacional, comportamiento determinista e interpretable. Sensible a variaciones visuales del entorno; requiere calibración manual por juego.
+Segmentación HSV, template matching u operaciones morfológicas para percepción; árboles de decisión o máquinas de estados para acción. Sin entrenamiento, bajo costo computacional, comportamiento determinista e interpretable. Sensible a variaciones visuales del entorno; requiere calibración manual por juego [3], [7].
 
 #### Detección con redes neuronales + Reglas:
 
-Modelos como YOLO para percepción; reglas para decisión. Alta precisión de detección, robusto ante variaciones visuales. Requiere dataset etiquetado y entrenamiento previo; mayor costo computacional en inferencia.
+Modelos como YOLO para percepción; reglas para decisión. Alta precisión de detección, robusto ante variaciones visuales. Requiere dataset etiquetado y entrenamiento previo; mayor costo computacional en inferencia [9].
 
 #### Visión clásica + Aprendizaje por Refuerzo:
 
@@ -159,7 +159,7 @@ Percepción clásica como preprocesamiento; agente RL para aprender la política
 
 #### End-to-end Deep RL (píxeles a acciones):
 
-El agente recibe píxeles crudos y aprende directamente la política óptima . Potencialmente más capaz pero con altísimo costo computacional y de entrenamiento; impracticable en recursos académicos estándar.
+El agente recibe píxeles crudos y aprende directamente la política óptima [8]. Potencialmente más capaz pero con altísimo costo computacional y de entrenamiento; impracticable en recursos académicos estándar.
 
 ### 6.4 Comparación de Soluciones
 
@@ -185,9 +185,11 @@ Aprende estrategias óptimas automáticamente. Alta escalabilidad. Requiere mile
 
 Del análisis anterior se identifican dos vacíos no resueltos por las soluciones existentes:
 
-- Vacío de percepción: Las soluciones open-source documentadas (Chrome Dino, SerpentAI) funcionan en escenas visualmente simples con fondo uniforme. No existe evidencia publicada de que la visión clásica (sin redes neuronales) sea suficientemente robusta para detectar múltiples elementos simultáneos en un fondo dinámico y complejo como el de Banana Kong, donde el fondo en movimiento comparte rangos de color con los objetos de interés.
-- Vacío de decisión: No existen trabajos que evalúen empíricamente la efectividad de un sistema de reglas predefinidas cuando la información del entorno proviene exclusivamente de percepción visual clásica en una escena dinámica. Se desconoce si los errores de percepción se acumulan de forma que degraden las decisiones por encima de un umbral crítico.
-  Estos vacíos justifican la necesidad de este proyecto: no se trata simplemente de implementar un bot, sino de evaluar empíricamente hasta dónde llegan las técnicas clásicas de visión por computador combinadas con un sistema de decisiones basado en reglas en un entorno visualmente desafiante, usando el puntaje del juego como métrica objetiva de desempeño del sistema completo.
+- **Vacío de percepción:** Las soluciones open-source documentadas (Chrome Dino, SerpentAI) funcionan en escenas visualmente simples con fondo uniforme. No existe evidencia publicada de que la visión clásica (sin redes neuronales) sea suficientemente robusta para detectar múltiples elementos simultáneos en un fondo dinámico y complejo como el de Banana Kong, donde el fondo en movimiento comparte rangos de color con los objetos de interés.
+
+- **Vacío de decisión:** No existen trabajos que evalúen empíricamente la efectividad de un sistema de reglas predefinidas cuando la información del entorno proviene exclusivamente de percepción visual clásica en una escena dinámica. Se desconoce si los errores de percepción se acumulan de forma que degraden las decisiones por encima de un umbral crítico.
+
+Estos vacíos justifican la necesidad de este proyecto: no se trata simplemente de implementar un bot, sino de evaluar empíricamente hasta dónde llegan las técnicas clásicas de visión por computador combinadas con un sistema de decisiones basado en reglas en un entorno visualmente desafiante, usando el puntaje del juego como métrica objetiva de desempeño del sistema completo.
 
 ---
 
@@ -250,12 +252,19 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 ## 10. Stack Tecnológico
 
 **Python 3.x:** Lenguaje principal del proyecto.
+
 **OpenCV (cv2):** Procesamiento de imágenes y visión por computador: conversión de espacios de color, operaciones morfológicas, detección de contornos.
+
 **mss:** Captura de pantalla de alto rendimiento (~1-2ms por frame) con acceso directo a la memoria de video.
+
 **numpy:** Manipulación eficiente de matrices de imágenes.
+
 **pygetwindow:** Detección automática de la ventana del emulador por nombre y obtención de coordenadas.
+
 **pyautogui:** Simulación de entradas de teclado sobre el emulador.
+
 **keyboard:** Detección global de teclas de control (pausar, salir) independientemente de qué ventana tenga el foco.
+
 **MuMu Player (Android):** Emulador Android que ejecuta Banana Kong a resolución 960x540.
 
 ---
@@ -263,12 +272,15 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 ## 11. Plan de Trabajo
 
 **Fase 1 — Captura y preprocesamiento:** Implementación del módulo de captura con detección automática de ventana. Conversión de espacios de color y limpieza morfológica de máscara.
+
 **Fase 2 — Detección de elementos:** Calibración de parámetros de detección para cada elemento del juego. Implementación y ajuste de criterios de filtrado. Validación con capturas estáticas.
 
 **Fase 3 — Módulo de control:** Implementación de simulación de teclado sobre el emulador. Validación de las cuatro acciones disponibles (salto, planeo, bajada, embestida).
 
 **Fase 4 — Módulo de decisión:** Diseño e implementación de reglas predefinidas basadas en el estado visual. Pruebas de respuesta ante obstáculos y coleccionables.
+
 **Fase 5 — Integración y pruebas:** Integración del pipeline completo percepción–decisión–acción. Ajuste fino de parámetros. Medición del puntaje en múltiples ejecuciones.
+
 **Fase 6 — Documentación:** Redacción del informe técnico, análisis de resultados y preparación de la presentación.
 
 ---
