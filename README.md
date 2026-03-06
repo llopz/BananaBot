@@ -23,9 +23,9 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 
 ### 2.2 Problema
 
-¿Hasta qué punto es suficiente la visión por computador clásica, combinada con un sistema de decisión basado en reglas, para sostener el funcionamiento autónomo y continuo de un agente en un entorno visual dinámico y complejo, operando en tiempo real sin intervención humana?
+¿Qué tan efectiva es la combinación de técnicas de visión por computador clásica y un sistema de decisión basado en reglas para sostener el funcionamiento autónomo y continuo de un agente en un entorno visual dinámico y complejo?
 
-#### Este problema abarca los siguientes subproblemas técnicos:
+**Este problema abarca los siguientes subproblemas técnicos:**
 
 - Captura en tiempo real: obtener frames del emulador con latencia mínima manteniendo una tasa de actualización compatible con la dinámica del juego.
 - Percepción visual: identificar y localizar elementos de interés en la escena usando técnicas de visión por computador clásica, sin recurrir a redes neuronales.
@@ -99,7 +99,7 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 
 ### 5.1 Objetivo General
 
-Diseñar e implementar un sistema autónomo que juegue Banana Kong en tiempo real usando únicamente información visual capturada de la pantalla, que tome decisiones basadas en reglas predefinidas y ejecute acciones mediante simulación de controles por teclado, con el fin de maximizar el puntaje obtenido como métrica principal de desempeño.
+Diseñar e implementar un sistema autónomo que juegue el videojuego movil Banana Kong en tiempo real mediante el procesamiento de información visual capturada de la pantalla, tomando decisiones basadas en reglas predefinidas y ejecutando acciones a través de la simulación de controles de teclado, con el propósito de maximizar el puntaje obtenido como indicador principal de desempeño.
 
 ### 5.2 Objetivos Específicos
 
@@ -217,7 +217,6 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 - Captura automática y continua de la pantalla del videojuego a través del emulador.
 - Detección en tiempo real de coleccionables, obstáculos y personaje principal relevantes para la navegación autónoma.
-- Filtrado de falsos positivos mediante criterios visuales configurables según las características de cada elemento del juego.
 - Clasificación de elementos detectados por tipo para construir el estado del entorno.
 - Toma de decisiones automática mediante reglas predefinidas basadas en el estado.
 - Simulación de entradas de teclado (salto, planeo, bajada, embestida) sobre el emulador.
@@ -271,7 +270,7 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 **Fase 1 — Captura y preprocesamiento:** Implementación del módulo de captura con detección automática de ventana. Conversión de espacios de color y limpieza morfológica de máscara.
 
-**Fase 2 — Detección de elementos:** Calibración de parámetros de detección para cada elemento del juego. Implementación y ajuste de criterios de filtrado. Validación con capturas estáticas.
+**Fase 2 — Detección de elementos:** Calibración de parámetros de detección para cada elemento del juego. Validación con capturas estáticas.
 
 **Fase 3 — Módulo de control:** Implementación de simulación de teclado sobre el emulador. Validación de las cuatro acciones disponibles (salto, planeo, bajada, embestida).
 
