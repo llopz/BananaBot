@@ -282,7 +282,135 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 ---
 
-## 12. Referencias
+## 12. Cronograma de Prototipos
+
+**Duración:** 7 semanas · **5 prototipos**  
+**Enfoque:** desarrollo iterativo de los módulos de **captura, percepción y reglas**, validando el sistema completo en cada ciclo.
+
+---
+
+### Resumen
+
+| Prototipo   | Semana(s) | Enfoque                     | Entregable                                                |
+| ----------- | --------- | --------------------------- | --------------------------------------------------------- |
+| Prototipo 1 | S1        | Pipeline mínimo             | Sistema captura → detección → acción funcionando          |
+| Prototipo 2 | S2        | Percepción y reglas básicas | Bot esquiva obstáculos principales                        |
+| Prototipo 3 | S3        | Sistema de supervivencia    | Bot maneja múltiples obstáculos                           |
+| Prototipo 4 | S4–S5     | Estrategia completa         | Bot incorpora preferencia de trayectoria y mejora puntaje |
+| Prototipo 5 | S6–S7     | Ajuste y validación         | Sistema estable y evaluación final                        |
+
+---
+
+### Prototipo 1: Pipeline mínimo (Semana 1)
+
+**Hipótesis:** Es posible ejecutar el pipeline completo en tiempo real.
+
+##### Construir
+
+- Integrar captura, detección, reglas y acciones.
+- Detectar al menos un obstáculo y reaccionar con una regla simple.
+
+##### Medir
+
+- Latencia del pipeline.
+- Tiempo de supervivencia en varias ejecuciones.
+
+##### Aprender
+
+- Validar si la detección y reacción ocurren a tiempo.
+
+**Entregable:** Bot funcional mínimo.
+
+---
+
+### Prototipo 2: Percepción completa y set de reglas básicas (Semana 2)
+
+**Hipótesis:** Los elementos del juego se detectan con menos del 20% de falsos positivos de forma simultánea y la supervivencia mejora debido a un set de reglas basicas.
+
+##### Construir
+
+- Incorporar nuevos obstáculos al módulo de percepción.
+- Definir reglas básicas para esquivarlos.
+
+##### Medir
+
+- Tiempo de supervivencia promedio.
+- Tasa de esquive por obstáculo.
+
+##### Aprender
+
+- Identificar detecciones inestables o reglas insuficientes.
+
+**Entregable:** Bot que sobrevive consistentemente más que sin automatización.
+
+---
+
+### Prototipo 3: Sistema de supervivencia (Semana 3)
+
+**Hipótesis:** Reglas basadas en distancia y prioridad mejoran el comportamiento del agente.
+
+##### Construir
+
+- Refinar detecciones existentes.
+- Implementar lógica basada en proximidad y prioridad entre reglas.
+
+##### Medir
+
+- Tiempo de supervivencia promedio.
+- Principales causas de fallo.
+
+##### Aprender
+
+- Determinar qué situaciones requieren nuevas reglas o ajustes.
+
+**Entregable:** Bot que maneja múltiples obstáculos de forma consistente.
+
+---
+
+### Prototipo 4: Estrategia completa (Semanas 4–5)
+
+**Hipótesis:** Integrar una trayectoria preferencial hacia las bananas permite aumentar el puntaje sin afectar la supervivencia.
+
+##### Construir
+
+- Implementar una preferencia de trayectoria hacia bananas cuando no exista riesgo inmediato.
+- Definir prioridad entre supervivencia y recolección.
+
+##### Medir
+
+- Puntaje promedio en múltiples ejecuciones.
+- Conflictos entre reglas.
+
+##### Aprender
+
+- Ajustar reglas para optimizar el desempeño.
+
+**Entregable:** Bot con sistema de decisión completo.
+
+---
+
+### Prototipo 5: Ajuste y validación final (Semanas 6–7)
+
+**Hipótesis:** Ajustes basados en fallos observados permiten estabilizar el sistema.
+
+##### Construir
+
+- Ajustar parámetros de detección y activación de reglas.
+- Ejecutar batería de pruebas.
+
+##### Medir
+
+- Puntaje y estabilidad en múltiples ejecuciones.
+
+##### Aprender
+
+- Identificar las limitaciones del enfoque basado en visión clásica y reglas.
+
+**Entregable:** Sistema validado y métricas finales.
+
+---
+
+## 13. Referencias
 
 [1] arturfog, “Chrome Dino game bot using OpenCV and mss,” GitHub, 2021. [Online]. Available https://github.com/arturfog/dino
 
