@@ -7,10 +7,10 @@ import pygetwindow as gw
 class Capturador:
 
     def __init__(self, titulo_ventana: str, refrescar_cada: int = 60):
-        self.titulo_ventana   = titulo_ventana
-        self.refrescar_cada   = refrescar_cada
-        self._sct             = None
-        self._region          = None
+        self.titulo_ventana = titulo_ventana
+        self.refrescar_cada = refrescar_cada
+        self._sct = None
+        self._region = None
         self._frames_contados = 0
 
         # Buscar la ventana al inicializar
@@ -30,10 +30,10 @@ class Capturador:
             return False
 
         self._region = {
-            "top":    ventana.top,
-            "left":   ventana.left,
-            "width":  ventana.width,
-            "height": ventana.height
+            "top": ventana.top,
+            "left": ventana.left,
+            "width": ventana.width,
+            "height": ventana.height,
         }
 
         return True
@@ -55,7 +55,9 @@ class Capturador:
             self._actualizar_region()
 
         if self._region is None:
-            raise RuntimeError(f"No se encontró la ventana '{self.titulo_ventana}'. ¿Está abierto el emulador?")
+            raise RuntimeError(
+                f"No se encontró la ventana '{self.titulo_ventana}'. ¿Está abierto el emulador?"
+            )
 
         screenshot = self._sct.grab(self._region)
         img = np.array(screenshot)

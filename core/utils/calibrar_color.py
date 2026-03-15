@@ -76,10 +76,10 @@ def calibrar():
                 historial.append((h, s, v))
 
                 # Calcular rango sugerido con margen
-                h_bajo = max(0,   h - 10)
+                h_bajo = max(0, h - 10)
                 h_alto = min(180, h + 10)
-                s_bajo = max(0,   s - 40)
-                v_bajo = max(0,   v - 40)
+                s_bajo = max(0, s - 40)
+                v_bajo = max(0, v - 40)
 
                 print(f"Click #{len(historial)} en ({click_x}, {click_y})")
                 print(f"  BGR : B={b}  G={g}  R={r}")
@@ -94,7 +94,9 @@ def calibrar():
                     s_vals = [c[1] for c in historial]
                     v_vals = [c[2] for c in historial]
                     print(f"  Rango que cubre todos los clicks:")
-                    print(f"    _HSV_BAJO = [{max(0, min(h_vals)-10)}, {max(0, min(s_vals)-40)}, {max(0, min(v_vals)-40)}]")
+                    print(
+                        f"    _HSV_BAJO = [{max(0, min(h_vals)-10)}, {max(0, min(s_vals)-40)}, {max(0, min(v_vals)-40)}]"
+                    )
                     print(f"    _HSV_ALTO = [{min(180, max(h_vals)+10)}, 255, 255]")
 
                 print()
@@ -106,8 +108,15 @@ def calibrar():
                 # Mostrar muestra de color
                 muestra = np.zeros((50, 150, 3), dtype=np.uint8)
                 muestra[:] = (b, g, r)
-                cv2.putText(muestra, f"H={h} S={s} V={v}", (5, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+                cv2.putText(
+                    muestra,
+                    f"H={h} S={s} V={v}",
+                    (5, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.4,
+                    (255, 255, 255),
+                    1,
+                )
                 cv2.imshow("Color del pixel", muestra)
 
             # Dibujar marcas de clicks anteriores
@@ -116,7 +125,7 @@ def calibrar():
 
             cv2.imshow("Calibrador", img)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
     cv2.destroyAllWindows()
@@ -128,7 +137,9 @@ def calibrar():
         print("=" * 55)
         print("  RANGO FINAL (basado en todos tus clicks)")
         print("=" * 55)
-        print(f"  _HSV_BAJO = [{max(0, min(h_vals)-10)}, {max(0, min(s_vals)-40)}, {max(0, min(v_vals)-40)}]")
+        print(
+            f"  _HSV_BAJO = [{max(0, min(h_vals)-10)}, {max(0, min(s_vals)-40)}, {max(0, min(v_vals)-40)}]"
+        )
         print(f"  _HSV_ALTO = [{min(180, max(h_vals)+10)}, 255, 255]")
 
 

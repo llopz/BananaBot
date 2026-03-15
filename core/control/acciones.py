@@ -21,14 +21,14 @@ import sys
 
 pyautogui.FAILSAFE = False
 
-TECLA_SALTAR  = 'c'
-TECLA_PLANEAR = 'space'
-TECLA_BAJAR   = 'down'
+TECLA_SALTAR = "c"
+TECLA_PLANEAR = "space"
+TECLA_BAJAR = "down"
 
-NADA       = 0
-SALTAR     = 1
-PLANEAR    = 2
-BAJAR      = 3
+NADA = 0
+SALTAR = 1
+PLANEAR = 2
+BAJAR = 3
 N_ACCIONES = 4
 
 TITULO_VENTANA = "Android Device"
@@ -37,7 +37,7 @@ TITULO_VENTANA = "Android Device"
 class ModuloAcciones:
 
     def __init__(self):
-        self.ventana    = None
+        self.ventana = None
         self._planeando = False
         self._actualizar_ventana()
         signal.signal(signal.SIGINT, self._parada_emergencia)
@@ -100,6 +100,7 @@ class ModuloAcciones:
         time.sleep(3)
 
         import keyboard
+
         print("Listo.")
 
         try:
