@@ -12,7 +12,7 @@ def obstacle_rule(state):
 
 def banana_rule_up(state):
     if state.banana and state.banana_distance is not None:
-        if state.banana_distance[0] < 150 and state.banana_distance[1] < 50:
+        if state.banana_distance[0] < 150 and state.banana_distance[1] < -10:
             return True
 
 
