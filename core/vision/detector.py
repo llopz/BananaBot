@@ -258,7 +258,6 @@ class Detector:
         bananas, desc_b, mascara_b = self.detectar_bananas(frame)
         troncos, desc_t, mascara_t = self.detectar_tronco(frame)
         arbustos, desc_a, mascara_a = self.detectar_arbusto(frame)
-<<<<<<< HEAD:test/vision/detector.py
         aviones,  desc_v, mascara_v = self.detectar_avion(frame)
         kongs,    desc_k, mascara_k = self.detectar_kong(frame)
         paredes,  desc_p, mascara_p = self.detectar_pared(frame)
@@ -273,31 +272,13 @@ class Detector:
             "paredes":     paredes,
             "aguas":       aguas,
             "descartados": desc_b + desc_t + desc_a + desc_v + desc_k + desc_p + desc_a2,
-=======
-        aviones, desc_v, mascara_v = self.detectar_avion(frame)
-        kongs, desc_k, mascara_k = self.detectar_kong(frame)
-
-        return {
-            "bananas": bananas,
-            "troncos": troncos,
-            "arbustos": arbustos,
-            "aviones": aviones,
-            "kong": kongs,
-            "descartados": desc_b + desc_t + desc_a + desc_v + desc_k,
->>>>>>> origin/main:core/vision/detector.py
             "mascaras": {
                 "bananas": mascara_b,
                 "troncos": mascara_t,
                 "arbustos": mascara_a,
-<<<<<<< HEAD:test/vision/detector.py
                 "aviones":  mascara_v,
                 "kong":     mascara_k,
                 "paredes":  mascara_p,
                 "aguas":    mascara_ag,
             }
-=======
-                "aviones": mascara_v,
-                "kong": mascara_k,
-            },
->>>>>>> origin/main:core/vision/detector.py
         }

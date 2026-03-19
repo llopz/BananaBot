@@ -6,7 +6,6 @@ EMULADOR_TITULO = "Android Device"
 EMULADOR_REFRESCAR_CADA = 60
 
 # ─── BANANAS ────────────────────────────────────────────────
-<<<<<<< HEAD:test/config/settings.py
 BANANA_HSV_BAJO = [18, 200, 200]
 BANANA_HSV_ALTO = [38, 255, 255]
 BANANA_AREA_MIN_PCT  = 0.00025
@@ -15,16 +14,6 @@ BANANA_PROP_MIN      = 0.7
 BANANA_PROP_MAX      = 1.6
 BANANA_ZONA_Y_INICIO = 50
 BANANA_ZONA_Y_FIN    = 580
-=======
-BANANA_HSV_BAJO = [13, 180, 180]
-BANANA_HSV_ALTO = [43, 255, 255]
-BANANA_AREA_MIN_PCT = 0.00015
-BANANA_AREA_MAX_PCT = 0.0008
-BANANA_PROP_MIN = 0.6
-BANANA_PROP_MAX = 1.6
-BANANA_ZONA_Y_INICIO = 50
-BANANA_ZONA_Y_FIN = 540
->>>>>>> origin/main:core/config/settings.py
 
 # ─── TRONCO ─────────────────────────────────────────────────
 TRONCO_HSV_BAJO = [0, 100, 150]
@@ -35,7 +24,6 @@ TRONCO_PROP_MIN = 0.5
 TRONCO_PROP_MAX = 1.5
 
 # ─── ARBUSTO ────────────────────────────────────────────────
-# Verde brillante H=50, S=157, V=219
 ARBUSTO_HSV_BAJO = [58, 155, 90]
 ARBUSTO_HSV_ALTO = [70, 220, 240]
 ARBUSTO_AREA_MIN_PCT = 0.005
