@@ -73,8 +73,8 @@ def main():
                     print(f"[VISION] bananas={len(bananas)} troncos={len(troncos)} arbustos={len(arbustos)} aviones={len(aviones)} kong={len(kong)}")
 
             # 4. ACTUAR
-            if bot_activo and not pausado:
-                acciones.ejecutar(SALTAR)
+           # if bot_activo and not pausado:
+            #    acciones.ejecutar(SALTAR)
 
             # 5. VISUALIZAR
             frame_debug = visualizador.dibujar_todo(

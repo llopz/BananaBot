@@ -173,6 +173,50 @@ class Detector:
             cfg.KONG_PROP_MIN, cfg.KONG_PROP_MAX,
             "kong"
         )
+    
+    def detectar_pared(self, frame):
+        cfg = self.config
+        return self._detectar_elemento(
+            frame,
+            cfg.PARED_HSV_BAJO, cfg.PARED_HSV_ALTO,
+            cfg.PARED_AREA_MIN_PCT, cfg.PARED_AREA_MAX_PCT,
+            cfg.PARED_PROP_MIN, cfg.PARED_PROP_MAX,
+            "pared"
+        )
+    
+    def detectar_agua(self, frame):
+        cfg = self.config
+        alto, ancho = frame.shape[:2]
+
+        franja = frame[cfg.BANANA_ZONA_Y_FIN:alto, :]
+        if franja.size == 0:
+            return [], [], None
+
+        mascara, _ = self._crear_mascara(franja, cfg.AGUA_HSV_BAJO, cfg.AGUA_HSV_ALTO)
+
+        # dilatar agresivamente en horizontal para conectar toda la superficie
+        kernel_h = np.ones((3, 60), np.uint8)
+        mascara = cv2.dilate(mascara, kernel_h, iterations=3)
+
+        # rellenar huecos verticales
+        kernel_v = np.ones((10, 1), np.uint8)
+        mascara = cv2.dilate(mascara, kernel_v, iterations=2)
+
+        pixeles_agua = cv2.countNonZero(mascara)
+
+        elementos = []
+        if pixeles_agua > cfg.AGUA_PIXELES_MIN:
+            elementos.append(Elemento(
+                x=0, y=cfg.BANANA_ZONA_Y_FIN,
+                w=ancho, h=alto - cfg.BANANA_ZONA_Y_FIN,
+                centro_x=ancho // 2,
+                centro_y=(cfg.BANANA_ZONA_Y_FIN + alto) // 2,
+                area=float(pixeles_agua),
+                proporcion=round(ancho / (alto - cfg.BANANA_ZONA_Y_FIN), 2),
+                tipo="agua"
+            ))
+
+        return elementos, [], mascara
 
     def detectar_todos(self, frame) -> dict:
         bananas,  desc_b, mascara_b = self.detectar_bananas(frame)
@@ -180,6 +224,8 @@ class Detector:
         arbustos, desc_a, mascara_a = self.detectar_arbusto(frame)
         aviones,  desc_v, mascara_v = self.detectar_avion(frame)
         kongs,    desc_k, mascara_k = self.detectar_kong(frame)
+        paredes,  desc_p, mascara_p = self.detectar_pared(frame)
+        aguas,    desc_a2, mascara_ag = self.detectar_agua(frame)
 
         return {
             "bananas":     bananas,
@@ -187,12 +233,16 @@ class Detector:
             "arbustos":    arbustos,
             "aviones":     aviones,
             "kong":        kongs,
-            "descartados": desc_b + desc_t + desc_a + desc_v + desc_k,
+            "paredes":     paredes,
+            "aguas":       aguas,
+            "descartados": desc_b + desc_t + desc_a + desc_v + desc_k + desc_p + desc_a2,
             "mascaras": {
                 "bananas":  mascara_b,
                 "troncos":  mascara_t,
                 "arbustos": mascara_a,
                 "aviones":  mascara_v,
                 "kong":     mascara_k,
+                "paredes":  mascara_p,
+                "aguas":    mascara_ag,
             }
         }

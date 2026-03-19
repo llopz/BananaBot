@@ -6,14 +6,14 @@ EMULADOR_TITULO         = "Android Device"
 EMULADOR_REFRESCAR_CADA = 60
 
 # ─── BANANAS ────────────────────────────────────────────────
-BANANA_HSV_BAJO      = [13, 180, 180]
-BANANA_HSV_ALTO      = [43, 255, 255]
-BANANA_AREA_MIN_PCT  = 0.00015
-BANANA_AREA_MAX_PCT  = 0.0008
-BANANA_PROP_MIN      = 0.6
+BANANA_HSV_BAJO = [18, 200, 200]
+BANANA_HSV_ALTO = [38, 255, 255]
+BANANA_AREA_MIN_PCT  = 0.00025
+BANANA_AREA_MAX_PCT = 0.003
+BANANA_PROP_MIN      = 0.7
 BANANA_PROP_MAX      = 1.6
 BANANA_ZONA_Y_INICIO = 50
-BANANA_ZONA_Y_FIN    = 540
+BANANA_ZONA_Y_FIN    = 580
 
 # ─── TRONCO ─────────────────────────────────────────────────
 TRONCO_HSV_BAJO      = [0,  100, 150]
@@ -39,6 +39,20 @@ AVION_AREA_MIN_PCT  = 0.0003
 AVION_AREA_MAX_PCT  = 0.004
 AVION_PROP_MIN      = 1.0
 AVION_PROP_MAX      = 4.0
+
+# ─── PARED / ROCA ───────────────────────────────────────────
+PARED_HSV_BAJO     = [5,  40, 60]
+PARED_HSV_ALTO     = [25, 110, 255]
+PARED_AREA_MIN_PCT = 0.005
+PARED_AREA_MAX_PCT = 0.04
+PARED_PROP_MIN     = 0.3   # w/h — piedra es vertical entonces w/h < 1
+PARED_PROP_MAX     = 0.7
+
+# ─── AGUA ───────────────────────────────────────────────────
+AGUA_HSV_BAJO = [87, 150, 130]
+AGUA_HSV_ALTO = [97, 255, 255]
+AGUA_ZONA_Y_INICIO = 300
+AGUA_PIXELES_MIN   = 200
 
 # ─── KONG ───────────────────────────────────────────────────
 KONG_HSV_BAJO     = [7,  140, 100]
