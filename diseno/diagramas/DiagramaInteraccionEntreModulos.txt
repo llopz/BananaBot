@@ -1,0 +1,36 @@
+@startuml
+
+title Diagrama de interaccion entre los modulos
+package "Captura" {
+  [mss] as MSS
+  [pygetwindow] as PGW
+}
+
+package "Detección" {
+  [Preprocesamiento\n(HSV / morfología)] as PREP
+  [Detección de elementos\n(contornos + filtros)] as DET
+}
+
+package "Decisión" {
+  [Construccion del estado] as CON
+  [Sistema de reglas] as REG
+}
+
+package "Acción" {
+  [Keyboard] as KEY
+}
+
+[Emulador] as EMU
+[Visualizador\ndebug (cv2)] as VIS
+
+EMU --> MSS : frame (píxeles)
+PGW --> MSS : coordenadas ventana
+MSS --> PREP : imagen BGR
+PREP --> DET : máscara binaria
+DET --> CON: bounding boxes\npor tipo
+CON --> REG 
+REG --> KEY: acción
+KEY --> EMU : entrada teclado simulada
+DET --> VIS : bounding boxes
+VIS --> EMU : overlay debug
+@enduml

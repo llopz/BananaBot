@@ -1,0 +1,9 @@
+@startuml
+title Secuencia - Toma de decisión 
+participant "Estado del Juego" as GameState
+participant "Módulo de Reglas" as RulesModule
+participant "Motor de Reglas" as RulesEngine
+
+GameState -> RulesModule : enviar Datos del Juego
+RulesModule -> RulesEngine : enviar Lista de Reglas
+@enduml

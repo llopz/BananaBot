@@ -1,0 +1,41 @@
+@startuml
+title Secuencia - Detección
+
+participant "Captura\n(mss)" as CAP
+participant "Preprocesamiento\n(OpenCV)" as PREP
+participant "Detector\npor elemento" as DET
+participant "Filtros\n(área, forma, zona)" as FIL
+participant "Estado\ndel entorno" as EST
+
+CAP -> PREP : imagen BGR
+
+PREP -> PREP : convertir a HSV
+PREP -> PREP : aplicar rango de color por elemento
+PREP -> PREP : erosión morfológica
+PREP -> PREP : dilatación morfológica
+PREP --> DET : máscara binaria limpia
+
+loop por cada elemento (banana, obstáculo, Kong, avión...)
+
+  DET -> DET : detectar contornos en máscara
+  DET -> FIL : contornos encontrados
+
+  loop por cada contorno
+
+    FIL -> FIL : calcular área relativa al frame
+    FIL -> FIL : calcular proporción ancho/alto
+    FIL -> FIL : verificar zona Y permitida
+
+    alt pasa todos los filtros
+      FIL --> EST : bounding box + tipo de elemento
+    else no pasa filtros
+      FIL -> FIL : descartar contorno
+    end
+
+  end
+
+end
+
+EST -> EST : consolidar elementos detectados
+note over EST : estado listo para\nel módulo de decisión
+@enduml

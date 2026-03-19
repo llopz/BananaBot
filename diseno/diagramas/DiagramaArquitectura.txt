@@ -1,0 +1,12 @@
+@startuml
+title Diagrama de Arquitectura del Sistema
+
+component "Captura" as CAP
+component "Detección" as DET
+component "Decisión" as DEC
+component "Acción" as ACC
+
+CAP --> DET
+DET --> DEC
+DEC --> ACC
+@enduml
