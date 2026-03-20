@@ -246,7 +246,22 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 ---
 
-## 10. Stack Tecnológico
+## 10. Puntos de Decisión
+
+| Punto de decisión               | Importancia                                                                                                                                                                             | Métricas                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Selección del entorno de prueba | Define la complejidad visual del problema y la reproducibilidad de los resultados.                                                                                                      | <ul><li>Variedad de elementos detectables</li><li>Estabilidad visual entre sesiones</li><li>Reproducibilidad del puntaje</li></ul>    |
+| Selección del emulador          | Determina la compatibilidad, acceso a la ventana y estabilidad del rendimiento.                                                                                                         | <ul><li>Latencia de respuesta ante input (ms)</li><li>Estabilidad del nombre de ventana</li><li>FPS sostenido del juego</li></ul>     |
+| Método de captura de pantalla   | Introduce la latencia inicial del sistema y afecta toda la cadena de procesamiento.                                                                                                     | <ul><li>Tiempo de captura por frame (ms)</li><li>FPS del módulo de captura</li></ul>                                                  |
+| Resolución de trabajo           | Balancea precisión visual y costo computacional.                                                                                                                                        | <ul><li>Tasa de detección por elemento</li><li>FPS del pipeline completo</li></ul>                                                    |
+| Región de interés (ROI)         | Reduce el área de procesamiento enfocándose en zonas relevantes.                                                                                                                        | <ul><li>Falsos positivos con ROI vs sin ROI</li><li>Reducción de tiempo de procesamiento</li></ul>                                    |
+| Método de detección             | Transforma píxeles en información estructurada del entorno.                                                                                                                             | <ul><li>Tasa de detección correcta (%)</li><li>Falsos positivos</li><li>Falsos negativos</li><li>Latencia (ms/frame)</li></ul>        |
+| Método de decisión              | Define cómo se seleccionan las acciones a partir del estado. Afecta la interpretabilidad del comportamiento, el costo computacional y la capacidad de manejar situaciones no previstas. | <ul><li>Tasa de esquive por obstáculo</li><li>Frecuencia de acciones incorrectas</li><li>Puntaje promedio en N ejecuciones.</li></ul> |
+| Método de envío de acciones     | Determina la latencia y fiabilidad al ejecutar acciones en el juego.                                                                                                                    | <ul><li>Latencia decisión–acción (ms)</li><li>Tasa de acciones correctas</li></ul>                                                    |
+
+---
+
+## 11. Stack Tecnológico
 
 **Python 3.x:** Lenguaje principal del proyecto.
 
@@ -266,7 +281,7 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 ---
 
-## 11. Plan de Trabajo
+## 12. Plan de Trabajo
 
 **Fase 1 — Captura y preprocesamiento:** Implementación del módulo de captura con detección automática de ventana. Conversión de espacios de color y limpieza morfológica de máscara.
 
@@ -282,7 +297,7 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 ---
 
-## 12. Cronograma de Prototipos
+## 13. Cronograma de Prototipos
 
 **Duración:** 7 semanas · **5 prototipos**  
 **Enfoque:** desarrollo iterativo de los módulos de **captura, percepción y reglas**, validando el sistema completo en cada ciclo.
@@ -361,7 +376,7 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 ---
 
-## 13. Diagramas
+## 14. Diagramas
 
 <p align="center">
   <img src="diseno/diagramas/DiagramaArquitectura.png" alt="Diagrama Arquitectura" width="700">
@@ -379,7 +394,7 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
   <img src="diseno/diagramas/SecuenciaDeteccion.png" alt="Secuencia Detección" width="700">
 </p>
 
-## 14. Referencias
+## 15. Referencias
 
 [1] arturfog, “Chrome Dino game bot using OpenCV and mss,” GitHub, 2021. [Online]. Available https://github.com/arturfog/dino
 
