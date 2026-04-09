@@ -99,14 +99,14 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 
 ### 5.1 Objetivo General
 
-Diseñar e implementar un sistema autónomo que juegue el videojuego movil Banana Kong en tiempo real mediante el procesamiento de información visual capturada de la pantalla, tomando decisiones basadas en reglas predefinidas y ejecutando acciones a través de la simulación de controles de teclado, con el propósito de maximizar el puntaje obtenido como indicador principal de desempeño.
+Diseñar e implementar un sistema autónomo que juegue el videojuego movil Banana Kong en tiempo real mediante el procesamiento de información visual capturada de la pantalla, tomando decisiones basadas en reglas predefinidas y ejecutando acciones a través de la simulación de controles de teclado o mouse, con el propósito de maximizar el puntaje obtenido como indicador principal de desempeño.
 
 ### 5.2 Objetivos Específicos
 
 - Implementar un módulo de captura de pantalla en tiempo real que se adapte automáticamente a la posición de la ventana del emulador.
 - Desarrollar un pipeline de visión por computador clásica capaz de detectar los elementos relevantes del juego mediante las técnicas más adecuadas según las características visuales de cada elemento.
 - Construir un módulo de decisión basado en reglas que determine la acción óptima a partir del estado visual detectado.
-- Implementar un módulo de control que traduzca las decisiones en entradas de teclado simuladas sobre el emulador.
+- Implementar un módulo de control que traduzca las decisiones en entradas de mouse o teclado simuladas sobre el emulador.
 - Validar el sistema utilizando metricas de desempeño.
 
 ---
@@ -263,21 +263,21 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 
 ## 11. Stack Tecnológico
 
-**Python 3.x:** Lenguaje principal del proyecto.
+**Python 3.x:** Se seleccionó como lenguaje principal debido a su simplicidad, versatilidad y amplio ecosistema de librerías para visión por computador y automatización.
 
-**OpenCV (cv2):** Procesamiento de imágenes y visión por computador: conversión de espacios de color, operaciones morfológicas, detección de contornos.
+**OpenCV (cv2):** Utilizado para el procesamiento de imágenes y visión por computador. Permite realizar conversiones de espacios de color, aplicar operaciones morfológicas y detectar contornos.
 
-**mss:** Captura de pantalla de alto rendimiento (~1-2ms por frame) con acceso directo a la memoria de video.
+**mss:** Herramienta de captura de pantalla de alto rendimiento, capaz de obtener frames en aproximadamente 1-2 ms. Permite trabajar en tiempo real con bajo impacto en el rendimiento.
 
-**numpy:** Manipulación eficiente de matrices de imágenes.
+**numpy:** Empleado para la manipulación eficiente de matrices.
 
-**pygetwindow:** Detección automática de la ventana del emulador por nombre y obtención de coordenadas.
+**pygetwindow:** Permite detectar automáticamente la ventana del emulador mediante su nombre y obtener sus coordenadas.
 
-**pyautogui:** Simulación de entradas de teclado sobre el emulador.
+**pyautogui:** Utilizado para simular entradas de teclado y mouse sobre el emulador, permitiendo la automatización de acciones dentro del juego.
 
-**keyboard:** Detección global de teclas de control (pausar, salir) independientemente de qué ventana tenga el foco.
+**keyboard:** Librería que permite detectar entradas de teclado a nivel global, independiente de la ventana activa, lo cual es útil para implementar controles como pausar o finalizar la ejecución del programa.
 
-**MuMu Player (Android):** Emulador Android que ejecuta Banana Kong a resolución 960x540.
+**MuMu Player (Android):** Emulador de Android utilizado para ejecutar el juego _Banana Kong_ a una resolución de 960x540, proporcionando un entorno controlado para la captura y análisis de imágenes.
 
 ---
 
@@ -375,10 +375,14 @@ El sistema sigue un pipeline estructurado en 7 etapas que se ejecutan en tiempo 
 | **Entregable** | Sistema validado y métricas finales.                                                        |
 
 ---
+
 ## 14. Diseño y Aequitectura
-## a. Evaluación de Alternativas
+
+### A. Evaluación de Alternativas
 
 El diseño del sistema implicó decisiones técnicas en cuatro dimensiones independientes: el método de detección visual, la librería de captura de pantalla, el mecanismo de simulación de entradas, y el patrón arquitectural. Para cada dimensión se evaluaron alternativas concretas contra criterios objetivos derivados de las restricciones del proyecto.
+
+---
 
 ### A.1 Método de Detección Visual
 
@@ -386,79 +390,87 @@ El módulo de percepción es el componente más crítico del sistema, ya que cua
 
 **Tabla 1. Comparación de métodos de detección visual.**
 
-| Criterio | Visión clásica por color (seleccionado) | YOLO / CNN | Template Matching |
-| :--- | :--- | :--- | :--- |
-| Velocidad de inferencia | Muy alta (<5 ms/frame) | Media-alta (15–50 ms) | Alta (~5 ms) |
-| Datos de entrenamiento | No requeridos | Dataset etiquetado necesario | Imágenes de referencia estáticas |
-| Complejidad de implementación | Baja | Alta | Baja |
-| Robustez ante fondos dinámicos | Media (ajustable con filtros morfológicos) | Alta | Baja |
-| Adecuación al contexto | Alta (paleta fija del juego) | Sobrecalificada para el problema | Frágil ante cambios gráficos |
+| Criterio                       | Visión clásica por color (seleccionado)    | YOLO / CNN                       | Template Matching                |
+| :----------------------------- | :----------------------------------------- | :------------------------------- | :------------------------------- |
+| Velocidad de inferencia        | Muy alta (<5 ms/frame)                     | Media-alta (15–50 ms)            | Alta (~5 ms)                     |
+| Datos de entrenamiento         | No requeridos                              | Dataset etiquetado necesario     | Imágenes de referencia estáticas |
+| Complejidad de implementación  | Baja                                       | Alta                             | Baja                             |
+| Robustez ante fondos dinámicos | Media (ajustable con filtros morfológicos) | Alta                             | Baja                             |
+| Adecuación al contexto         | Alta (paleta fija del juego)               | Sobrecalificada para el problema | Frágil ante cambios gráficos     |
 
 **Decisión:** Se seleccionó la detección basada en segmentación en espacios de color (hsv, yuv, lav, xyz, etc) con operaciones morfológicas. Banana Kong presenta una paleta de colores relativamente estable entre sesiones, con elementos claramente diferenciables por color (bananas amarillas, Kong marrón, obstáculos de colores específicos). Esta característica hace que el enfoque por espacios de color sea suficiente para el contexto, sin incurrir en el costo de entrenamiento y hardware que exigen las redes neuronales. El riesgo conocido es la sensibilidad a variaciones del fondo dinámico del juego, que se mitiga mediante la calibración de rangos de color por elemento y el filtrado morfológico para eliminar falsos positivos.
 
-## A.2 Librería de Captura de Pantalla
+---
+
+### A.2 Librería de Captura de Pantalla
 
 La latencia de captura es la primera contribución al tiempo total del pipeline percepción–decisión–acción. Se evaluaron tres opciones disponibles en Python:
 
-### Tabla 2. Comparación de librerías de captura de pantalla
+**Tabla 2. Comparación de librerías de captura de pantalla**
 
-| Criterio                              | mss (seleccionado)              | PIL/ImageGrab                  | PyAutoGUI                      |
-|---------------------------------------|---------------------------------|--------------------------------|--------------------------------|
-| Latencia de captura                   | ~1–2 ms por frame               | ~15–30 ms por frame            | ~10–20 ms por frame            |
-| Acceso directo a memoria de video     | Sí                              | No                             | No                             |
-| Captura de región específica          | Sí (coordenadas por ventana)    | Sí (limitado)                  | Sí (limitado)                  |
-| Compatibilidad con emulador           | Alta                            | Media                          | Media                          |
+| Criterio                          | mss (seleccionado)           | PIL/ImageGrab       | PyAutoGUI           |
+| --------------------------------- | ---------------------------- | ------------------- | ------------------- |
+| Latencia de captura               | ~1–2 ms por frame            | ~15–30 ms por frame | ~10–20 ms por frame |
+| Acceso directo a memoria de video | Sí                           | No                  | No                  |
+| Captura de región específica      | Sí (coordenadas por ventana) | Sí (limitado)       | Sí (limitado)       |
+| Compatibilidad con emulador       | Alta                         | Media               | Media               |
 
-### Decisión
+**Decisión:**
 
 Se seleccionó **mss** por su acceso directo a la memoria de video, que le permite capturar frames con latencias de 1–2 ms frente a los 15–30 ms de PIL/ImageGrab.
 La integración con `pygetwindow` permite detectar automáticamente la ventana del emulador MuMu Player por nombre y refrescar sus coordenadas cada 60 frames, adaptándose si el usuario mueve la ventana durante la ejecución.
 
-## A.3 Simulación de Entradas con Mouse
+---
+
+### A.3 Simulación de Entradas con Mouse
 
 El módulo de acción debe enviar entradas al emulador independientemente de qué ventana tenga el foco. Aunque inicialmente se evaluó simulación de teclado, se decidió implementar todas las acciones mediante **simulación con mouse**.
 
-### Tabla 3. Comparación de métodos de simulación de entradas
+**Tabla 3. Comparación de métodos de simulación de entradas**
 
-| Criterio                          | pyautogui (seleccionado)                                    | ADB (Android Debug Bridge)                          |
-|-----------------------------------|-------------------------------------------------------------|----------------------------------------------------|
-| Compatibilidad con MuMu Player    | Alta                                                        | Requiere configuración adicional                    |
-| Latencia                          | Baja (<1 ms)                                                | Media (~5–15 ms por round-trip)                    |
-| Independencia del foco de ventana | Sí                                                          | Sí                                                 |
-| Complejidad de integración        | Baja                                                        | Media-alta                                         |
+| Criterio                          | pyautogui (seleccionado) | ADB (Android Debug Bridge)       |
+| --------------------------------- | ------------------------ | -------------------------------- |
+| Compatibilidad con MuMu Player    | Alta                     | Requiere configuración adicional |
+| Latencia                          | Baja (<1 ms)             | Media (~5–15 ms por round-trip)  |
+| Independencia del foco de ventana | Sí                       | Sí                               |
+| Complejidad de integración        | Baja                     | Media-alta                       |
 
-### Decisión
+**Decisión:**
 
-Se eligió **pyautogui** para simular todas las acciones del bot mediante movimientos y clics de mouse. 
+Se eligió **pyautogui** para simular todas las acciones del bot mediante movimientos y clics de mouse.
 
 Esta solución proporciona baja latencia y alta compatibilidad con MuMu Player sin requerir configuración extra en el emulador. Las acciones (salto, planeo, bajada y embestida) se ejecutan correctamente a través de clics y movimientos simulados del mouse.
 
-## A.4 Patrón Arquitectural
+---
+
+### A.4 Patrón Arquitectural
 
 Se evaluó si conviene implementar el sistema como un único script monolítico o estructurarlo en módulos con responsabilidades separadas:
 
-### Tabla 4. Comparación de patrones arquitecturales
+**Tabla 4. Comparación de patrones arquitecturales**
 
-| Criterio                    | Pipeline modular (seleccionado)                          | Monolítico (script único)                  |
-|-----------------------------|----------------------------------------------------------|--------------------------------------------|
-| Testabilidad                | Alta (módulos independientes)                            | Baja (todo acoplado)                       |
-| Mantenibilidad              | Alta (cambio de módulo aislado)                          | Baja (cambios globales)                    |
-| Legibilidad                 | Alta                                                     | Baja para proyectos de mediana complejidad |
-| Overhead de comunicación    | Mínimo (paso en memoria)                                 | Ninguno                                    |
+| Criterio                 | Pipeline modular (seleccionado) | Monolítico (script único)                  |
+| ------------------------ | ------------------------------- | ------------------------------------------ |
+| Testabilidad             | Alta (módulos independientes)   | Baja (todo acoplado)                       |
+| Mantenibilidad           | Alta (cambio de módulo aislado) | Baja (cambios globales)                    |
+| Legibilidad              | Alta                            | Baja para proyectos de mediana complejidad |
+| Overhead de comunicación | Mínimo (paso en memoria)        | Ninguno                                    |
 
-### Decisión
+**Decisión:**
 
-Se adoptó la **arquitectura en pipeline modular** con cuatro módulos de responsabilidad única: **Captura**, **Detección**, **Decisión** y **Acción**. 
+Se adoptó la **arquitectura en pipeline modular** con cuatro módulos de responsabilidad única: **Captura**, **Detección**, **Decisión** y **Acción**.
 
 La comunicación entre módulos se realiza mediante paso de datos en memoria (sin red ni IPC), por lo que el overhead es mínimo. Esta estructura facilita el reemplazo aislado de cualquier componente —por ejemplo, cambiar el sistema de reglas por un agente de aprendizaje por refuerzo— sin modificar los módulos de captura o detección, y es consistente con el principio de separación percepción–decisión–acción documentado en la literatura de sistemas autónomos.
 
-### b. Arquitectura Seleccionada
+### B. Arquitectura Seleccionada
 
 El sistema sigue un pipeline estructurado en cuatro módulos principales que se ejecutan secuencialmente en cada ciclo de procesamiento:
 
 **Captura → Detección → Decisión → Acción**
 
-## B.1 Módulo de Captura
+---
+
+### B.1 Módulo de Captura
 
 **Responsabilidad:** Obtener el frame actual del juego como imagen BGR.
 
@@ -469,9 +481,12 @@ El sistema sigue un pipeline estructurado en cuatro módulos principales que se 
 - **mss**: Recibe las coordenadas de la ventana y captura únicamente esa región de la pantalla accediendo directamente a la memoria de video, logrando una latencia de **1–2 ms por frame**.
 
 ### Salida
+
 Imagen BGR en resolución fija **960×540 px**, lista para ser procesada por el módulo de Detección.
 
-## B.2 Módulo de Detección
+---
+
+### B.2 Módulo de Detección
 
 **Responsabilidad:** Transformar la imagen BGR cruda en una lista estructurada de bounding boxes clasificados por tipo de elemento (coleccionables, obstáculos, personaje principal).
 
@@ -484,6 +499,7 @@ La imagen BGR se convierte al espacio de color más adecuado según el tipo de e
 A continuación se aplica un rango de umbrales calibrado por elemento que genera una máscara binaria (píxeles blancos = presencia del elemento, píxeles negros = ausencia).
 
 Posteriormente se realizan dos operaciones morfológicas en secuencia:
+
 - **Erosión**: Elimina píxeles de ruido aislados y pequeñas regiones espurias que no corresponden al elemento real.
 - **Dilatación**: Restaura el tamaño original de los objetos reales que pudieron reducirse ligeramente durante la erosión.
 
@@ -497,18 +513,23 @@ Para cada tipo de elemento, se detectan contornos en su máscara binaria limpia 
 - **Proporción ancho/alto (aspect ratio)**: El bounding box del contorno debe tener una proporción dentro de un rango esperado para ese tipo de elemento, validando que la forma sea consistente con el objeto real.
 
 ### Salida
+
 Lista de bounding boxes clasificados por tipo de elemento, listos para ser procesados por el módulo de Decisión.
 
-## B.3 Módulo de Decisión
+---
+
+### B.3 Módulo de Decisión
 
 **Responsabilidad:** Traducir la lista de bounding boxes en una acción concreta a ejecutar en el siguiente ciclo.
 
 El módulo opera en dos sub-etapas:
 
 ### Construcción del estado del entorno
+
 A partir de los bounding boxes recibidos, se construye una representación estructurada del estado actual del juego: posiciones relativas de obstáculos respecto al personaje, presencia de bananas en distintas zonas de la pantalla, y distancias aproximadas a elementos de interés. Esta representación es el input del sistema de reglas.
 
 ### Sistema de reglas predefinidas
+
 Un conjunto de reglas codificadas manualmente evalúa el estado del entorno y determina la acción a ejecutar. Las reglas consideran:
 
 - **Proximidad de obstáculos**: Si existe un obstáculo en la zona de colisión inminente del personaje, se prioriza la acción de esquive (salto, planeo o bajada según la posición vertical del obstáculo).
@@ -517,7 +538,9 @@ Un conjunto de reglas codificadas manualmente evalúa el estado del entorno y de
 
 **Salida:** Acción discreta (salto, planeo, bajada, embestida o ninguna acción) lista para ser ejecutada por el módulo de Acción.
 
-## B.4 Módulo de Acción
+---
+
+### B.4 Módulo de Acción
 
 **Responsabilidad:** Traducir la acción decidida en una entrada simulada con mouse sobre el emulador.
 
@@ -528,13 +551,17 @@ Un conjunto de reglas codificadas manualmente evalúa el estado del entorno y de
 
 Este módulo no genera salida para el pipeline principal; su efecto es directamente observable en el comportamiento del juego.
 
-## B.5 Visualizador de Debug
+---
 
-Componente auxiliar que corre en paralelo al pipeline principal. Recibe los bounding boxes del módulo de Detección y dibuja rectángulos de color sobre el frame original usando OpenCV, con un color diferente por tipo de elemento. 
+### B.5 Visualizador de Debug
+
+Componente auxiliar que corre en paralelo al pipeline principal. Recibe los bounding boxes del módulo de Detección y dibuja rectángulos de color sobre el frame original usando OpenCV, con un color diferente por tipo de elemento.
 
 El frame anotado se muestra en una ventana de OpenCV que permite inspeccionar en tiempo real qué detecta el sistema y cómo clasifica cada elemento. Este componente no forma parte del pipeline de decisión y puede desactivarse sin afectar el funcionamiento del bot.
 
-## B.6 Comunicación entre Módulos y Flujo de Datos
+---
+
+### B.6 Comunicación entre Módulos y Flujo de Datos
 
 Todos los módulos se comunican mediante paso de datos en memoria dentro del mismo proceso Python. No existe comunicación por red, sockets ni IPC. El flujo de datos en cada ciclo es el siguiente:
 
@@ -545,7 +572,9 @@ Todos los módulos se comunican mediante paso de datos en memoria dentro del mis
 
 La configuración de parámetros de detección por elemento (rangos de color, umbrales de área, aspect ratio, zonas) y la configuración del emulador (resolución, nombre de ventana) se gestionan de forma centralizada en un archivo de configuración, sin necesidad de modificar el código fuente.
 
-## B.7 Cómo la Arquitectura Soporta los Requerimientos
+---
+
+### B.7 Cómo la Arquitectura Soporta los Requerimientos
 
 La arquitectura modular en pipeline satisface directamente los requerimientos funcionales y no funcionales del sistema:
 
@@ -574,7 +603,81 @@ La arquitectura modular en pipeline satisface directamente los requerimientos fu
   <img src="diseno/diagramas/SecuenciaDeteccion.png" alt="Secuencia Detección" width="700">
 </p>
 
-## 16. Referencias
+## 16. Plan de Pruebas
+
+### a. Pruebas por Componentes
+
+Se evaluó cada módulo de forma independiente, definiendo condiciones observables de correcto funcionamiento y casos representativos del entorno del juego.
+
+#### Módulo de Captura
+
+- **Prueba realizada:** medición del tiempo de captura por frame durante ejecución continua.
+- **Criterio de aceptación:** mantener tiempos de captura entre 1–2 ms de forma estable.
+- **Validación:** si el sistema mantiene tiempos constantes de captura y permite la reacción en tiempo real, el módulo se considera correcto.
+- **Caso representativo:** captura continua durante escenas con múltiples elementos en pantalla para verificar estabilidad.
+
+#### Módulo de Detección
+
+- **Prueba realizada:** ejecución en múltiples escenarios reales del juego.
+- **Criterio de aceptación:** detección consistente del personaje y de los elementos relevantes con una tasa de acierto superior al 70% en escenarios evaluados.
+- **Validación:** el módulo se considera correcto si la información detectada permite alimentar adecuadamente al módulo de decisión, evidenciado en la capacidad del sistema para reaccionar correctamente ante obstáculos en tiempo real.
+- **Casos representativos:**
+  - detección de obstáculos frontales.
+  - identificación de plataformas y vacíos.
+  - reconocimiento de objetos recolectables.
+
+#### Módulo de Decisión
+
+- **Prueba realizada:** evaluación de decisiones frente a situaciones específicas del juego.
+- **Criterio de aceptación:** la acción seleccionada coincide con la esperada según las reglas definidas.
+- **Validación:** el sistema debe responder de forma consistente ante condiciones similares.
+- **Casos representativos:**
+  - obstáculo frontal → acción: saltar.
+  - ausencia de plataforma → acción: planear.
+  - Objeto interactuable arriba → acción: saltar.
+  - Banana bajo → acción: bajar.
+  - situación favorable → no realizar acciones innecesarias.
+
+#### Módulo de Acción
+
+Responsable de ejecutar las decisiones mediante teclado y mouse.
+
+- **Prueba realizada:** verificación directa de la ejecución de acciones dentro del juego.
+- **Criterio de aceptación:** correspondencia correcta entre la decisión y la acción ejecutada, con baja latencia.
+- **Validación:** la acción debe reflejarse de manera inmediata en el comportamiento del personaje.
+- **Casos representativos:**
+  - ejecución de salto ante obstáculo,
+  - mantenimiento de acción de planeo,
+  - combinación de acciones (ej. bajar o dash).
+
+---
+
+### b. Pruebas de Integración
+
+Se validó el sistema completo como un flujo continuo en tiempo real:
+
+**Captura → Detección → Decisión → Acción**
+
+- **Prueba principal:** ejecución continua del sistema durante partidas reales.
+- **Criterio de aceptación:**
+  - flujo sin interrupciones,
+  - procesamiento en tiempo real (~1–2 ms por frame),
+  - comportamiento coherente frente a obstáculos.
+
+- **Pruebas realizadas:**
+  - ejecución de partidas completas para evaluar estabilidad,
+  - pruebas prolongadas para identificar degradación del rendimiento,
+  - evaluación bajo diferentes velocidades del juego.
+
+- **Casos representativos:**
+  - partida completa sin intervención del usuario,
+  - respuesta ante secuencias rápidas de obstáculos,
+  - comportamiento en escenarios con alta carga visual.
+
+- **Manejo de errores:**  
+  El sistema continúa operando incluso ante fallos parciales (por ejemplo, errores de detección), tomando decisiones con la información disponible.
+
+## 17. Referencias
 
 [1] arturfog, “Chrome Dino game bot using OpenCV and mss,” GitHub, 2021. [Online]. Available https://github.com/arturfog/dino
 
