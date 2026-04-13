@@ -133,7 +133,5 @@ class Visualizador:
     def mostrar_mascara(self, nombre: str, mascara: np.ndarray, escala: float = 0.3):
         if mascara is None:
             return
-        if nombre not in ("roca", "rocas"):
-            return
-        pequeña = cv2.resize(mascara, (0, 0), fx=escala, fy=escala)
-        cv2.imshow("mascara_roca", pequeña)
+        pequeña = cv2.resize(mascara, (0, 0), fx=0.7, fy=0.7)
+        cv2.imshow(f"mascara_{nombre}", pequeña)
