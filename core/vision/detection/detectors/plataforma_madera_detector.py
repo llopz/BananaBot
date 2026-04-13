@@ -1,0 +1,71 @@
+from ..base_detector import BaseDetector, Elemento
+import cv2
+import numpy as np
+
+
+class PlataformaMaderaDetector(BaseDetector):
+    def detectar(self, frame):
+        cfg = self.config
+        alto, ancho = frame.shape[:2]
+
+        elementos = []
+        descartados = []
+        mascara_final = None
+
+        for y_centro in cfg.PLATAFORMA_MADERA_ZONAS_Y:
+            y_inicio = max(0, y_centro - 15)  # Franja más pequeña ya que son más pequeñas
+            y_fin    = min(alto, y_centro + 15)
+
+            franja = frame[y_inicio:y_fin, :]
+            if franja.size == 0:
+                continue
+
+            mascara, _ = self._crear_mascara(
+                franja,
+                cfg.PLATAFORMA_MADERA_RANGO_BAJO,
+                cfg.PLATAFORMA_MADERA_RANGO_ALTO,
+                cfg.PLATAFORMA_MADERA_ESPACIO
+            )
+
+            # Dilatar menos ya que son más pequeñas y cuadradas
+            kernel_h = np.ones((3, 10), np.uint8)
+            mascara = cv2.dilate(mascara, kernel_h, iterations=2)
+
+            # Mantener la última máscara para debug
+            mascara_final = mascara.copy()
+
+            contornos, _ = cv2.findContours(mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            for contorno in contornos:
+                area = cv2.contourArea(contorno)
+                x, y, w, h = cv2.boundingRect(contorno)
+                centro_x = x + w // 2
+                centro_y_real = y_inicio + y + h // 2
+                proporcion = w / h if h > 0 else 0
+
+                area_total = alto * ancho
+                area_min = area_total * cfg.PLATAFORMA_MADERA_AREA_MIN_PCT
+                area_max = area_total * cfg.PLATAFORMA_MADERA_AREA_MAX_PCT
+
+                if area < area_min or area > area_max:
+                    continue
+                if proporcion < cfg.PLATAFORMA_MADERA_PROP_MIN or proporcion > cfg.PLATAFORMA_MADERA_PROP_MAX:
+                    continue
+
+                # Limitar altura al estándar si detecta algo muy alto
+                h_limitado = min(h, cfg.PLATAFORMA_MADERA_ALTURA_STANDAR)
+                y_ajustado = y_inicio + y + (h - h_limitado) // 2  # centrar si se reduce
+
+                elementos.append(Elemento(
+                    x=x,
+                    y=y_ajustado,
+                    w=w,
+                    h=h_limitado,
+                    centro_x=centro_x,
+                    centro_y=centro_y_real,
+                    area=area,
+                    proporcion=round(proporcion, 2),
+                    tipo="plataforma_madera"
+                ))
+
+        return elementos, descartados, mascara_final

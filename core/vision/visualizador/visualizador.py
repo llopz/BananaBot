@@ -1,23 +1,25 @@
 import cv2
 import numpy as np
 from typing import List
-from vision.detector import Elemento
+from ..detection.base_detector import Elemento
 
-# Colores en formato BGR (OpenCV usa BGR, no RGB)
-COLOR_BANANA     = (0, 255, 0)      # verde
-COLOR_TRONCO     = (0, 140, 255)    # naranja
-COLOR_ARBUSTO    = (0, 200, 100)    # verde oscuro
-COLOR_AVION      = (255, 200, 0)    # celeste
-COLOR_KONG       = (0, 255, 255)    # amarillo
-COLOR_PARED      = (180, 180, 180)  # gris
-COLOR_AGUA       = (200, 200, 0)    # amarillo verdoso
-COLOR_OBSTACULO  = (0, 0, 255)      # rojo
-COLOR_ZONA       = (255, 255, 0)    # amarillo
-COLOR_PERSONAJE  = (255, 0, 255)    # magenta
-COLOR_CENTRO     = (0, 0, 255)      # rojo (punto central)
-COLOR_TEXTO_ON   = (0, 255, 0)      # verde (bot activo)
-COLOR_TEXTO_OFF  = (0, 0, 255)      # rojo (bot inactivo)
-COLOR_REFERENCIA = (100, 100, 255)  # azul claro (línea de referencia)
+COLOR_BANANA     = (0, 255, 0)
+COLOR_TRONCO     = (0, 140, 255)
+COLOR_ARBUSTO    = (0, 200, 100)
+COLOR_AVION      = (255, 200, 0)
+COLOR_KONG       = (0, 255, 255)
+COLOR_PARED      = (180, 180, 180)
+COLOR_ROCA       = (80, 80, 80)
+COLOR_PLATAFORMA = (255, 0, 0)  
+COLOR_PLATAFORMA_MADERA = (139, 69, 19)  
+COLOR_AGUA       = (200, 200, 0)
+COLOR_OBSTACULO  = (0, 0, 255)
+COLOR_ZONA       = (255, 255, 0)
+COLOR_PERSONAJE  = (255, 0, 255)
+COLOR_CENTRO     = (0, 0, 255)
+COLOR_TEXTO_ON   = (0, 255, 0)
+COLOR_TEXTO_OFF  = (0, 0, 255)
+COLOR_REFERENCIA = (100, 100, 255)
 
 
 class Visualizador:
@@ -34,6 +36,8 @@ class Visualizador:
 
     def dibujar_elementos(self, frame: np.ndarray, elementos: List[Elemento]) -> np.ndarray:
         for el in elementos:
+            if el.tipo == "agua":
+                continue
             if el.tipo == "banana":
                 color = COLOR_BANANA
             elif el.tipo == "tronco":
@@ -46,29 +50,22 @@ class Visualizador:
                 color = COLOR_KONG
             elif el.tipo == "pared":
                 color = COLOR_PARED
-            elif el.tipo == "agua":
-                color = COLOR_AGUA
+            elif el.tipo == "roca":
+                color = COLOR_ROCA
+            elif el.tipo == "plataforma":
+                color = COLOR_PLATAFORMA
+            elif el.tipo == "plataforma_madera":
+                color = COLOR_PLATAFORMA_MADERA
             else:
                 color = COLOR_OBSTACULO
 
-            cv2.rectangle(
-                frame,
-                (el.x, el.y),
-                (el.x + el.w, el.y + el.h),
-                color, 2
-            )
+            cv2.rectangle(frame, (el.x, el.y), (el.x + el.w, el.y + el.h), color, 2)
             cv2.circle(frame, (el.centro_x, el.centro_y), 4, COLOR_CENTRO, -1)
 
             if self.config.DEBUG:
-                cv2.putText(
-                    frame,
-                    f"a={int(el.area)} p={el.proporcion}",
-                    (el.x, el.y - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.35,
-                    color,
-                    1,
-                )
+                cv2.putText(frame, f"a={int(el.area)} p={el.proporcion}",
+                            (el.x, el.y - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, color, 1)
 
         return frame
 
@@ -81,20 +78,8 @@ class Visualizador:
             cv2.line(frame, (x_personaje, 0), (x_personaje, alto), COLOR_PERSONAJE, 1)
 
         if cfg.MOSTRAR_ZONA:
-            cv2.line(
-                frame,
-                (0, cfg.BANANA_ZONA_Y_INICIO),
-                (ancho, cfg.BANANA_ZONA_Y_INICIO),
-                COLOR_ZONA,
-                1,
-            )
-            cv2.line(
-                frame,
-                (0, cfg.BANANA_ZONA_Y_FIN),
-                (ancho, cfg.BANANA_ZONA_Y_FIN),
-                COLOR_ZONA,
-                1,
-            )
+            cv2.line(frame, (0, cfg.BANANA_ZONA_Y_INICIO), (ancho, cfg.BANANA_ZONA_Y_INICIO), COLOR_ZONA, 1)
+            cv2.line(frame, (0, cfg.BANANA_ZONA_Y_FIN),    (ancho, cfg.BANANA_ZONA_Y_FIN),    COLOR_ZONA, 1)
 
         cv2.line(frame, (0, alto // 2), (ancho, alto // 2), COLOR_REFERENCIA, 1)
 
@@ -111,9 +96,8 @@ class Visualizador:
             texto_estado = "BOT: OFF"
             color = COLOR_TEXTO_OFF
 
-        cv2.putText(
-            frame, texto_estado, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2
-        )
+        cv2.putText(frame, texto_estado, (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
 
         y = 55
         for tipo, cantidad in conteos.items():
@@ -123,14 +107,9 @@ class Visualizador:
 
         return frame
 
-    def dibujar_todo(
-        self,
-        frame: np.ndarray,
-        elementos_por_tipo: dict,
-        bot_activo: bool,
-        pausado: bool,
-        descartados: list = None,
-    ) -> np.ndarray:
+    def dibujar_todo(self, frame: np.ndarray, elementos_por_tipo: dict,
+                     bot_activo: bool, pausado: bool,
+                     descartados: list = None) -> np.ndarray:
         frame = frame.copy()
 
         frame = self.dibujar_zonas(frame)
@@ -147,9 +126,14 @@ class Visualizador:
             conteos[tipo] = len(lista)
 
         frame = self.dibujar_elementos(frame, todos_los_elementos)
-        frame = self.dibujar_estado(frame, bot_activo, pausado, conteos)
+        #frame = self.dibujar_estado(frame, bot_activo, pausado, conteos)
 
         return frame
 
-    def mostrar_mascara(self, nombre: str, mascara: np.ndarray, escala: float = 0.5):
-        pass  # desactivado
+    def mostrar_mascara(self, nombre: str, mascara: np.ndarray, escala: float = 0.3):
+        if mascara is None:
+            return
+        if nombre not in ("roca", "rocas"):
+            return
+        pequeña = cv2.resize(mascara, (0, 0), fx=escala, fy=escala)
+        cv2.imshow("mascara_roca", pequeña)
