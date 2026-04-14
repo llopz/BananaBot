@@ -12,7 +12,7 @@ class GameState:
         self.carriles = carriles
         self.carril_actual = carril_actual
     
-    def actualizar(self, kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems):
+    def actualizar(self, kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos):
         
         # Reset carriles
         self.carriles = [
@@ -65,7 +65,7 @@ class GameState:
                     banana_obj_carril = carril
 
         # 🔹 OBSTÁCULOS POR CARRIL
-        objetos = troncos + arbustos + aviones + paredes + rocas + cuevas + totems
+        objetos = troncos + arbustos + aviones + paredes + rocas + cuevas + totems + tubos
 
         for obj in objetos:
             dx = obj.centro_x - kong_x

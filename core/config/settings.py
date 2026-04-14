@@ -128,6 +128,16 @@ TOTEM_PROP_MAX     = 0.6        # más flexible para fragmentos
 TOTEM_DILATE_KERNEL = (10, 5)
 TOTEM_DILATE_ITER   = 2
 
+# ─── TUBO ───────────────────────────────────────────────────
+TUBO_ESPACIO      = "HSV"
+TUBO_RANGO_BAJO   = [18, 200, 180]
+TUBO_RANGO_ALTO   = [30, 255, 255]
+TUBO_AREA_MIN_PCT = 0.003
+TUBO_AREA_MAX_PCT = 0.04
+TUBO_PROP_MIN     = 0.5
+TUBO_PROP_MAX     = 1.5
+TUBO_EXTENSION_IZQUIERDA = 20
+
 
 # ─── PERSONAJE ──────────────────────────────────────────────
 PERSONAJE_X_RATIO = 0.30

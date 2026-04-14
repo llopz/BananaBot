@@ -12,6 +12,7 @@ COLOR_PARED      = (180, 180, 180)
 COLOR_ROCA       = (80, 80, 80)
 COLOR_CUEVA      = (255, 0, 255)
 COLOR_TOTEM      = (0, 165, 255)
+COLOR_TUBO       = (0, 255, 255)
 COLOR_PLATAFORMA = (255, 0, 0)  
 COLOR_PLATAFORMA_MADERA = (139, 69, 19)  
 COLOR_AGUA       = (200, 200, 0)
@@ -58,6 +59,8 @@ class Visualizador:
                 color = COLOR_CUEVA
             elif el.tipo == "totem":
                 color = COLOR_TOTEM
+            elif el.tipo == "tubo":
+                color = COLOR_TUBO
             elif el.tipo == "plataforma":
                 color = COLOR_PLATAFORMA
             elif el.tipo == "plataforma_madera":

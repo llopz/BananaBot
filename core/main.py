@@ -55,6 +55,7 @@ def main():
         "rocas":        [],
         "cuevas":       [],
         "totems":       [],
+        "tubos":        [],
         "aguas":        [],
         "descartados":  [],
         "mascaras":     {},
@@ -82,12 +83,13 @@ def main():
             rocas        = resultados.get("rocas",       [])
             cuevas       = resultados.get("cuevas",      [])
             totems       = resultados.get("totems",      [])
+            tubos        = resultados.get("tubos",       [])
             aguas        = resultados.get("aguas",       [])
             descartados  = resultados.get("descartados", [])
             mascaras     = resultados.get("mascaras",    {})
 
             # 3. ACTUALIZAR ESTADO DEL JUEGO
-            estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems)
+            estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos)
 
             # 4. DECIDIR ACCIÓN
             if bot_activo and deteccion_activa and not pausado and settings.EJECUTAR_ACCIONES:
@@ -105,8 +107,8 @@ def main():
 
             cv2.imshow("Banana Kong Bot", frame_debug)
 
-            #for nombre, mascara in mascaras.items():
-             #   visualizador.mostrar_mascara(nombre, mascara)
+            for nombre, mascara in mascaras.items():
+              visualizador.mostrar_mascara(nombre, mascara)
 
             if deteccion_activa and settings.DEBUG:
                 ahora = time.time()
