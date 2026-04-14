@@ -20,6 +20,8 @@ def main():
     print("  SPACE = iniciar detección")
     print("  P     = pausar / reanudar")
     print("  Q     = salir")
+    if not settings.EJECUTAR_ACCIONES:
+        print("  MODO SEGURO: acciones automáticas desactivadas")
     print()
 
     capturador = Capturador(
@@ -36,6 +38,8 @@ def main():
     bot_activo      = False
     deteccion_activa = False       # ← nueva bandera
     frame_congelado = None
+    ultimo_debug_log = 0.0
+    debug_interval_seg = 0.5
 
     resultados = {
         "bananas":      [],
@@ -47,6 +51,8 @@ def main():
         "plataformas":  [],
         "plataformas_madera": [],
         "rocas":        [],
+        "cuevas":       [],
+        "totems":       [],
         "aguas":        [],
         "descartados":  [],
         "mascaras":     {},
@@ -72,6 +78,8 @@ def main():
             paredes      = resultados.get("paredes",     [])
             plataformas  = resultados.get("plataformas", [])
             rocas        = resultados.get("rocas",       [])
+            cuevas       = resultados.get("cuevas",      [])
+            totems       = resultados.get("totems",      [])
             aguas        = resultados.get("aguas",       [])
             descartados  = resultados.get("descartados", [])
             mascaras     = resultados.get("mascaras",    {})
@@ -100,7 +108,7 @@ def main():
                         banana_objetivo.centro_y - kong_y,
                     ]
 
-                todos_obstaculos = troncos + arbustos + aviones + paredes + rocas + aguas
+                todos_obstaculos = troncos + arbustos + aviones + paredes + rocas + cuevas + totems + aguas
                 objects_relevantes = [
                     obj for obj in todos_obstaculos
                     if 0 < obj.centro_x - kong_x < 200
@@ -123,7 +131,7 @@ def main():
             )
 
             # 4. DECIDIR ACCIÓN
-            if bot_activo and deteccion_activa and not pausado:
+            if bot_activo and deteccion_activa and not pausado and settings.EJECUTAR_ACCIONES:
                 accion = engine.decide(estado_juego)
                 acciones.ejecutar(accion)
 
@@ -140,6 +148,24 @@ def main():
 
             for nombre, mascara in mascaras.items():
                 visualizador.mostrar_mascara(nombre, mascara)
+
+            if deteccion_activa and settings.DEBUG:
+                ahora = time.time()
+                if ahora - ultimo_debug_log >= debug_interval_seg:
+                    resumen = []
+                    for tipo, lista in resultados.items():
+                        if tipo in ("descartados", "mascaras"):
+                            continue
+                        cantidad = len(lista)
+                        if cantidad > 0:
+                            resumen.append(f"{tipo}={cantidad}")
+
+                    if resumen:
+                        print("[DEBUG] Detectados -> " + ", ".join(resumen))
+                    else:
+                        print("[DEBUG] Detectados -> ninguno")
+
+                    ultimo_debug_log = ahora
 
             # 6. TECLAS
             if keyboard.is_pressed("q"):
