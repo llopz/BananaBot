@@ -2,7 +2,7 @@ from rules.rule_engine import Rule
 from control.acciones_click import NADA, SALTAR, PLANEAR, BAJAR, DASH
 
 # Definicion de reglas
-obst_dist = {"tronco": (150, 50), "arbusto": (150, 50), "avion": (200, 50), "pared": (150, 50), "roca": (260, 50), "cueva": (280, 50), "totem": (150, 50)}
+obst_dist = {"tronco": (170, 50), "arbusto": (160, 50), "avion": (200, 50), "pared": (160, 50), "roca": (260, 50), "cueva": (280, 50), "totem": (160, 50)}
 
 
 def obstacle_rule(state):

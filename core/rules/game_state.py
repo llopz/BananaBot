@@ -85,12 +85,12 @@ class GameState:
 
     def obtener_carril(self, y):
         if 149 < y < 240:
-            return 1
+            return 3
         elif 247 < y < 340:
             return 2
         elif 345 < y <= 440:
-            return 3
+            return 1
         elif 448 < y:
-            return 4
+            return 0
         else:
-            return 0  # suelo base
+            return 4  # suelo base

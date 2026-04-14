@@ -17,7 +17,7 @@ class ModuloAcciones:
         self.y = None
         self.presionado = False
         self.ultimo_salto = 0
-        self.cooldown = 0.25
+        self.cooldown = 0.1
 
     def actualizar_posicion(self, x, y):
         self.x = x

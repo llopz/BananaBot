@@ -133,7 +133,7 @@ TOTEM_DILATE_ITER   = 2
 PERSONAJE_X_RATIO = 0.30
 
 # ─── CONTROL DEL BOT ────────────────────────────────────────
-EJECUTAR_ACCIONES = False
+EJECUTAR_ACCIONES = True
 
 # ─── VISUALIZACIÓN ──────────────────────────────────────────
 MOSTRAR_MASCARA   = True
