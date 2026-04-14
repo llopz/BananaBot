@@ -37,6 +37,8 @@ def main():
     deteccion_activa = False       # ← nueva bandera
     frame_congelado = None
 
+    estado_juego = GameState()
+
     resultados = {
         "bananas":      [],
         "troncos":      [],
@@ -76,51 +78,8 @@ def main():
             descartados  = resultados.get("descartados", [])
             mascaras     = resultados.get("mascaras",    {})
 
-            # 3. CREAR ESTADO DE JUEGO (solo si detección activa)
-            bananas_relevantes       = []
-            banana_objetivo          = None
-            banana_objetivo_distance = None
-            objects_relevantes       = []
-            nearest_object           = None
-            nearest_object_distance  = None
-
-            if deteccion_activa and kong:
-                kong_x = kong[0].centro_x
-                kong_y = kong[0].centro_y
-
-                for banana in bananas:
-                    dx = banana.centro_x - kong_x
-                    if 0 < dx < 200:
-                        bananas_relevantes.append(banana)
-
-                if bananas_relevantes:
-                    banana_objetivo = min(bananas_relevantes, key=lambda b: b.centro_x)
-                    banana_objetivo_distance = [
-                        banana_objetivo.centro_x - kong_x,
-                        banana_objetivo.centro_y - kong_y,
-                    ]
-
-                todos_obstaculos = troncos + arbustos + aviones + paredes + rocas + aguas
-                objects_relevantes = [
-                    obj for obj in todos_obstaculos
-                    if 0 < obj.centro_x - kong_x < 200
-                ]
-
-                if objects_relevantes:
-                    nearest_object = min(objects_relevantes, key=lambda o: o.centro_x)
-                    nearest_object_distance = [
-                        nearest_object.centro_x - kong_x,
-                        nearest_object.centro_y - kong_y,
-                    ]
-
-               
-
-            estado_juego = GameState(
-                obstacle_ahead=nearest_object is not None,
-                obstacle_distance=nearest_object_distance if nearest_object else None,
-                banana=banana_objetivo is not None,
-                banana_distance=banana_objetivo_distance if banana_objetivo else None,
-            )
+            # 3. ACTUALIZAR ESTADO DEL JUEGO
+            estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, plataformas, paredes, rocas, aguas)
 
             # 4. DECIDIR ACCIÓN
             if bot_activo and deteccion_activa and not pausado:
