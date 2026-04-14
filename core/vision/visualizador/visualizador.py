@@ -15,7 +15,7 @@ COLOR_TOTEM      = (0, 165, 255)
 COLOR_TUBO       = (0, 255, 255)
 COLOR_PLATAFORMA = (255, 0, 0)  
 COLOR_PLATAFORMA_MADERA = (139, 69, 19)  
-COLOR_AGUA       = (200, 200, 0)
+COLOR_AGUA       = (0, 0, 0)
 COLOR_OBSTACULO  = (0, 0, 255)
 COLOR_ZONA       = (255, 255, 0)
 COLOR_PERSONAJE  = (255, 0, 255)
@@ -30,6 +30,35 @@ class Visualizador:
     def __init__(self, config):
         self.config = config
 
+    def dibujar_agua(self, frame: np.ndarray, agua: Elemento) -> np.ndarray:
+        overlay = frame.copy()
+        cv2.rectangle(
+            overlay,
+            (agua.x, agua.y),
+            (agua.x + agua.w, agua.y + agua.h),
+            COLOR_AGUA,
+            -1,
+        )
+        frame = cv2.addWeighted(overlay, 0.22, frame, 0.78, 0)
+        cv2.line(frame, (agua.x, agua.y), (agua.x + agua.w, agua.y), COLOR_AGUA, 3)
+        cv2.line(frame, (agua.x, agua.y), (agua.x, agua.y + agua.h), COLOR_AGUA, 2)
+        cv2.line(frame, (agua.x + agua.w, agua.y), (agua.x + agua.w, agua.y + agua.h), COLOR_AGUA, 2)
+        cv2.circle(frame, (agua.x, agua.y), 4, COLOR_AGUA, -1)
+        cv2.circle(frame, (agua.x + agua.w, agua.y), 4, COLOR_AGUA, -1)
+
+        if self.config.DEBUG:
+            cv2.putText(
+                frame,
+            f"agua x={agua.x} fin={agua.x + agua.w} y={agua.y}",
+                (agua.x + 8, max(20, agua.y - 8)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.45,
+                COLOR_AGUA,
+                1,
+            )
+
+        return frame
+
     def dibujar_descartados(self, frame: np.ndarray, descartados: list) -> np.ndarray:
         for (x, y, w, h, razon) in descartados:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 1)
@@ -40,6 +69,7 @@ class Visualizador:
     def dibujar_elementos(self, frame: np.ndarray, elementos: List[Elemento]) -> np.ndarray:
         for el in elementos:
             if el.tipo == "agua":
+                frame = self.dibujar_agua(frame, el)
                 continue
             if el.tipo == "banana":
                 color = COLOR_BANANA

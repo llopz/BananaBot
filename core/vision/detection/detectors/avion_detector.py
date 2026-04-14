@@ -31,6 +31,10 @@ class AvionDetector(BaseDetector):
                 descartados.append((x, y, w, h, "avion proporción rara"))
                 continue
 
+            if y >= 557:
+                descartados.append((x, y, w, h, "avion no detecta del 557"))
+                continue
+
             centro_y = y + h // 2
             if centro_y > cfg.BANANA_ZONA_Y_FIN:
                 descartados.append((x, y, w, h, "avion fuera de zona"))
