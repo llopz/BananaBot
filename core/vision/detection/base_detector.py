@@ -32,20 +32,42 @@ class BaseDetector:
     def __init__(self, config):
         self.config = config
 
-    def _crear_mascara(self, frame, rango_bajo, rango_alto, espacio="HSV"):
+    def _crear_mascara(
+        self,
+        frame,
+        rango_bajo,
+        rango_alto,
+        espacio="HSV",
+        erode_kernel=(3, 3),
+        erode_iter=1,
+        dilate_kernel=(3, 3),
+        dilate_iter=1,
+    ):
         codigo = ESPACIOS_COLOR.get(espacio, cv2.COLOR_BGR2HSV)
         convertida = cv2.cvtColor(frame, codigo)
         mascara = cv2.inRange(convertida, np.array(rango_bajo), np.array(rango_alto))
-        kernel = np.ones((3, 3), np.uint8)
-        mascara = cv2.erode(mascara, kernel, iterations=1)
-        mascara = cv2.dilate(mascara, kernel, iterations=1)
+
+        erode_kernel = tuple(int(v) for v in erode_kernel)
+        dilate_kernel = tuple(int(v) for v in dilate_kernel)
+        erode_iter = int(erode_iter)
+        dilate_iter = int(dilate_iter)
+
+        if erode_iter > 0:
+            kernel_erode = np.ones(erode_kernel, np.uint8)
+            mascara = cv2.erode(mascara, kernel_erode, iterations=erode_iter)
+        if dilate_iter > 0:
+            kernel_dilate = np.ones(dilate_kernel, np.uint8)
+            mascara = cv2.dilate(mascara, kernel_dilate, iterations=dilate_iter)
+
         return mascara, convertida
 
     def _detectar_elemento(self, frame, rango_bajo, rango_alto,
                            area_min_pct, area_max_pct,
                            prop_min, prop_max, tipo,
                            zona_y_inicio=0, zona_y_fin=None,
-                           espacio="HSV") -> Tuple[List[Elemento], List[Tuple], np.ndarray]:
+                           espacio="HSV",
+                           erode_kernel=(3, 3), erode_iter=1,
+                           dilate_kernel=(3, 3), dilate_iter=1) -> Tuple[List[Elemento], List[Tuple], np.ndarray]:
         
         alto, ancho = frame.shape[:2]
         area_total = alto * ancho
@@ -54,7 +76,16 @@ class BaseDetector:
         if zona_y_fin is None:
             zona_y_fin = alto
 
-        mascara, _ = self._crear_mascara(frame, rango_bajo, rango_alto, espacio)
+        mascara, _ = self._crear_mascara(
+            frame,
+            rango_bajo,
+            rango_alto,
+            espacio,
+            erode_kernel=erode_kernel,
+            erode_iter=erode_iter,
+            dilate_kernel=dilate_kernel,
+            dilate_iter=dilate_iter,
+        )
         contornos, _ = cv2.findContours(mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         elementos = []
