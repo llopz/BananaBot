@@ -12,6 +12,7 @@ class Capturador:
         self._sct = None
         self._region = None
         self._frames_contados = 0
+        self._ultimo_error_captura = None
 
         # Buscar la ventana al inicializar
         self._actualizar_region()
@@ -23,7 +24,11 @@ class Capturador:
             print(f"[CAPTURA] No se encontró ventana '{self.titulo_ventana}'")
             return False
 
-        ventana = ventanas[0]
+        ventana = next((v for v in ventanas if not getattr(v, "isMinimized", False)), ventanas[0])
+
+        if getattr(ventana, "isMinimized", False):
+            print(f"[CAPTURA] La ventana '{self.titulo_ventana}' está minimizada")
+            return False
 
         if ventana.width <= 0 or ventana.height <= 0:
             print(f"[CAPTURA] Ventana encontrada pero con tamaño inválido")
@@ -44,6 +49,25 @@ class Capturador:
     def detener(self):
         if self._sct:
             self._sct.close()
+            self._sct = None
+
+    def _capturar_con_reintento(self):
+        ultimo_error = None
+
+        for intento in range(2):
+            try:
+                if self._sct is None:
+                    self.iniciar()
+
+                if intento > 0:
+                    self._actualizar_region()
+
+                return self._sct.grab(self._region)
+            except Exception as exc:
+                ultimo_error = exc
+                self.detener()
+
+        raise ultimo_error
 
     def capturar(self) -> np.ndarray:
         if self._sct is None:
@@ -59,7 +83,7 @@ class Capturador:
                 f"No se encontró la ventana '{self.titulo_ventana}'. ¿Está abierto el emulador?"
             )
 
-        screenshot = self._sct.grab(self._region)
+        screenshot = self._capturar_con_reintento()
         img = np.array(screenshot)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
@@ -69,7 +93,23 @@ class Capturador:
         if pausado and frame_congelado is not None:
             return frame_congelado.copy(), frame_congelado
 
-        nuevo_frame = self.capturar()
+        try:
+            nuevo_frame = self.capturar()
+            self._ultimo_error_captura = None
+        except Exception as exc:
+            mensaje = str(exc)
+            if mensaje != self._ultimo_error_captura:
+                print(f"[CAPTURA] Error al capturar: {mensaje}")
+                self._ultimo_error_captura = mensaje
+
+            if frame_congelado is not None:
+                return frame_congelado.copy(), frame_congelado
+
+            alto = self.alto or 1
+            ancho = self.ancho or 1
+            frame_vacio = np.zeros((alto, ancho, 3), dtype=np.uint8)
+            return frame_vacio, frame_vacio
+
         return nuevo_frame, nuevo_frame
 
     @property

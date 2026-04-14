@@ -17,10 +17,13 @@ class AguaDetector(BaseDetector):
             franja, cfg.AGUA_RANGO_BAJO, cfg.AGUA_RANGO_ALTO, cfg.AGUA_ESPACIO
         )
 
-        kernel_h = np.ones((3, 60), np.uint8)
-        mascara = cv2.dilate(mascara, kernel_h, iterations=3)
-        kernel_v = np.ones((10, 1), np.uint8)
-        mascara = cv2.dilate(mascara, kernel_v, iterations=2)
+        kernel_h_shape = getattr(cfg, "AGUA_DILATE_KERNEL_H", (3, 60))
+        kernel_h = np.ones(tuple(int(v) for v in kernel_h_shape), np.uint8)
+        mascara = cv2.dilate(mascara, kernel_h, iterations=int(getattr(cfg, "AGUA_DILATE_ITER_H", 3)))
+
+        kernel_v_shape = getattr(cfg, "AGUA_DILATE_KERNEL_V", (10, 1))
+        kernel_v = np.ones(tuple(int(v) for v in kernel_v_shape), np.uint8)
+        mascara = cv2.dilate(mascara, kernel_v, iterations=int(getattr(cfg, "AGUA_DILATE_ITER_V", 2)))
 
         pixeles_agua = cv2.countNonZero(mascara)
 

@@ -28,8 +28,9 @@ class PlataformaDetector(BaseDetector):
             )
 
             # Dilatar más para unir fragmentos
-            kernel_h = np.ones((3, 15), np.uint8)
-            mascara = cv2.dilate(mascara, kernel_h, iterations=3)
+            kernel_shape = getattr(cfg, "PLATAFORMA_DILATE_KERNEL", (3, 15))
+            kernel_h = np.ones(tuple(int(v) for v in kernel_shape), np.uint8)
+            mascara = cv2.dilate(mascara, kernel_h, iterations=int(getattr(cfg, "PLATAFORMA_DILATE_ITER", 3)))
 
             # Mantener la última máscara para debug
             mascara_final = mascara.copy()
