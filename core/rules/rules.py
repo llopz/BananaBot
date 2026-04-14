@@ -2,7 +2,16 @@ from rules.rule_engine import Rule
 from control.acciones_click import NADA, SALTAR, PLANEAR, BAJAR, DASH
 
 # Definicion de reglas
-obst_dist = {"tronco": (150, 50), "arbusto": (150, 50), "avion": (200, 50), "pared": (150, 50), "roca": (260, 50), "cueva": (280, 50), "totem": (150, 50)}
+obst_dist = {
+    "tronco": (170, 50),
+    "arbusto": (160, 50),
+    "avion": (200, 50),
+    "pared": (160, 50),
+    "roca": (260, 50),
+    "cueva": (280, 50),
+    "totem": (160, 50),
+    "tubo": (280, 50),
+}
 
 
 def obstacle_rule(state):
@@ -11,14 +20,19 @@ def obstacle_rule(state):
 
     if obst_data:
         obstaculo, dx, dy = obst_data
+        limites = obst_dist.get(obstaculo.tipo)
+
+        if limites is None:
+            print(f"[REGLAS] Obstáculo sin configuración: {obstaculo.tipo}")
+            return False
 
         print(f"Obstáculo en carril {carril}: {obstaculo.tipo}")
         print(f"Distancia al obstáculo: dx={dx}, dy={dy}")
 
         return (
-            dx < obst_dist[obstaculo.tipo][0]
-            and dy < obst_dist[obstaculo.tipo][1]
-            and dy > -obst_dist[obstaculo.tipo][1]
+            dx < limites[0]
+            and dy < limites[1]
+            and dy > -limites[1]
         )
 
 '''
