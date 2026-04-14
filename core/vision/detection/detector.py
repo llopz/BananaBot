@@ -3,7 +3,7 @@ from .base_detector import BaseDetector, Elemento
 from .detectors import (
     BananaDetector, TroncoDetector, ArbustoDetector, AvionDetector,
     KongDetector, ParedDetector, AguaDetector, PlataformaDetector,
-    PlataformaMaderaDetector, RocaDetector
+    PlataformaMaderaDetector, RocaDetector, CuevaDetector, TotemDetector
 )
 
 
@@ -27,6 +27,8 @@ class Detector:
         self._registrar("plataformas", PlataformaDetector(self.config).detectar)
         self._registrar("plataformas_madera", PlataformaMaderaDetector(self.config).detectar)
         self._registrar("rocas",       RocaDetector(self.config).detectar)
+        self._registrar("cuevas",      CuevaDetector(self.config).detectar)
+        self._registrar("totems",      TotemDetector(self.config).detectar)
 
     def _registrar(self, nombre: str, metodo: Callable):
         self._registry[nombre] = metodo
@@ -55,6 +57,8 @@ class Detector:
             "aguas":       resultados.get("aguas", []),
             "plataformas": resultados.get("plataformas", []),
             "rocas":       resultados.get("rocas", []),
+            "cuevas":      resultados.get("cuevas", []),
+            "totems":      resultados.get("totems", []),
             "descartados": todos_descartados,
             "mascaras": mascaras
         }

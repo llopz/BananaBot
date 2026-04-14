@@ -1,5 +1,6 @@
 # Bot autónomo para videojuego usando Visión por Computador y Reglas Predefinidas
 
+
 ## 1. Introducción
 
 En los videojuegos modernos, la toma de decisiones ocurre en tiempo real y está basada en información visual presentada en pantalla. Automatizar la ejecución de un videojuego sin acceso interno al motor del juego representa un desafío técnico significativo, ya que el sistema debe interpretar el estado del juego únicamente a partir de los píxeles capturados en cada frame.

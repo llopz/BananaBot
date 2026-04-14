@@ -69,8 +69,8 @@ PLATAFORMA_MADERA_ZONAS_Y = [139, 227, 315, 403]
 PARED_ESPACIO      = "HSV"
 PARED_RANGO_BAJO   = [5,  40,  60]
 PARED_RANGO_ALTO   = [25, 110, 255]
-PARED_AREA_MIN_PCT = 0.005
-PARED_AREA_MAX_PCT = 0.04
+PARED_AREA_MIN_PCT = 0.002
+PARED_AREA_MAX_PCT = 0.08
 PARED_PROP_MIN     = 0.3
 PARED_PROP_MAX     = 0.7
 
@@ -91,16 +91,41 @@ KONG_PROP_MAX     = 2.0
 
 # ─── ROCA ───────────────────────────────────────────────────
 ROCA_ESPACIO      = "HSV"
-ROCA_RANGO_BAJO   = [8,  40,  80]
-ROCA_RANGO_ALTO   = [35, 255, 255]
+ROCA_RANGO_BAJO   = [5,  40,  60]
+ROCA_RANGO_ALTO   = [25, 110, 255]
 ROCA_AREA_MIN_PCT = 0.008
-ROCA_AREA_MAX_PCT = 0.12
+ROCA_AREA_MAX_PCT = 0.11
 ROCA_PROP_MIN     = 0.8
 ROCA_PROP_MAX     = 2.8
+
+# ─── CUEVA ───────────────────────────────────────────────────
+CUEVA_ESPACIO      = "HSV"
+CUEVA_RANGO_BAJO   = [5,  40,  60]
+CUEVA_RANGO_ALTO   = [25, 110, 255]
+CUEVA_AREA_MIN_PCT = 0.008
+CUEVA_AREA_MAX_PCT = 0.12
+CUEVA_PROP_MIN     = 2.0           
+CUEVA_PROP_MAX     = 3.6           
+CUEVA_ZONA_Y_INICIO = 458
+CUEVA_EXTENSION_IZQUIERDA = 73
+
+# ─── TOTEM ───────────────────────────────────────────────────
+TOTEM_ESPACIO      = "HSV"
+TOTEM_RANGO_BAJO   = [10, 170, 140]
+TOTEM_RANGO_ALTO   = [22, 255, 220]
+TOTEM_AREA_MIN_PCT = 0.008
+TOTEM_AREA_MAX_PCT = 0.04
+TOTEM_PROP_MIN     = 0.25
+TOTEM_PROP_MAX     = 0.55
+TOTEM_DILATE_KERNEL = (7, 7)
+TOTEM_DILATE_ITER   = 2
 
 
 # ─── PERSONAJE ──────────────────────────────────────────────
 PERSONAJE_X_RATIO = 0.30
+
+# ─── CONTROL DEL BOT ────────────────────────────────────────
+EJECUTAR_ACCIONES = False
 
 # ─── VISUALIZACIÓN ──────────────────────────────────────────
 MOSTRAR_MASCARA   = True

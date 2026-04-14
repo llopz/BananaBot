@@ -20,6 +20,8 @@ def main():
     print("  SPACE = iniciar detección")
     print("  P     = pausar / reanudar")
     print("  Q     = salir")
+    if not settings.EJECUTAR_ACCIONES:
+        print("  MODO SEGURO: acciones automáticas desactivadas")
     print()
 
     capturador = Capturador(
@@ -36,6 +38,8 @@ def main():
     bot_activo      = False
     deteccion_activa = False       # ← nueva bandera
     frame_congelado = None
+    ultimo_debug_log = 0.0
+    debug_interval_seg = 0.5
 
     estado_juego = GameState()
 
@@ -49,6 +53,8 @@ def main():
         "plataformas":  [],
         "plataformas_madera": [],
         "rocas":        [],
+        "cuevas":       [],
+        "totems":       [],
         "aguas":        [],
         "descartados":  [],
         "mascaras":     {},
@@ -74,15 +80,65 @@ def main():
             paredes      = resultados.get("paredes",     [])
             plataformas  = resultados.get("plataformas", [])
             rocas        = resultados.get("rocas",       [])
+            cuevas       = resultados.get("cuevas",      [])
+            totems       = resultados.get("totems",      [])
             aguas        = resultados.get("aguas",       [])
             descartados  = resultados.get("descartados", [])
             mascaras     = resultados.get("mascaras",    {})
 
+<<<<<<< HEAD
             # 3. ACTUALIZAR ESTADO DEL JUEGO
             estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, plataformas, paredes, rocas, aguas)
+=======
+            # 3. CREAR ESTADO DE JUEGO (solo si detección activa)
+            bananas_relevantes       = []
+            banana_objetivo          = None
+            banana_objetivo_distance = None
+            objects_relevantes       = []
+            nearest_object           = None
+            nearest_object_distance  = None
+
+            if deteccion_activa and kong:
+                kong_x = kong[0].centro_x
+                kong_y = kong[0].centro_y
+
+                for banana in bananas:
+                    dx = banana.centro_x - kong_x
+                    if 0 < dx < 200:
+                        bananas_relevantes.append(banana)
+
+                if bananas_relevantes:
+                    banana_objetivo = min(bananas_relevantes, key=lambda b: b.centro_x)
+                    banana_objetivo_distance = [
+                        banana_objetivo.centro_x - kong_x,
+                        banana_objetivo.centro_y - kong_y,
+                    ]
+
+                todos_obstaculos = troncos + arbustos + aviones + paredes + rocas + cuevas + totems + aguas
+                objects_relevantes = [
+                    obj for obj in todos_obstaculos
+                    if 0 < obj.centro_x - kong_x < 200
+                ]
+
+                if objects_relevantes:
+                    nearest_object = min(objects_relevantes, key=lambda o: o.centro_x)
+                    nearest_object_distance = [
+                        nearest_object.centro_x - kong_x,
+                        nearest_object.centro_y - kong_y,
+                    ]
+
+               
+
+            estado_juego = GameState(
+                obstacle_ahead=nearest_object is not None,
+                obstacle_distance=nearest_object_distance if nearest_object else None,
+                banana=banana_objetivo is not None,
+                banana_distance=banana_objetivo_distance if banana_objetivo else None,
+            )
+>>>>>>> df9232378c9014a8dc33281cd82406c7f9173ac6
 
             # 4. DECIDIR ACCIÓN
-            if bot_activo and deteccion_activa and not pausado:
+            if bot_activo and deteccion_activa and not pausado and settings.EJECUTAR_ACCIONES:
                 accion = engine.decide(estado_juego)
                 acciones.ejecutar(accion)
 
@@ -99,6 +155,24 @@ def main():
 
             for nombre, mascara in mascaras.items():
                 visualizador.mostrar_mascara(nombre, mascara)
+
+            if deteccion_activa and settings.DEBUG:
+                ahora = time.time()
+                if ahora - ultimo_debug_log >= debug_interval_seg:
+                    resumen = []
+                    for tipo, lista in resultados.items():
+                        if tipo in ("descartados", "mascaras"):
+                            continue
+                        cantidad = len(lista)
+                        if cantidad > 0:
+                            resumen.append(f"{tipo}={cantidad}")
+
+                    if resumen:
+                        print("[DEBUG] Detectados -> " + ", ".join(resumen))
+                    else:
+                        print("[DEBUG] Detectados -> ninguno")
+
+                    ultimo_debug_log = ahora
 
             # 6. TECLAS
             if keyboard.is_pressed("q"):

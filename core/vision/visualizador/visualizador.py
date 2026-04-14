@@ -10,6 +10,8 @@ COLOR_AVION      = (255, 200, 0)
 COLOR_KONG       = (0, 255, 255)
 COLOR_PARED      = (180, 180, 180)
 COLOR_ROCA       = (80, 80, 80)
+COLOR_CUEVA      = (255, 0, 255)
+COLOR_TOTEM      = (0, 165, 255)
 COLOR_PLATAFORMA = (255, 0, 0)  
 COLOR_PLATAFORMA_MADERA = (139, 69, 19)  
 COLOR_AGUA       = (200, 200, 0)
@@ -52,6 +54,10 @@ class Visualizador:
                 color = COLOR_PARED
             elif el.tipo == "roca":
                 color = COLOR_ROCA
+            elif el.tipo == "cueva":
+                color = COLOR_CUEVA
+            elif el.tipo == "totem":
+                color = COLOR_TOTEM
             elif el.tipo == "plataforma":
                 color = COLOR_PLATAFORMA
             elif el.tipo == "plataforma_madera":
@@ -133,7 +139,5 @@ class Visualizador:
     def mostrar_mascara(self, nombre: str, mascara: np.ndarray, escala: float = 0.3):
         if mascara is None:
             return
-        if nombre not in ("roca", "rocas"):
-            return
-        pequeña = cv2.resize(mascara, (0, 0), fx=escala, fy=escala)
-        cv2.imshow("mascara_roca", pequeña)
+        pequeña = cv2.resize(mascara, (0, 0), fx=0.7, fy=0.7)
+        cv2.imshow(f"mascara_{nombre}", pequeña)

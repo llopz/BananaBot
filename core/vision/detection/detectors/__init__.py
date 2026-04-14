@@ -9,10 +9,12 @@ from .agua_detector import AguaDetector
 from .plataforma_detector import PlataformaDetector
 from .plataforma_madera_detector import PlataformaMaderaDetector
 from .roca_detector import RocaDetector
+from .cueva_detector import CuevaDetector
+from .totem_detector import TotemDetector
 
 __all__ = [
     "BaseDetector", "Elemento", "ESPACIOS_COLOR",
     "BananaDetector", "TroncoDetector", "ArbustoDetector", "AvionDetector",
     "KongDetector", "ParedDetector", "AguaDetector", "PlataformaDetector",
-    "PlataformaMaderaDetector", "RocaDetector"
+    "PlataformaMaderaDetector", "RocaDetector", "CuevaDetector", "TotemDetector"
 ]
