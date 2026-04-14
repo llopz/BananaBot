@@ -36,12 +36,12 @@ class GameState:
 
         # 🔹 AGUA (quita suelo base)
         for a in aguas:
-            if 0 < a.centro_x - kong_x < 200:
+            if 0 < a.centro_x - kong_x < 300:
                 self.carriles[0]["suelo"] = False
 
         # 🔹 PLATAFORMAS (activan suelo en carriles altos)
         for p in plataformas:
-            if 0 < p.centro_x - kong_x < 200:
+            if 0 < p.centro_x - kong_x < 300:
                 carril = self.obtener_carril(p.centro_y)
                 self.carriles[carril]["suelo"] = True
 
@@ -49,7 +49,7 @@ class GameState:
         for banana in bananas:
             dx = banana.centro_x - kong_x
             dy = banana.centro_y - kong_y
-            if 0 < dx < 200:
+            if 0 < dx < 300:
                 carril = self.obtener_carril(banana.centro_y)
 
                 actual = self.carriles[carril]["banana_cercana"]

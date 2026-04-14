@@ -2,9 +2,6 @@ from rules.rule_engine import Rule
 from control.acciones_click import NADA, SALTAR, PLANEAR, BAJAR, DASH
 
 # Definicion de reglas
-<<<<<<< HEAD
-obst_dist = {"tronco": (170, 50), "arbusto": (160, 50), "avion": (200, 50), "pared": (160, 50), "roca": (260, 50), "cueva": (280, 50), "totem": (160, 50)}
-=======
 obst_dist = {
     "tronco": (170, 50),
     "arbusto": (160, 50),
@@ -15,7 +12,7 @@ obst_dist = {
     "totem": (160, 50),
     "tubo": (280, 50),
 }
->>>>>>> 4f461eb26a3925b1e8a65c7f62ccff1c60f9f348
+
 
 
 def obstacle_rule(state):
@@ -39,24 +36,34 @@ def obstacle_rule(state):
             and dy > -limites[1]
         )
 
-'''
 def banana_rule_up(state):
-    if state.banana and state.banana_distance is not None:
-        if state.banana_distance[0] < 150 and state.banana_distance[1] < -10:
-            return True
-
-def banana_rule_up(state):
+    print(f"Evaluando regla banana_rule_up en carril {state.carril_actual}")
     carril = state.carril_actual
 
     if carril < 4:
         data = state.carriles[carril + 1]["banana_cercana"]
         suelo = state.carriles[carril + 1]["suelo"]
 
-        if data and suelo:
+        if data:
+            banana, dx, dy = data
+
+            return dx < 150 
+    elif carril == 4:
+        data = state.carriles[carril]["banana_cercana"]
+        suelo = state.carriles[carril]["suelo"]
+
+        if data:
             banana, dx, dy = data
 
             if dx < 150:
                 return True
+'''
+def banana_rule_up(state):
+    if state.banana and state.banana_distance is not None:
+        if state.banana_distance[0] < 150 and state.banana_distance[1] < -10:
+            return True
+
+
 
 
 def banana_rule_down(state):
@@ -138,5 +145,5 @@ def dash_obstacle_rule(state):
 
 rules = [
     Rule(name="saltar_obstaculo", condition=obstacle_rule, action=SALTAR, priority=1),
-    #Rule(name="recolectar_banana", condition=banana_rule_up, action=SALTAR, priority=2),
+    Rule(name="recolectar_banana", condition=banana_rule_up, action=SALTAR, priority=2),
 ]
