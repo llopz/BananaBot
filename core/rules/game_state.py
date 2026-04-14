@@ -2,97 +2,95 @@ class GameState:
 
     def __init__(
         self,
-        obstacle_ahead=False,
-        obstacle_distance=None,
         banana=False,
-        banana_distance=None,
-        superficie=[True, False, False, False],
+        banana_carril=None,
+        carriles = [{'suelo': True, 'banana_cercana': None, 'obstaculo_cercano': None}, {'suelo': False, 'banana_cercana': None, 'obstaculo_cercano': None}, {'suelo': False, 'banana_cercana': None, 'obstaculo_cercano': None}, {'suelo': False, 'banana_cercana': None, 'obstaculo_cercano': None}, {'suelo': False, 'banana_cercana': None, 'obstaculo_cercano': None}],
+        carril_actual = 0
     ):
-        self.obstacle_ahead = obstacle_ahead
-        self.obstacle_distance = obstacle_distance
         self.banana = banana
-        self.banana_distance = banana_distance
-        self.superficie = [True, False, False, False]
+        self.banana_carril = banana_carril
+        self.carriles = carriles
+        self.carril_actual = carril_actual
     
-    def actualizar(self, kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas):
-        bananas_relevantes = []
+    def actualizar(self, kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems):
+        
+        # Reset carriles
+        self.carriles = [
+            {"suelo": False, "banana_cercana": None, "obstaculo_cercano": None}
+            for _ in range(5)
+        ]
+
+        self.banana = None
+        self.banana_carril = None
         banana_objetivo = None
-        banana_objetivo_distance = None
-        objects_relevantes = []
-        nearest_object = None
-        nearest_object_distance = None
-        plataformas_relevantes = []
-        self.superficie = [True, False, False, False]
+        banana_obj_carril = None
 
-        if kong:
-            kong_x = kong[0].centro_x
-            kong_y = kong[0].centro_y
+        if not kong:
+            return
 
-            # BANANAS
-            if bananas:
-                for banana in bananas:
-                    dx = banana.centro_x - kong_x
-                    if 0 < dx < 200:
-                        bananas_relevantes.append(banana)
+        kong_x = kong[0].centro_x
+        kong_y = kong[0].centro_y
 
-            if bananas_relevantes:
-                banana_objetivo = min(bananas_relevantes, key=lambda b: b.centro_x)
-                banana_objetivo_distance = [
-                    banana_objetivo.centro_x - kong_x,
-                    banana_objetivo.centro_y - kong_y,
-                ]
+        # 🔹 Inicialmente el suelo base existe
+        self.carriles[0]["suelo"] = True
 
-            # OBJETOS
-            objects = troncos + arbustos + aviones + paredes + rocas
-            if objects:
-                objects_relevantes = [
-                    obj for obj in objects
-                    if 0 < obj.centro_x - kong_x < 200
-                ]
+        # 🔹 AGUA (quita suelo base)
+        for a in aguas:
+            if 0 < a.centro_x - kong_x < 200:
+                self.carriles[0]["suelo"] = False
 
-            if objects_relevantes:
-                nearest_object = min(objects_relevantes, key=lambda o: o.centro_x)
-                nearest_object_distance = [
-                    nearest_object.centro_x - kong_x,
-                    nearest_object.centro_y - kong_y,
-                ]
-            
-            # AGUA
-            agua = [
-                a for a in aguas
-                if kong and 0 < a.centro_x - kong_x < 200
-            ]
+        # 🔹 PLATAFORMAS (activan suelo en carriles altos)
+        for p in plataformas:
+            if 0 < p.centro_x - kong_x < 200:
+                carril = self.obtener_carril(p.centro_y)
+                self.carriles[carril]["suelo"] = True
 
-            if agua:
-                self.superficie[0] = False
+        # 🔹 BANANAS POR CARRIL
+        for banana in bananas:
+            dx = banana.centro_x - kong_x
+            dy = banana.centro_y - kong_y
+            if 0 < dx < 200:
+                carril = self.obtener_carril(banana.centro_y)
 
-            # PLATAFORMAS            
-            plataformas_relevantes = [
-                p for p in plataformas
-                if kong and 0 < p.centro_x - kong_x < 200
-            ]
+                actual = self.carriles[carril]["banana_cercana"]
 
-            for p in plataformas_relevantes:
-                
-                if p.centro_y > 250:
-                    nivel = 1  # plataforma baja
-                elif 0 < p.centro_y <= 50:
-                    nivel = 2  # media
-                elif -50 < p.centro_y <= 0:
-                    nivel = 3  # alta
-                else:
-                    nivel = None
+                if actual is None or banana.centro_x < actual[0].centro_x:
+                    self.carriles[carril]["banana_cercana"] = (banana, dx, dy)
 
-                if nivel is not None:
-                    self.superficie[nivel] = True
-            
-            if plataformas_relevantes:
-                print(
-                    f"nearest_object_distance: {plataformas[0]}"
-                )
+        for carril in range(1, 5):
+            bc = self.carriles[carril]["banana_cercana"]
+            if bc is not None:
+                if banana_objetivo is None or bc[0].centro_x < banana_objetivo[0].centro_x:
+                    banana_objetivo = bc
+                    banana_obj_carril = carril
 
-        # 🔹 Aquí sí usas self
-        self.obstacle = nearest_object
-        self.obstacle_distance = nearest_object_distance
+        # 🔹 OBSTÁCULOS POR CARRIL
+        objetos = troncos + arbustos + aviones + paredes + rocas + cuevas + totems
+
+        for obj in objetos:
+            dx = obj.centro_x - kong_x
+            dy = obj.centro_y - kong_y
+            if 0 < dx < 300:
+                carril = self.obtener_carril(obj.centro_y)
+
+                actual = self.carriles[carril]["obstaculo_cercano"]
+
+                if actual is None or obj.centro_x < actual[0].centro_x:
+                    self.carriles[carril]["obstaculo_cercano"] = (obj, dx, dy)
+
+        # 🔹 Carril actual del kong
+        self.carril_actual = self.obtener_carril(kong_y)
         self.banana = banana_objetivo is not None
-        self.banana_distance = banana_objetivo_distance
+        self.banana_carril = banana_obj_carril
+
+    def obtener_carril(self, y):
+        if 149 < y < 240:
+            return 1
+        elif 247 < y < 340:
+            return 2
+        elif 345 < y <= 440:
+            return 3
+        elif 448 < y:
+            return 4
+        else:
+            return 0  # suelo base
