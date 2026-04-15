@@ -79,15 +79,16 @@ PARED_PROP_MIN     = 0.3
 PARED_PROP_MAX     = 0.7
 
 # ─── AGUA ───────────────────────────────────────────────────
-AGUA_ESPACIO       = "XYZ"
-AGUA_RANGO_BAJO    = [0,   0,  17]
-AGUA_RANGO_ALTO    = [255, 255, 78]
-AGUA_ZONA_Y_INICIO = 460   
+AGUA_ESPACIO       = "HSV"
+AGUA_RANGO_BAJO    = [85, 120, 140]
+AGUA_RANGO_ALTO    = [100, 255, 255]
+AGUA_ZONA_Y_INICIO = 560
 AGUA_PIXELES_MIN   = 200
-AGUA_DILATE_KERNEL_H = (3, 60)
-AGUA_DILATE_ITER_H   = 3
-AGUA_DILATE_KERNEL_V = (10, 1)
-AGUA_DILATE_ITER_V   = 2
+AGUA_ANCHO_MIN_PCT = 0.35
+AGUA_DILATE_KERNEL_H = (3, 90)
+AGUA_DILATE_ITER_H   = 2
+AGUA_DILATE_KERNEL_V = (3, 1)
+AGUA_DILATE_ITER_V   = 1
 # ─── KONG ───────────────────────────────────────────────────
 KONG_ESPACIO      = "HSV"
 KONG_RANGO_BAJO   = [7,  140, 100]
