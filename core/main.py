@@ -63,13 +63,15 @@ def main():
 
     with capturador:
         while True:
-
+            
             # 1. CAPTURAR (siempre, para mostrar video)
+            t1 = time.perf_counter()
             frame_actual, frame_congelado = capturador.capturar_y_congelar(
                 frame_congelado, pausado
             )
 
             # 2. DETECTAR (solo si la detección está activa y no pausado)
+            t2 = time.perf_counter()
             if deteccion_activa and not pausado:
                 resultados = detector.detectar_todos(frame_actual)
 
@@ -89,14 +91,20 @@ def main():
             mascaras     = resultados.get("mascaras",    {})
 
             # 3. ACTUALIZAR ESTADO DEL JUEGO
+            t3 = time.perf_counter()
             estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos)
 
             # 4. DECIDIR ACCIÓN
+            t4 = time.perf_counter()
             if bot_activo and deteccion_activa and not pausado and settings.EJECUTAR_ACCIONES:
+                if kong:
+                    acciones.presionado = False
                 accion = engine.decide(estado_juego)
+                t5 = time.perf_counter()
                 acciones.ejecutar(accion)
 
             # 5. VISUALIZAR
+            t6 = time.perf_counter()
             frame_debug = visualizador.dibujar_todo(
                 frame_actual,
                 {k: v for k, v in resultados.items() if k not in ("descartados", "mascaras")},
@@ -129,7 +137,20 @@ def main():
                     ultimo_debug_log = ahora
 
             # 6. TECLAS
+            t7 = time.perf_counter()
+            
             if keyboard.is_pressed("q"):
+                '''
+                print(
+                    f"CAPTURA: {(t2 - t1)*1000:.1f} ms | "
+                    f"DETECCIÓN: {(t3 - t2)*1000:.1f} ms | "
+                    f"ESTADO: {(t4 - t3)*1000:.1f} ms | "
+                    f"DECISIÓN: {(t5 - t4)*1000:.1f} ms | "
+                    f"ACCIÓN: {(t6 - t5)*1000:.1f} ms | "
+                    f"VISUAL: {(t7 - t6)*1000:.1f} ms | "
+                    f"TOTAL: {(t7 - t1)*1000:.1f} ms"
+                )
+                '''
                 acciones.parar()
                 break
 
@@ -151,4 +172,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main() 

@@ -17,7 +17,7 @@ class ModuloAcciones:
         self.y = None
         self.presionado = False
         self.ultimo_salto = 0
-        self.cooldown = 0.1
+        self.cooldown = 0.05
 
     def actualizar_posicion(self, x, y):
         self.x = x
@@ -38,21 +38,21 @@ class ModuloAcciones:
             self.dash()
 
         elif accion == NADA:
-            self.soltar()
+            None
+            #self.soltar()
 
     def saltar(self):
-
+        self.soltar()
         ahora = time.time()
-
         if ahora - self.ultimo_salto > self.cooldown:
             pyautogui.click()
             self.ultimo_salto = ahora
 
     def planear(self):
-
         if not self.presionado:
             pyautogui.mouseDown()
             self.presionado = True
+            self.tiempo_inicio = time.time()
 
     def soltar(self):
 
