@@ -62,13 +62,13 @@ class BaseDetector:
         return mascara, convertida
 
     def _detectar_elemento(self, frame, rango_bajo, rango_alto,
-                           area_min_pct, area_max_pct,
-                           prop_min, prop_max, tipo,
-                           zona_y_inicio=0, zona_y_fin=None,
-                           espacio="HSV",
-                           erode_kernel=(3, 3), erode_iter=1,
-                           dilate_kernel=(3, 3), dilate_iter=1) -> Tuple[List[Elemento], List[Tuple], np.ndarray]:
-        
+                        area_min_pct, area_max_pct,
+                        prop_min, prop_max, tipo,
+                        zona_y_inicio=0, zona_y_fin=None,
+                        espacio="HSV",
+                        erode_kernel=(3, 3), erode_iter=1,
+                        dilate_kernel=(3, 3), dilate_iter=1):
+
         alto, ancho = frame.shape[:2]
         area_total = alto * ancho
         area_min = area_total * area_min_pct
@@ -77,25 +77,29 @@ class BaseDetector:
             zona_y_fin = alto
 
         mascara, _ = self._crear_mascara(
-            frame,
-            rango_bajo,
-            rango_alto,
-            espacio,
-            erode_kernel=erode_kernel,
-            erode_iter=erode_iter,
-            dilate_kernel=dilate_kernel,
-            dilate_iter=dilate_iter,
+            frame, rango_bajo, rango_alto, espacio,
+            erode_kernel=erode_kernel, erode_iter=erode_iter,
+            dilate_kernel=dilate_kernel, dilate_iter=dilate_iter,
         )
-        contornos, _ = cv2.findContours(mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        elementos = []
+        # connectedComponentsWithStats devuelve directamente
+        # x, y, w, h y área de cada blob sin calcular polígonos
+        num_labels, _, stats, centroids = cv2.connectedComponentsWithStats(
+            mascara, connectivity=8
+        )
+
+        elementos   = []
         descartados = []
 
-        for contorno in contornos:
-            area = cv2.contourArea(contorno)
-            x, y, w, h = cv2.boundingRect(contorno)
-            centro_x = x + w // 2
-            centro_y = y + h // 2
+        # label 0 es el fondo, se empieza desde 1
+        for i in range(1, num_labels):
+            x    = int(stats[i, cv2.CC_STAT_LEFT])
+            y    = int(stats[i, cv2.CC_STAT_TOP])
+            w    = int(stats[i, cv2.CC_STAT_WIDTH])
+            h    = int(stats[i, cv2.CC_STAT_HEIGHT])
+            area = float(stats[i, cv2.CC_STAT_AREA])
+            centro_x = int(centroids[i, 0])
+            centro_y = int(centroids[i, 1])
             proporcion = w / h if h > 0 else 0
 
             if area < area_min:

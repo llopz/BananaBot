@@ -4,7 +4,7 @@ from ..base_detector import BaseDetector
 class TotemDetector(BaseDetector):
     def detectar(self, frame):
         cfg = self.config
-        return self._detectar_elemento(
+        elementos, descartados, mascara = self._detectar_elemento(
             frame,
             cfg.TOTEM_RANGO_BAJO,
             cfg.TOTEM_RANGO_ALTO,
@@ -17,3 +17,4 @@ class TotemDetector(BaseDetector):
             dilate_kernel=cfg.TOTEM_DILATE_KERNEL,
             dilate_iter=cfg.TOTEM_DILATE_ITER,
         )
+        return elementos, descartados, mascara
