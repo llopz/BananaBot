@@ -122,10 +122,10 @@ CUEVA_EXTENSION_IZQUIERDA = 73
 TOTEM_ESPACIO      = "HSV"
 TOTEM_RANGO_BAJO   = [10, 170, 140]
 TOTEM_RANGO_ALTO   = [22, 255, 220]
-TOTEM_AREA_MIN_PCT = 0.003      # mucho más bajo para capturar fragmentos
+TOTEM_AREA_MIN_PCT = 0.003      
 TOTEM_AREA_MAX_PCT = 0.04
-TOTEM_PROP_MIN     = 0.3       # más flexible para fragmentos
-TOTEM_PROP_MAX     = 0.6        # más flexible para fragmentos
+TOTEM_PROP_MIN     = 0.3       
+TOTEM_PROP_MAX     = 0.6        
 TOTEM_DILATE_KERNEL = (10, 5)
 TOTEM_DILATE_ITER   = 2
 
@@ -151,5 +151,10 @@ MOSTRAR_MASCARA   = True
 MOSTRAR_ZONA      = True
 MOSTRAR_PERSONAJE = True
 
+# ─── RENDIMIENTO ────────────────────────────────────────────
+DETECTAR_CADA_N_FRAMES = 2
+PREDICCION_X_MAX = 55
+DETECCION_FORZAR_DX_UMBRAL = 180
+
 # ─── DEBUG ──────────────────────────────────────────────────
-DEBUG = True
+DEBUG = False

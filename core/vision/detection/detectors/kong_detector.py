@@ -4,7 +4,7 @@ from ..base_detector import BaseDetector
 class KongDetector(BaseDetector):
     def detectar(self, frame):
         cfg = self.config
-        return self._detectar_elemento(
+        elementos, descartados, mascara = self._detectar_elemento(
             frame,
             cfg.KONG_RANGO_BAJO, cfg.KONG_RANGO_ALTO,
             cfg.KONG_AREA_MIN_PCT, cfg.KONG_AREA_MAX_PCT,
@@ -12,3 +12,4 @@ class KongDetector(BaseDetector):
             "kong",
             espacio=cfg.KONG_ESPACIO,
         )
+        return elementos, descartados, mascara
