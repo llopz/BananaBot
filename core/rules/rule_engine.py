@@ -25,7 +25,7 @@ class RuleEngine:
         for rule in self.rules:
 
             if rule.check(state):
-                #print(f"[REGLA] {rule.name} se activó.")
+                print(f"[REGLA] {rule.name} se activó.")
                 return rule.action
 
         return NADA

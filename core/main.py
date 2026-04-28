@@ -217,11 +217,15 @@ def main():
             # 4. DECIDIR ACCIÓN
             t0 = time.perf_counter()
             if bot_activo and deteccion_activa and not pausado and settings.EJECUTAR_ACCIONES:
+                if kong:
+                    acciones.presionado = False
                 accion = engine.decide(estado_juego)
+                t5 = time.perf_counter()
                 acciones.ejecutar(accion)
             tiempos_accion.append(time.perf_counter() - t0)
 
             # 5. VISUALIZAR
+            t6 = time.perf_counter()
             frame_debug = visualizador.dibujar_todo(
                 frame_actual,
                 {k: v for k, v in resultados.items() if k not in ("descartados", "mascaras")},
@@ -278,7 +282,20 @@ def main():
                 ultimo_metricas_log = ahora
 
             # 6. TECLAS
+            t7 = time.perf_counter()
+            
             if keyboard.is_pressed("q"):
+                '''
+                print(
+                    f"CAPTURA: {(t2 - t1)*1000:.1f} ms | "
+                    f"DETECCIÓN: {(t3 - t2)*1000:.1f} ms | "
+                    f"ESTADO: {(t4 - t3)*1000:.1f} ms | "
+                    f"DECISIÓN: {(t5 - t4)*1000:.1f} ms | "
+                    f"ACCIÓN: {(t6 - t5)*1000:.1f} ms | "
+                    f"VISUAL: {(t7 - t6)*1000:.1f} ms | "
+                    f"TOTAL: {(t7 - t1)*1000:.1f} ms"
+                )
+                '''
                 acciones.parar()
                 break
 
@@ -300,4 +317,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main() 
