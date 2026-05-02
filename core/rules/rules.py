@@ -3,13 +3,13 @@ from control.acciones_click import NADA, SALTAR, PLANEAR, BAJAR, DASH
 
 # Definicion de reglas
 obst_dist = {
-    "tronco": (170, 40),
-    "arbusto": (160, 50),
+    "tronco": (180, 40),
+    "arbusto": (180, 50),
     "avion": (200, 50),
     "pared": (180, 50),
     "roca": (260, 50),
     "cueva": (280, 50),
-    "totem": (190, 50),
+    "totem": (180, 50),
     "tubo": (200, 50),
 }
 
@@ -36,6 +36,20 @@ def obstacle_rule(state):
             and dy > -limites[1]
         )
 
+def obstacle_down_rule(obst_data):
+
+    if obst_data:
+        obstaculo, dx, dy = obst_data
+        limites = obst_dist.get(obstaculo.tipo)
+
+        if limites is None:
+            print(f"[REGLAS] Obstáculo sin configuración: {obstaculo.tipo}")
+            return False
+
+        return (
+            (dx + 10) < limites[0]
+        )
+
 def banana_rule_up(state):
     carril = state.carril_actual
 
@@ -46,7 +60,7 @@ def banana_rule_up(state):
         if data:
             banana, dx, dy = data
 
-            return dx < 150 
+            return dx < 140 
     elif carril == 4:
         data = state.carriles[carril]["banana_cercana"]
         suelo = state.carriles[carril]["suelo"]
@@ -54,7 +68,7 @@ def banana_rule_up(state):
         if data:
             banana, dx, dy = data
 
-            if dx < 150:
+            if dx < 140:
                 return True
 
 def banana_rule_2(state):
@@ -73,13 +87,18 @@ def plataforma (state):
     carril = state.carril_actual
     if carril < 4:
         suelo_arriba = state.carriles[carril + 1]["suelo"]
+        obstaculo = state.carriles[carril + 1]["obstaculo_cercano"]
+    else:
+        return False
 
-    if suelo_arriba:
+    if suelo_arriba and not obstacle_down_rule(obstaculo):
         return True
     
 def gap_rule(state):
     carril = state.carril_actual
-    if carril == 0:
+    if carril != 0:
+        return False
+    else:
         suelo_actual = state.carriles[carril]["suelo"]
 
         if not suelo_actual:
@@ -96,7 +115,7 @@ def dangerous_falling(state):
     else:
         suelo_abajo = False
     
-    if not suelo_actual and (not suelo_abajo or obstaculo ):
+    if not suelo_actual and (not suelo_abajo or obstacle_down_rule(obstaculo) ):
             return True
 
     
@@ -171,9 +190,9 @@ def dash_obstacle_rule(state):
 
 rules = [
     Rule(name="saltar_obstaculo", condition=obstacle_rule, action=SALTAR, priority=0),
-    #Rule(name="saltar_vacio", condition=gap_rule, action=SALTAR, priority=1),
-    Rule(name="caida_peligrosa", condition=dangerous_falling, action=PLANEAR, priority=2),
-    Rule(name="recolectar_banana", condition=banana_rule_up, action=SALTAR, priority=3),
+    Rule(name="saltar_vacio", condition=gap_rule, action=SALTAR, priority=2),
+    Rule(name="plataforma", condition=plataforma, action=SALTAR, priority=1),
+    Rule(name="caida_peligrosa", condition=dangerous_falling, action=PLANEAR, priority=3),
+    Rule(name="recolectar_banana", condition=banana_rule_up, action=SALTAR, priority=4),
     #Rule(name="recolectar_banana_planear", condition=banana_rule_2, action=PLANEAR, priority=5),
-    #Rule(name="plataforma", condition=plataforma, action=SALTAR, priority=5),
 ]

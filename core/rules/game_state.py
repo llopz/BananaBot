@@ -53,13 +53,18 @@ class GameState:
             #        self.carriles[0]["suelo"] = False
         
         for a in aguas:
-            if 0 < a.centro_x - kong_x < 100: # -a.w/2 < blabla < a.w/2 + 100
+            izquierda = a.centro_x - a.w / 2
+            derecha = a.centro_x + a.w / 2
+            if derecha > kong_x and izquierda < kong_x + 100:
+            #if 0 < a.centro_x - kong_x < 100: # -a.w/2 < blabla < a.w/2 + 100
                 self.carriles[0]["suelo"] = False
                 break
 
         # Plataformas
         for p in plataformas:
-            if 0 < p.centro_x - kong_x < 300:
+            izquierda = p.centro_x - p.w / 2
+            derecha = p.centro_x + p.w / 2
+            if derecha > kong_x and izquierda < kong_x + 100:
                 carril = self.obtener_carril(p.centro_y)
                 self.carriles[carril]["suelo"] = True
 
@@ -87,7 +92,7 @@ class GameState:
         for obj in chain(troncos, arbustos, aviones, paredes, rocas, cuevas, totems, tubos):
             dx = obj.centro_x - kong_x
             dy = obj.centro_y - kong_y
-            if 0 < dx < 300:
+            if 0 < dx < 400:
                 carril = self.obtener_carril(obj.centro_y)
 
                 actual = self.carriles[carril]["obstaculo_cercano"]
