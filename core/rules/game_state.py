@@ -53,9 +53,7 @@ class GameState:
             #        self.carriles[0]["suelo"] = False
         
         for a in aguas:
-            if 0 < a.centro_x - kong_x < 100:
-                print(aguas[a].centro_x - aguas[a].w / 2 - kong_x)
-                print(aguas[a].centro_x - kong_x)
+            if 0 < a.centro_x - kong_x < 100: # -a.w/2 < blabla < a.w/2 + 100
                 self.carriles[0]["suelo"] = False
                 break
 
@@ -79,11 +77,11 @@ class GameState:
                 if actual is None or banana.centro_x < actual[0].centro_x:
                     self.carriles[carril]["banana_cercana"] = (banana, dx, dy)
 
-                    if banana_objetivo is None or banana.centro_x < banana_objetivo.centro_x:
+                    if banana_objetivo is None or banana.centro_x < banana_objetivo[0].centro_x:
                         banana_objetivo = (banana, dx, dy)
         
         if banana_objetivo:
-            self.banana_carril = self.obtener_carril(banana_objetivo)       
+            self.banana_carril = self.obtener_carril(banana_objetivo[0].centro_y)       
 
         # Obstaculos
         for obj in chain(troncos, arbustos, aviones, paredes, rocas, cuevas, totems, tubos):
