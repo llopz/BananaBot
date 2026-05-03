@@ -10,6 +10,8 @@ from .plataforma_detector import PlataformaDetector
 from .plataforma_madera_detector import PlataformaMaderaDetector
 from .roca_detector import RocaDetector
 from .cueva_detector import CuevaDetector
+from .barril_detector import BarrilDetector
+from .barra_potenciadora_detector import BarraPotenciadoraDetector
 from .totem_detector import TotemDetector
 from .tubo_detector import TuboDetector
 
@@ -17,5 +19,5 @@ __all__ = [
     "BaseDetector", "Elemento", "ESPACIOS_COLOR",
     "BananaDetector", "TroncoDetector", "ArbustoDetector", "AvionDetector",
     "KongDetector", "ParedDetector", "AguaDetector", "PlataformaDetector",
-    "PlataformaMaderaDetector", "RocaDetector", "CuevaDetector", "TotemDetector", "TuboDetector"
+    "PlataformaMaderaDetector", "RocaDetector", "CuevaDetector", "BarrilDetector", "BarraPotenciadoraDetector", "TotemDetector", "TuboDetector"
 ]

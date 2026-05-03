@@ -11,53 +11,9 @@ from control.acciones_click import ModuloAcciones, SALTAR, PLANEAR, BAJAR, DASH
 from rules.rule_engine import RuleEngine
 from rules.rules import rules
 from rules.game_state import GameState
-from vision.detection.base_detector import Elemento
 
 
 def main():
-
-    def clonar_elementos(lista):
-        return [
-            Elemento(
-                x=e.x,
-                y=e.y,
-                w=e.w,
-                h=e.h,
-                centro_x=e.centro_x,
-                centro_y=e.centro_y,
-                area=e.area,
-                proporcion=e.proporcion,
-                tipo=e.tipo,
-            )
-            for e in lista
-        ]
-
-    def calcular_velocidades_x(prev, curr, frames):
-        if frames <= 0:
-            return []
-        prev_ord = sorted(prev, key=lambda e: e.centro_x)
-        curr_ord = sorted(curr, key=lambda e: e.centro_x)
-        velocidades = []
-        for i, el in enumerate(curr_ord):
-            if i < len(prev_ord):
-                velocidades.append((el.centro_x - prev_ord[i].centro_x) / frames)
-            else:
-                velocidades.append(0.0)
-        return velocidades
-
-    def aplicar_prediccion_x(lista, velocidades, ancho, max_delta):
-        ordenados = sorted(lista, key=lambda e: e.centro_x)
-        for i, el in enumerate(ordenados):
-            dx = velocidades[i] if i < len(velocidades) else 0.0
-            if dx > max_delta:
-                dx = max_delta
-            elif dx < -max_delta:
-                dx = -max_delta
-
-            nuevo_x = int(round(el.x + dx))
-            max_x = max(0, ancho - el.w)
-            el.x = max(0, min(max_x, nuevo_x))
-            el.centro_x = el.x + el.w // 2
 
     print("=" * 55)
     print("  BANANA KONG BOT")
@@ -99,12 +55,6 @@ def main():
     metricas_interval_seg = 1.0
     contador_frames = 0
 
-    tipos_prediccion_x = [
-        "bananas", "troncos", "arbustos", "aviones",
-        "paredes", "rocas", "cuevas", "totems", "tubos", "aguas",
-    ]
-    velocidades_x_por_tipo = {t: [] for t in tipos_prediccion_x}
-    ultimo_resultado_real = {t: [] for t in tipos_prediccion_x}
     tipos_obstaculos = ["troncos", "arbustos", "aviones", "paredes", "rocas", "cuevas", "totems", "tubos"]
 
     estado_juego = GameState()
@@ -116,7 +66,6 @@ def main():
         "aviones":      [],
         "kong":         [],
         "paredes":      [],
-        "plataformas":  [],
         "plataformas_madera": [],
         "rocas":        [],
         "cuevas":       [],
@@ -172,26 +121,6 @@ def main():
             if deteccion_activa and not pausado:
                 if ejecutar_deteccion:
                     resultados = detector.detectar_todos(frame_actual)
-                    for tipo in tipos_prediccion_x:
-                        actuales = resultados.get(tipo, [])
-                        previos = ultimo_resultado_real.get(tipo, [])
-                        if previos and actuales:
-                            velocidades_x_por_tipo[tipo] = calcular_velocidades_x(
-                                previos, actuales, detectar_cada
-                            )
-                        else:
-                            velocidades_x_por_tipo[tipo] = []
-                        ultimo_resultado_real[tipo] = clonar_elementos(actuales)
-                else:
-                    ancho_frame = frame_actual.shape[1]
-                    max_delta = float(getattr(settings, "PREDICCION_X_MAX"))
-                    for tipo in tipos_prediccion_x:
-                        aplicar_prediccion_x(
-                            resultados.get(tipo, []),
-                            velocidades_x_por_tipo.get(tipo, []),
-                            ancho_frame,
-                            max_delta,
-                        )
             tiempos_detec.append(time.perf_counter() - t0)
 
             bananas      = resultados.get("bananas",     [])
@@ -200,7 +129,7 @@ def main():
             aviones      = resultados.get("aviones",     [])
             kong         = resultados.get("kong",        [])
             paredes      = resultados.get("paredes",     [])
-            plataformas  = resultados.get("plataformas", [])
+            plataformas  = resultados.get("plataformas_madera", [])
             rocas        = resultados.get("rocas",       [])
             cuevas       = resultados.get("cuevas",      [])
             totems       = resultados.get("totems",      [])

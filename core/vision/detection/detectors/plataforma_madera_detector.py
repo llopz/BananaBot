@@ -1,5 +1,4 @@
 from ..base_detector import BaseDetector, Elemento
-import cv2
 import numpy as np
 
 
@@ -7,67 +6,57 @@ class PlataformaMaderaDetector(BaseDetector):
     def detectar(self, frame):
         cfg = self.config
         alto, ancho = frame.shape[:2]
-        area_total = alto * ancho
-        area_min = area_total * cfg.PLATAFORMA_MADERA_AREA_MIN_PCT
-        area_max = area_total * cfg.PLATAFORMA_MADERA_AREA_MAX_PCT
+
+        template_nombre = getattr(cfg, "PLATAFORMA_MADERA_TEMPLATE_ARCHIVO", "Plataforma madera.png")
+        threshold = float(getattr(cfg, "PLATAFORMA_MADERA_TEMPLATE_UMBRAL", 0.18))
+        escala_template = float(getattr(cfg, "PLATAFORMA_MADERA_TEMPLATE_ESCALA", 1.10))
+        posiciones_y = getattr(cfg, "PLATAFORMA_MADERA_POSICIONES_Y", [255, 357, 459, 560])
+        roi_padding_y = int(getattr(cfg, "PLATAFORMA_MADERA_ROI_PADDING_Y", 50))
+        prop_min = cfg.PLATAFORMA_MADERA_PROP_MIN
+        prop_max = cfg.PLATAFORMA_MADERA_PROP_MAX
+        altura_standar = cfg.PLATAFORMA_MADERA_ALTURA_STANDAR
 
         elementos = []
         descartados = []
         mascara_final = np.zeros((alto, ancho), dtype=np.uint8)
-        kernel_shape = tuple(int(v) for v in cfg.PLATAFORMA_MADERA_DILATE_KERNEL)
-        kernel = np.ones(kernel_shape, np.uint8)
-        iteraciones = int(cfg.PLATAFORMA_MADERA_DILATE_ITER)
 
-        for y_centro in sorted(cfg.PLATAFORMA_MADERA_ZONAS_Y):
-            y_inicio = max(0, y_centro - 20)
-            y_fin = min(alto, y_centro + 20)
+        for pos_y in posiciones_y:
+            y_inicio = max(0, pos_y - roi_padding_y)
+            y_fin = min(alto, pos_y + roi_padding_y)
 
-            franja = frame[y_inicio:y_fin, :]
-            if franja.size == 0:
-                continue
-
-            mascara, _ = self._crear_mascara(
-                franja,
-                cfg.PLATAFORMA_MADERA_RANGO_BAJO,
-                cfg.PLATAFORMA_MADERA_RANGO_ALTO,
-                cfg.PLATAFORMA_MADERA_ESPACIO,
+            elementos_franja, descartados_franja, mascara_franja = self._detectar_por_template(
+                frame,
+                template_nombre=template_nombre,
+                tipo="plataforma_madera",
+                threshold=threshold,
+                escala_template=escala_template,
+                zona_y_inicio=y_inicio,
+                zona_y_fin=y_fin,
             )
-            mascara = cv2.dilate(mascara, kernel, iterations=iteraciones)
-            alto_franja = y_fin - y_inicio
-            mascara_recortada = mascara[:alto_franja, :]
-            mascara_final[y_inicio:y_fin, :] = np.maximum(mascara_final[y_inicio:y_fin, :], mascara_recortada)
+            descartados.extend(descartados_franja)
+            mascara_final = np.maximum(mascara_final, mascara_franja)
 
-            contornos, _ = cv2.findContours(mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if elementos_franja:
+                e = elementos_franja[0]
+                proporcion = e.w / e.h if e.h > 0 else 0.0
 
-            for contorno in contornos:
-                area = cv2.contourArea(contorno)
-                x, y, w, h = cv2.boundingRect(contorno)
-                proporcion = w / h if h > 0 else 0
-
-                y_real = y_inicio + y
-                centro_x = x + w // 2
-                centro_y_real = y_real + h // 2
-
-                if area < area_min or area > area_max:
-                    descartados.append((x, y_real, w, h, "plataforma_madera area"))
-                    continue
-                if proporcion < cfg.PLATAFORMA_MADERA_PROP_MIN or proporcion > cfg.PLATAFORMA_MADERA_PROP_MAX:
-                    descartados.append((x, y_real, w, h, f"plataforma_madera prop {proporcion:.2f}"))
+                if proporcion < prop_min or proporcion > prop_max:
+                    descartados.append((e.x, e.y, e.w, e.h, f"plataforma_madera prop {proporcion:.2f}"))
                     continue
 
-                h_limitado = min(h, cfg.PLATAFORMA_MADERA_ALTURA_STANDAR)
-                y_ajustado = y_real + (h - h_limitado) // 2
+                h_limitado = min(e.h, altura_standar)
+                y_ajustado = e.y + (e.h - h_limitado) // 2
 
                 elementos.append(Elemento(
-                    x=x,
+                    x=e.x,
                     y=y_ajustado,
-                    w=w,
+                    w=e.w,
                     h=h_limitado,
-                    centro_x=centro_x,
-                    centro_y=centro_y_real,
-                    area=area,
+                    centro_x=e.centro_x,
+                    centro_y=e.centro_y,
+                    area=float(e.w * e.h),
                     proporcion=round(proporcion, 2),
-                    tipo="plataforma_madera"
+                    tipo="plataforma_madera",
                 ))
 
         return elementos, descartados, mascara_final

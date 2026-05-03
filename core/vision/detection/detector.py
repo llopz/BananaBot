@@ -1,9 +1,10 @@
-from typing import Dict, Callable
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, Callable, List, Tuple
 from .base_detector import BaseDetector, Elemento
 from .detectors import (
     BananaDetector, TroncoDetector, ArbustoDetector, AvionDetector,
     KongDetector, ParedDetector, AguaDetector, PlataformaDetector,
-    PlataformaMaderaDetector, RocaDetector, CuevaDetector, TotemDetector, TuboDetector
+    PlataformaMaderaDetector, RocaDetector, CuevaDetector, BarrilDetector, BarraPotenciadoraDetector, TotemDetector, TuboDetector
 )
 
 
@@ -12,6 +13,8 @@ class Detector:
     def __init__(self, config):
         self.config = config
         self._registry: Dict[str, Callable] = {}
+        workers = int(getattr(self.config, "DETECTORES_WORKERS", 2))
+        self._executor = ThreadPoolExecutor(max_workers=max(1, workers))
         self._registrar_detectores()
 
 
@@ -24,29 +27,71 @@ class Detector:
         self._registrar("kong",        KongDetector(self.config).detectar)
         self._registrar("paredes",     ParedDetector(self.config).detectar)
         self._registrar("aguas",       AguaDetector(self.config).detectar)
-        self._registrar("plataformas", PlataformaDetector(self.config).detectar)
         self._registrar("plataformas_madera", PlataformaMaderaDetector(self.config).detectar)
         self._registrar("rocas",       RocaDetector(self.config).detectar)
         self._registrar("cuevas",      CuevaDetector(self.config).detectar)
+        self._registrar("barriles",    BarrilDetector(self.config).detectar)
+        self._registrar("barras_potenciadoras", BarraPotenciadoraDetector(self.config).detectar)
         self._registrar("totems",      TotemDetector(self.config).detectar)
         self._registrar("tubos",       TuboDetector(self.config).detectar)
 
     def _registrar(self, nombre: str, metodo: Callable):
         self._registry[nombre] = metodo
 
+    def _ejecutar_grupo(self, grupo: List[Tuple[str, Callable]], frame):
+        resultados = {}
+        descartados = []
+        mascaras = {}
+
+        for nombre, detector_func in grupo:
+            elementos, descartados_local, mascara = detector_func(frame)
+
+            resultados[nombre] = elementos
+            descartados.extend(descartados_local)
+            mascaras[nombre] = mascara
+
+        return resultados, descartados, mascaras
+
+    def _aplicar_filtro_x_minimo(self, resultados: Dict[str, List[Elemento]]):
+        x_min = int(getattr(self.config, "DETECCION_X_MIN", 160))
+        excluidos = {"kong", "barras_potenciadoras"}
+
+        for nombre, elementos in resultados.items():
+            if nombre in excluidos:
+                continue
+            resultados[nombre] = [e for e in elementos if int(e.x) >= x_min]
+
     # ====================== DETECTAR TODOS  ======================
     def detectar_todos(self, frame) -> dict:
+        items = list(self._registry.items())
+        mitad = (len(items) + 1) // 2
+        grupo_1 = items[:mitad]
+        grupo_2 = items[mitad:]
 
         resultados = {}
         todos_descartados = []
         mascaras = {}
 
-        for nombre, detector_func in self._registry.items():
-            elementos, descartados, mascara = detector_func(frame)
-            
-            resultados[nombre] = elementos
-            todos_descartados.extend(descartados)
-            mascaras[nombre] = mascara
+        if grupo_2:
+            f1 = self._executor.submit(self._ejecutar_grupo, grupo_1, frame)
+            f2 = self._executor.submit(self._ejecutar_grupo, grupo_2, frame)
+
+            res_1, desc_1, mas_1 = f1.result()
+            res_2, desc_2, mas_2 = f2.result()
+
+            resultados.update(res_1)
+            resultados.update(res_2)
+            todos_descartados.extend(desc_1)
+            todos_descartados.extend(desc_2)
+            mascaras.update(mas_1)
+            mascaras.update(mas_2)
+        else:
+            res_1, desc_1, mas_1 = self._ejecutar_grupo(grupo_1, frame)
+            resultados.update(res_1)
+            todos_descartados.extend(desc_1)
+            mascaras.update(mas_1)
+
+        self._aplicar_filtro_x_minimo(resultados)
 
         return {
             "bananas":     resultados.get("bananas", []),
@@ -56,9 +101,11 @@ class Detector:
             "kong":        resultados.get("kong", []),
             "paredes":     resultados.get("paredes", []),
             "aguas":       resultados.get("aguas", []),
-            "plataformas": resultados.get("plataformas", []),
+            "plataformas_madera": resultados.get("plataformas_madera", []),
             "rocas":       resultados.get("rocas", []),
+            "barriles":    resultados.get("barriles", []),
             "cuevas":      resultados.get("cuevas", []),
+            "barras_potenciadoras": resultados.get("barras_potenciadoras", []),
             "totems":      resultados.get("totems", []),
             "tubos":       resultados.get("tubos", []),
             "descartados": todos_descartados,
