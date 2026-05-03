@@ -3,14 +3,14 @@ from control.acciones_click import NADA, SALTAR, PLANEAR, BAJAR, DASH
 
 # Definicion de reglas
 obst_dist = {
-    "tronco": (180, 40),
-    "arbusto": (180, 50),
-    "avion": (200, 50),
-    "pared": (180, 50),
-    "roca": (260, 50),
+    "tronco": (200, 40),
+    "arbusto": (200, 50),
+    "avion": (220, 50),
+    "pared": (200, 50),
+    "roca": (280, 50),
     "cueva": (280, 50),
-    "totem": (180, 50),
-    "tubo": (200, 50),
+    "totem": (200, 50),
+    "tubo": (220, 50),
 }
 
 
@@ -115,7 +115,7 @@ def dangerous_falling(state):
     else:
         suelo_abajo = False
     
-    if not suelo_actual and (not suelo_abajo or obstacle_down_rule(obstaculo) ):
+    if not suelo_actual and (not suelo_abajo):
             return True
 
     
