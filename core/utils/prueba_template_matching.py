@@ -605,7 +605,7 @@ def main():
 
         ih, iw = imagen_proc.shape[:2]
         resize_settings = calcular_resize_desde_settings(plantilla_base, tipo_base)
-        if tipo_normalizado in ("cueva", "plataforma_madera"):
+        if tipo_normalizado == "cueva":
             resize_settings = None
         if resize_settings is not None:
             nuevo_w, nuevo_h = resize_settings
@@ -614,7 +614,7 @@ def main():
             nuevo_w = max(1, int(round(plantilla_base.shape[1] * ESCALA_TEMPLATE)))
             nuevo_h = max(1, int(round(plantilla_base.shape[0] * ESCALA_TEMPLATE)))
             escala_info = f"escala={ESCALA_TEMPLATE:.2f}"
-        if tipo_normalizado in ("cueva", "plataforma_madera"):
+        if tipo_normalizado == "cueva":
             candidatos_hsv, mascara_hsv = [], None
             print(f"[INFO] HSV desactivado para {tipo_base}")
         else:
@@ -622,6 +622,23 @@ def main():
         if mascara_hsv is not None:
             mascaras_hsv[tipo_base] = mascara_hsv
             print(f"[HSV] {tipo_base}: candidatos={len(candidatos_hsv)}")
+
+        if tipo_normalizado == "plataforma_madera":
+            # Plataforma de madera queda en modo HSV-only: sin template matching.
+            for candidato in candidatos_hsv:
+                x1 = int(candidato.x)
+                y1 = int(candidato.y)
+                x2 = int(candidato.x + candidato.w)
+                y2 = int(candidato.y + candidato.h)
+                detecciones.append(
+                    {
+                        "label": f"{tipo_base}@hsv",
+                        "score": 1.0,
+                        "box": (x1, y1, x2, y2),
+                    }
+                )
+            print(f"[INFO] {tipo_base}: deteccion HSV-only activa")
+            continue
 
         if candidatos_hsv:
             mejor_score_global = 0.0
@@ -686,7 +703,20 @@ def main():
             print(f"[WARN] Plantilla fuera de rango tras ajuste {escala_info}: {path_plantilla}")
             continue
 
-        score_map = cv2.matchTemplate(imagen_proc, plantilla_proc, metodo)
+        zona_y_inicio = 0
+        if tipo_normalizado == "plataforma_madera":
+            zona_y_inicio = int(getattr(settings, "PLATAFORMA_MADERA_ZONA_Y_INICIO", 230))
+
+        imagen_match = imagen_proc[zona_y_inicio:ih, :]
+        if imagen_match.shape[0] < th or imagen_match.shape[1] < tw:
+            print(
+                f"[WARN] ROI de match demasiado pequena para {tipo_base}: "
+                f"y_inicio={zona_y_inicio}, roi={imagen_match.shape[1]}x{imagen_match.shape[0]}, "
+                f"template={tw}x{th}"
+            )
+            continue
+
+        score_map = cv2.matchTemplate(imagen_match, plantilla_proc, metodo)
         confidence_map = obtener_mapa_confianza(score_map, metodo)
         mejor_score = float(np.max(confidence_map)) if confidence_map.size else 0.0
 
@@ -697,19 +727,33 @@ def main():
         for i, (px, py, pscore) in enumerate(
             topk_confianzas(confidence_map, args.topk_debug), start=1
         ):
-            print(f"  top{i}: score={pscore:.4f} en (x={px}, y={py})")
+            print(f"  top{i}: score={pscore:.4f} en (x={px}, y={py + zona_y_inicio})")
 
         label_con_escala = f"{tipo_base}@{nuevo_w}x{nuevo_h}"
-        detecciones.extend(
-            extraer_detecciones(
-                score_map=score_map,
-                template_w=tw,
-                template_h=th,
-                threshold=threshold_plantilla,
-                label=label_con_escala,
-                metodo=metodo,
+        if zona_y_inicio > 0:
+            detecciones.extend(
+                extraer_detecciones_en_roi(
+                    score_map=score_map,
+                    template_w=tw,
+                    template_h=th,
+                    threshold=threshold_plantilla,
+                    label=label_con_escala,
+                    metodo=metodo,
+                    offset_x=0,
+                    offset_y=zona_y_inicio,
+                )
             )
-        )
+        else:
+            detecciones.extend(
+                extraer_detecciones(
+                    score_map=score_map,
+                    template_w=tw,
+                    template_h=th,
+                    threshold=threshold_plantilla,
+                    label=label_con_escala,
+                    metodo=metodo,
+                )
+            )
 
     detecciones_crudas = detecciones
     if args.sin_agrupado:

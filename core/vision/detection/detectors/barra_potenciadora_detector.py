@@ -13,14 +13,17 @@ class BarraPotenciadoraDetector(BaseDetector):
         tol_y = int(getattr(cfg, "BARRA_POTENCIADORA_TOL_Y", 50))
         roi_padding = int(getattr(cfg, "BARRA_POTENCIADORA_ROI_PADDING", 16))
 
+        zona_x_fin = int(getattr(cfg, "BARRA_POTENCIADORA_ZONA_X_FIN", 300))
+        zona_y_fin = int(getattr(cfg, "BARRA_POTENCIADORA_ZONA_Y_FIN", 200))
+
         template = self._cargar_template(template_nombre, escala=escala_template, gris=True)
         template_h, template_w = template.shape[:2]
         alto, ancho = frame.shape[:2]
 
-        x_inicio = max(0, pos_x - tol_x - (template_w // 2) - roi_padding)
-        x_fin = min(ancho, pos_x + tol_x + (template_w // 2) + roi_padding)
-        y_inicio = max(0, pos_y - tol_y - (template_h // 2) - roi_padding)
-        y_fin = min(alto, pos_y + tol_y + (template_h // 2) + roi_padding)
+        x_inicio = 0
+        x_fin = min(zona_x_fin, ancho)
+        y_inicio = 0
+        y_fin = min(zona_y_fin, alto)
 
         elementos, descartados, mascara = self._detectar_por_template(
             frame,

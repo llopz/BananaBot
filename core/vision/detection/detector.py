@@ -27,7 +27,7 @@ class Detector:
         self._registrar("kong",        KongDetector(self.config).detectar)
         self._registrar("paredes",     ParedDetector(self.config).detectar)
         self._registrar("aguas",       AguaDetector(self.config).detectar)
-        self._registrar("plataformas_madera", PlataformaMaderaDetector(self.config).detectar)
+        # self._registrar("plataformas_madera", PlataformaMaderaDetector(self.config).detectar)
         self._registrar("rocas",       RocaDetector(self.config).detectar)
         self._registrar("cuevas",      CuevaDetector(self.config).detectar)
         self._registrar("barriles",    BarrilDetector(self.config).detectar)
