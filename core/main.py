@@ -72,6 +72,8 @@ def main():
         "totems":       [],
         "tubos":        [],
         "aguas":        [],
+        "barriles":     [],
+        "barras_potenciadoras": [],
         "descartados":  [],
         "mascaras":     {},
     }
@@ -135,6 +137,8 @@ def main():
             totems       = resultados.get("totems",      [])
             tubos        = resultados.get("tubos",       [])
             aguas        = resultados.get("aguas",       [])
+            barriles     = resultados.get("barriles",    [])
+            barras_potenciadoras = resultados.get("barras_potenciadoras", [])
             descartados  = resultados.get("descartados", [])
             mascaras     = resultados.get("mascaras",    {})
 
