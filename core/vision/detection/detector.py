@@ -27,7 +27,7 @@ class Detector:
         self._registrar("kong",        KongDetector(self.config).detectar)
         self._registrar("paredes",     ParedDetector(self.config).detectar)
         self._registrar("aguas",       AguaDetector(self.config).detectar)
-        # self._registrar("plataformas_madera", PlataformaMaderaDetector(self.config).detectar)
+        self._registrar("plataformas_madera", PlataformaMaderaDetector(self.config).detectar)
         self._registrar("rocas",       RocaDetector(self.config).detectar)
         self._registrar("cuevas",      CuevaDetector(self.config).detectar)
         self._registrar("barriles",    BarrilDetector(self.config).detectar)
@@ -54,7 +54,7 @@ class Detector:
 
     def _aplicar_filtro_x_minimo(self, resultados: Dict[str, List[Elemento]]):
         x_min = int(getattr(self.config, "DETECCION_X_MIN", 160))
-        excluidos = {"kong", "barras_potenciadoras"}
+        excluidos = {"kong", "barras_potenciadoras", "aguas", "plataformas_madera"}
 
         for nombre, elementos in resultados.items():
             if nombre in excluidos:

@@ -169,8 +169,8 @@ def main():
 
             cv2.imshow("Banana Kong Bot", frame_debug)
 
-            #for nombre, mascara in mascaras.items():
-            #  visualizador.mostrar_mascara(nombre, mascara)
+            mascara_plataforma_madera = mascaras.get("plataformas_madera")
+            visualizador.mostrar_mascara("plataformas_madera", mascara_plataforma_madera)
 
             if deteccion_activa and settings.DEBUG:
                 ahora = time.time()
