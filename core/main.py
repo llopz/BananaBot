@@ -150,8 +150,6 @@ def main():
             # 4. DECIDIR ACCIÓN
             t0 = time.perf_counter()
             if bot_activo and deteccion_activa and not pausado and settings.EJECUTAR_ACCIONES:
-                if kong:
-                    acciones.presionado = False
                 accion = engine.decide(estado_juego)
                 t5 = time.perf_counter()
                 acciones.ejecutar(accion)

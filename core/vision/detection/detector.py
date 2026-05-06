@@ -30,7 +30,7 @@ class Detector:
         self._registrar("plataformas_madera", PlataformaMaderaDetector(self.config).detectar)
         self._registrar("rocas",       RocaDetector(self.config).detectar)
         self._registrar("cuevas",      CuevaDetector(self.config).detectar)
-        self._registrar("barriles",    BarrilDetector(self.config).detectar)
+        # self._registrar("barriles",    BarrilDetector(self.config).detectar)
         self._registrar("barras_potenciadoras", BarraPotenciadoraDetector(self.config).detectar)
         self._registrar("totems",      TotemDetector(self.config).detectar)
         self._registrar("tubos",       TuboDetector(self.config).detectar)

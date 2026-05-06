@@ -1,4 +1,5 @@
 from control.acciones import NADA
+import config.settings as settings
 
 
 class Rule:
@@ -19,13 +20,15 @@ class RuleEngine:
 
         # menor número = mayor prioridad
         self.rules = sorted(rules, key=lambda r: r.priority)
+        self.debug_reglas = bool(getattr(settings, "DEBUG_REGLAS", False))
 
     def decide(self, state):
 
         for rule in self.rules:
 
             if rule.check(state):
-                print(f"[REGLA] {rule.name} se activó.")
+                if self.debug_reglas:
+                    print(f"[REGLA] {rule.name} se activó.")
                 return rule.action
 
         return NADA
