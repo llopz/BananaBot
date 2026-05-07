@@ -150,8 +150,6 @@ def main():
             # 4. DECIDIR ACCIÓN
             t0 = time.perf_counter()
             if bot_activo and deteccion_activa and not pausado and settings.EJECUTAR_ACCIONES:
-                if kong:
-                    acciones.presionado = False
                 accion = engine.decide(estado_juego)
                 t5 = time.perf_counter()
                 acciones.ejecutar(accion)
@@ -169,8 +167,8 @@ def main():
 
             cv2.imshow("Banana Kong Bot", frame_debug)
 
-            #for nombre, mascara in mascaras.items():
-            #  visualizador.mostrar_mascara(nombre, mascara)
+            mascara_plataforma_madera = mascaras.get("plataformas_madera")
+            visualizador.mostrar_mascara("plataformas_madera", mascara_plataforma_madera)
 
             if deteccion_activa and settings.DEBUG:
                 ahora = time.time()

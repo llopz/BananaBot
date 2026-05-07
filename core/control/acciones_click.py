@@ -7,6 +7,9 @@ PLANEAR = "planear"
 BAJAR = "bajar"
 DASH = "dash"
 
+pyautogui.FAILSAFE = False
+pyautogui.PAUSE = 0
+
 
 class ModuloAcciones:
 
@@ -17,7 +20,7 @@ class ModuloAcciones:
         self.y = None
         self.presionado = False
         self.ultimo_salto = 0
-        self.cooldown = 0.05
+        self.cooldown = 0
 
     def actualizar_posicion(self, x, y):
         self.x = x
@@ -38,12 +41,11 @@ class ModuloAcciones:
             self.dash()
 
         elif accion == NADA:
-            None
-            #self.soltar()
+            self.soltar()
 
     def saltar(self):
         self.soltar()
-        ahora = time.time()
+        ahora = time.perf_counter()
         if ahora - self.ultimo_salto > self.cooldown:
             pyautogui.click()
             self.ultimo_salto = ahora
@@ -52,7 +54,7 @@ class ModuloAcciones:
         if not self.presionado:
             pyautogui.mouseDown()
             self.presionado = True
-            self.tiempo_inicio = time.time()
+            self.tiempo_inicio = time.perf_counter()
 
     def soltar(self):
 
@@ -63,16 +65,16 @@ class ModuloAcciones:
     def bajar(self):
 
         pyautogui.mouseDown()
-        pyautogui.moveRel(0, 50, duration=0.1)
+        pyautogui.moveRel(0, 50, duration=0)
         pyautogui.mouseUp()
-        pyautogui.moveRel(0, -50, duration=0.1)
+        pyautogui.moveRel(0, -50, duration=0)
 
     def dash(self):
 
         pyautogui.mouseDown(self.x, self.y)
-        pyautogui.moveRel(20, 0, duration=0.1)
+        pyautogui.moveRel(20, 0, duration=0)
         pyautogui.mouseUp()
-        pyautogui.moveRel(-20, 0, duration=0.1)
+        pyautogui.moveRel(-20, 0, duration=0)
 
     def parar(self):
         pyautogui.mouseUp()
