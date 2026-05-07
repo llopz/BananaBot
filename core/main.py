@@ -144,7 +144,7 @@ def main():
 
             # 3. ACTUALIZAR ESTADO DEL JUEGO
             t0 = time.perf_counter()
-            estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos)
+            estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos, barriles, barras_potenciadoras)
             tiempos_estado.append(time.perf_counter() - t0)
 
             # 4. DECIDIR ACCIÓN

@@ -8,6 +8,7 @@ class GameState:
         carriles = None,
         carril_actual = 0,
         Kong = None,
+        Dash = False,
     ):
         self.banana_carril = banana_carril
         if carriles is None:
@@ -19,12 +20,22 @@ class GameState:
         self.carriles = carriles
         self.carril_actual = carril_actual
         self.Kong = Kong
-    
-    def actualizar(self, kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos):
+        self.Dash = Dash
+
+    def actualizar(self, kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos, barriles, barras_potenciadoras):
         
         if not kong:
-            return
-        
+            kong_x = self.Kong.centro_x if self.Kong else 0
+            kong_y = self.Kong.centro_y if self.Kong else 0
+        else:
+            self.Kong = kong[0]
+            kong_x = kong[0].centro_x
+            kong_y = kong[0].centro_y
+
+        print (barriles)
+        print (cuevas)
+        print (aviones)
+            
         # Reset
         for carril in self.carriles:
             carril["suelo"] = False
@@ -35,22 +46,12 @@ class GameState:
 
         self.banana_carril = None
 
-        self.Kong = kong[0] if kong else None
-
-
-        kong_x = kong[0].centro_x
-        kong_y = kong[0].centro_y
+        if barras_potenciadoras:
+            self.Dash = True
+        else:
+            self.Dash = False
         
         self.carril_actual = self.obtener_carril(kong_y)
-
-        # Agua
-        #for a in aguas:
-        #   print(a)
-        #if aguas:
-         #   if 0 < aguas[0].centro_x - kong_x < 100:
-          #          print(aguas[0].centro_x - aguas[0].w / 2 - kong_x)
-           #         print(aguas[0].centro_x - kong_x)
-            #        self.carriles[0]["suelo"] = False
         
         for a in aguas:
             izquierda = a.centro_x - a.w / 2
@@ -89,7 +90,8 @@ class GameState:
             self.banana_carril = self.obtener_carril(banana_objetivo[0].centro_y)       
 
         # Obstaculos
-        for obj in chain(troncos, arbustos, aviones, paredes, rocas, cuevas, totems, tubos):
+        for obj in chain(troncos, arbustos, aviones, paredes, rocas, cuevas, totems, tubos, barriles):
+            print (kong_x)
             dx = obj.centro_x - kong_x
             dy = obj.centro_y - kong_y
             if 0 < dx < 400:
