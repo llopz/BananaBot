@@ -7,7 +7,7 @@ obst_dist = {
     "arbusto": (200, 50),
     "avion": (220, 50),
     "pared": (200, 50),
-    "roca": (280, 50),
+    "roca": (280, 40),
     "cueva": (280, 50),
     "totem": (200, 50),
     "tubo": (220, 50),
@@ -37,7 +37,7 @@ def obstacle_rule(state):
             and dy > -limites[1]
         )
 
-def obstacle_down_rule(obst_data):
+def obstacle(obst_data):
 
     if obst_data:
         obstaculo, dx, dy = obst_data
@@ -54,30 +54,29 @@ def obstacle_down_rule(obst_data):
 def banana_rule_up(state):
     carril = state.carril_actual
 
-    if carril < 4:
-        data = state.carriles[carril + 1]["banana_cercana"]
-        suelo = state.carriles[carril + 1]["suelo"]
+    data = state.carriles[carril + 1]["banana_cercana"]
 
-        if data:
-            banana, dx, dy = data
+    if data and not obstacle(state.carriles[carril + 1]["obstaculo_cercano"]):
+        banana, dx, dy = data
+        return dx < 160
 
-            return dx < 140 
-    elif carril == 4:
-        data = state.carriles[carril]["banana_cercana"]
-        suelo = state.carriles[carril]["suelo"]
-
-        if data:
-            banana, dx, dy = data
-
-            if dx < 140:
-                return True
-
-def banana_rule_2(state):
+def banana_rule_glide(state):
     carril = state.carril_actual
     data = state.carriles[carril]["banana_cercana"]
     suelo = state.carriles[carril]["suelo"]
 
     if data and not suelo:
+        banana, dx, dy = data
+
+        if dx < 50 and 10< dy < 10:
+            return True
+
+def banana_rule_keep(state):
+    carril = state.carril_actual
+    data = state.carriles[carril]["banana_cercana"]
+    suelo = state.carriles[carril]["suelo"]
+
+    if data and suelo:
         banana, dx, dy = data
 
         if dx < 50 and 10< dy < 10:
@@ -92,7 +91,7 @@ def plataforma (state):
     else:
         return False
 
-    if suelo_arriba and not obstacle_down_rule(obstaculo):
+    if suelo_arriba and not obstacle(obstaculo):
         return True
     
 def gap_rule(state):
@@ -119,8 +118,32 @@ def dangerous_falling(state):
     if not suelo_actual and (not suelo_abajo):
             return True
 
+def safe_falling(state):
     
+    carril = state.carril_actual
+    suelo_actual = state.carriles[carril]["suelo"]
+    obstaculo = state.carriles[carril]["obstaculo_cercano"]
+    
+    if carril == 0 and suelo_actual and not obstacle(obstaculo) :
+            return True
+
+def dash(state):
+    if state.Dash and state.carril_actual != 0:
+        state.Dash = False
+        return True
+
 '''
+def dash_obstacle_rule(state):
+    carril = state.carril_actual
+    data = state.carriles[carril]["obstaculo_cercano"]
+
+    if data:
+        obstaculo, dx, dy = data
+
+        if dx < 80:
+            print("DASH por peligro cercano")
+            return True
+    
 
 def banana_rule_down(state):
     if state.banana and state.banana_distance is not None:
@@ -162,17 +185,6 @@ def banana_down_plataform_rule(state): # SALTAR
     ):
         if state.banana_distance[0] > 150 and state.banana_distance[1] > 50 and state.platform_distance[0] < 120:
             return True
-        
-def falling_without_platform_rule(state): # PLANEAR
-    if state.platform is not None and state.platform_distance is not None:
-        if state.platform_distance[0] > 150:
-            return True
-        
-        
-def dash_obstacle_rule(state): # DASH
-    if state.obstacle is not None and state.obstacle_distance is not None:
-        if state.obstacle_distance[0] < 80:
-            return True
 
 def dash_obstacle_rule(state):
     carril = state.carril_actual
@@ -191,9 +203,11 @@ def dash_obstacle_rule(state):
 
 rules = [
     Rule(name="saltar_obstaculo", condition=obstacle_rule, action=SALTAR, priority=0),
-    Rule(name="saltar_vacio", condition=gap_rule, action=SALTAR, priority=2),
-    Rule(name="plataforma", condition=plataforma, action=SALTAR, priority=1),
+    Rule(name="saltar_vacio", condition=gap_rule, action=SALTAR, priority=1),
+    Rule(name="dash", condition=dash, action=DASH, priority=2),
     Rule(name="caida_peligrosa", condition=dangerous_falling, action=PLANEAR, priority=3),
     Rule(name="recolectar_banana", condition=banana_rule_up, action=SALTAR, priority=4),
-    #Rule(name="recolectar_banana_planear", condition=banana_rule_2, action=PLANEAR, priority=5),
+    #Rule(name="caida_segura", condition=safe_falling, action=BAJAR, priority=5),
+    #Rule(name="recolectar_banana_planear", condition=banana_rule_2, action=PLANEAR, priority=6),
+    #Rule(name="plataforma", condition=plataforma, action=SALTAR, priority=7),
 ]

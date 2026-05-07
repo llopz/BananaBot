@@ -183,3 +183,4 @@ DETECTORES_WORKERS = 2
 
 # ─── DEBUG ──────────────────────────────────────────────────
 DEBUG = False
+DEBUG_REGLAS = True

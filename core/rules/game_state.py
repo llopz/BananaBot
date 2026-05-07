@@ -31,10 +31,6 @@ class GameState:
             self.Kong = kong[0]
             kong_x = kong[0].centro_x
             kong_y = kong[0].centro_y
-
-        print (barriles)
-        print (cuevas)
-        print (aviones)
             
         # Reset
         for carril in self.carriles:
@@ -48,8 +44,6 @@ class GameState:
 
         if barras_potenciadoras:
             self.Dash = True
-        else:
-            self.Dash = False
         
         self.carril_actual = self.obtener_carril(kong_y)
         
@@ -91,7 +85,6 @@ class GameState:
 
         # Obstaculos
         for obj in chain(troncos, arbustos, aviones, paredes, rocas, cuevas, totems, tubos, barriles):
-            print (kong_x)
             dx = obj.centro_x - kong_x
             dy = obj.centro_y - kong_y
             if 0 < dx < 400:

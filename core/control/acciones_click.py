@@ -20,7 +20,7 @@ class ModuloAcciones:
         self.y = None
         self.presionado = False
         self.ultimo_salto = 0
-        self.cooldown = 0
+        self.cooldown = 0.0001
 
     def actualizar_posicion(self, x, y):
         self.x = x
@@ -65,16 +65,17 @@ class ModuloAcciones:
     def bajar(self):
 
         pyautogui.mouseDown()
-        pyautogui.moveRel(0, 50, duration=0)
+        pyautogui.moveRel(0, 50, duration=0.01)
         pyautogui.mouseUp()
         pyautogui.moveRel(0, -50, duration=0)
 
     def dash(self):
 
+        self.soltar()
         pyautogui.mouseDown(self.x, self.y)
-        pyautogui.moveRel(20, 0, duration=0)
+        pyautogui.moveRel(50, 0, duration=0.01)
         pyautogui.mouseUp()
-        pyautogui.moveRel(-20, 0, duration=0)
+        pyautogui.moveRel(-50, 0, duration=0)
 
     def parar(self):
         pyautogui.mouseUp()
