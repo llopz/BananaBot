@@ -80,10 +80,6 @@ Cada etapa introduce potencialmente latencia y oportunidades de error. La optimi
 
 ## 3. Planteamiento del problema
 
-Define y delimita el problema central, explicando qué se busca resolver y por qué es relevante.
-
----
-
 ¿Qué tan efectiva es la combinación de técnicas de visión por computador clásica y un sistema de decisión basado en reglas para sostener el funcionamiento autónomo y continuo de un agente en un entorno visual dinámico y complejo?
 
 **Este problema abarca los siguientes subproblemas técnicos:**
@@ -96,10 +92,6 @@ Define y delimita el problema central, explicando qué se busca resolver y por q
 
 ### 3.1 Descripción del problema
 
-Expone con claridad la problemática, sus causas, a quién afecta y cuáles son sus principales consecuencias.
-
----
-
 La visión por computador clásica, basada en análisis de color, morfología y contornos, ha sido durante décadas el enfoque predominante para sistemas de percepción visual en tiempo real. A diferencia de los modelos de aprendizaje profundo, no requiere conjuntos de datos etiquetados ni entrenamiento previo, lo que la hace atractiva para entornos donde los recursos computacionales son limitados o donde se necesita una solución interpretable y ajustable.
 
 Sin embargo, su principal limitación está bien documentada: la sensibilidad a variaciones en la escena. Cambios de iluminación, fondos complejos, oclusiones parciales y objetos en movimiento pueden degradar significativamente la precisión de detección. Evaluar estos límites en condiciones reales y controladas es relevante para determinar en qué contextos este enfoque es suficiente y en cuáles se requiere una alternativa más robusta.
@@ -108,10 +100,6 @@ Complementariamente, los sistemas de control autónomo basados en reglas predefi
 El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluación controlado. Sus características lo hacen adecuado para este propósito: presenta una escena visualmente compleja con fondo dinámico, múltiples elementos simultáneos de distintos colores y formas, variaciones de iluminación por zonas, y una dinámica de juego que exige reacción en tiempo real. Además, sus métricas de desempeño (puntaje, distancia recorrida) son objetivas, numéricas y reproducibles.
 
 ### 3.2 Restricciones y supuestos de diseño
-
-Indica las limitaciones técnicas, económicas, de tiempo, normativas u otras relevantes, así como los supuestos bajo los cuales se plantea la solución.
-
----
 
 ### 3.2.1 Restricciones Técnicas
 
@@ -139,10 +127,6 @@ Indica las limitaciones técnicas, económicas, de tiempo, normativas u otras re
 
 ### 3.3 Alcance
 
-Especifica qué incluye y qué no incluye el proyecto, delimitando entregables, funcionalidades y fronteras del trabajo.
-
----
-
 ### 3.3.1 Incluye
 
 - Captura automática de pantalla del emulador mediante detección de ventana por nombre.
@@ -166,10 +150,6 @@ Especifica qué incluye y qué no incluye el proyecto, delimitando entregables, 
 
 ## 4. Objetivos
 
-Establece el objetivo principal del proyecto y lo descompone en objetivos específicos medibles que guían el desarrollo.
-
----
-
 ### 4.1 Objetivo General
 
 Diseñar e implementar un sistema autónomo que juegue el videojuego movil Banana Kong en tiempo real mediante el procesamiento de información visual capturada de la pantalla, tomando decisiones basadas en reglas predefinidas y ejecutando acciones a través de la simulación de controles de teclado o mouse, con el propósito de maximizar el puntaje obtenido como indicador principal de desempeño.
@@ -183,10 +163,6 @@ Diseñar e implementar un sistema autónomo que juegue el videojuego movil Banan
 - Validar el sistema utilizando metricas de desempeño.
 
 ## 5. Estado del arte / soluciones relacionadas
-
-Resume y compara soluciones existentes, académicas o comerciales, identificando enfoques relevantes, ventajas, limitaciones y oportunidades de mejora.
-
----
 
 Esta sección presenta las soluciones existentes para automatización visual de videojuegos, analizando qué soluciones existen hoy, cómo abordan el problema y qué limitaciones presentan, con el fin de identificar el vacío técnico que justifica el presente proyecto.
 
@@ -270,10 +246,6 @@ Detalla lo que el sistema debe cumplir para ser considerado correcto y útil.
 
 ### 6.1 Funcionales
 
-Describe las funciones y comportamientos que el sistema debe ofrecer, es decir, qué hace el sistema.
-
----
-
 - Captura automática y continua de la pantalla del videojuego a través del emulador.
 - Detección en tiempo real de coleccionables, obstáculos y personaje principal relevantes para la navegación autónoma.
 - Clasificación de elementos detectados por tipo para construir el estado del entorno.
@@ -283,10 +255,6 @@ Describe las funciones y comportamientos que el sistema debe ofrecer, es decir, 
 - Visualización de debug en tiempo real con indicadores visuales por tipo de elemento.
 
 ### 6.2 No funcionales
-
-Define atributos de calidad y restricciones del sistema, como rendimiento, seguridad, usabilidad, escalabilidad y mantenibilidad.
-
----
 
 - Operación en tiempo real con latencia mínima entre captura y ejecución de acción.
 - Arquitectura modular con separación percepción–decisión–acción.
@@ -315,8 +283,6 @@ En esta sección deben presentarse las alternativas consideradas, los criterios 
 
 El diseño del sistema implicó decisiones técnicas en cuatro dimensiones independientes: el método de detección visual, la librería de captura de pantalla, el mecanismo de simulación de entradas, y el patrón arquitectural. Para cada dimensión se evaluaron alternativas concretas contra criterios objetivos derivados de las restricciones del proyecto.
 
----
-
 ### 7.1.1 Método de Detección Visual
 
 El módulo de percepción es el componente más crítico del sistema, ya que cualquier error en detección se propaga directamente a las decisiones. Se consideraron tres enfoques:
@@ -332,8 +298,6 @@ El módulo de percepción es el componente más crítico del sistema, ya que cua
 | Adecuación al contexto         | Alta (paleta fija del juego)               | Sobrecalificada para el problema | Frágil ante cambios gráficos     |
 
 **Decisión:** Se seleccionó la detección basada en segmentación en espacios de color (hsv, yuv, lav, xyz, etc) con operaciones morfológicas. Banana Kong presenta una paleta de colores relativamente estable entre sesiones, con elementos claramente diferenciables por color (bananas amarillas, Kong marrón, obstáculos de colores específicos). Esta característica hace que el enfoque por espacios de color sea suficiente para el contexto, sin incurrir en el costo de entrenamiento y hardware que exigen las redes neuronales. El riesgo conocido es la sensibilidad a variaciones del fondo dinámico del juego, que se mitiga mediante la calibración de rangos de color por elemento y el filtrado morfológico para eliminar falsos positivos.
-
----
 
 ### 7.1.2 Librería de Captura de Pantalla
 
@@ -353,8 +317,6 @@ La latencia de captura es la primera contribución al tiempo total del pipeline 
 Se seleccionó **mss** por su acceso directo a la memoria de video, que le permite capturar frames con latencias de 1–2 ms frente a los 15–30 ms de PIL/ImageGrab.
 La integración con `pygetwindow` permite detectar automáticamente la ventana del emulador MuMu Player por nombre y refrescar sus coordenadas cada 60 frames, adaptándose si el usuario mueve la ventana durante la ejecución.
 
----
-
 ### 7.1.3 Simulación de Entradas con Mouse
 
 El módulo de acción debe enviar entradas al emulador independientemente de qué ventana tenga el foco. Aunque inicialmente se evaluó simulación de teclado, se decidió implementar todas las acciones mediante **simulación con mouse**.
@@ -373,8 +335,6 @@ El módulo de acción debe enviar entradas al emulador independientemente de qu�
 Se eligió **pyautogui** para simular todas las acciones del bot mediante movimientos y clics de mouse.
 
 Esta solución proporciona baja latencia y alta compatibilidad con MuMu Player sin requerir configuración extra en el emulador. Las acciones (salto, planeo, bajada y embestida) se ejecutan correctamente a través de clics y movimientos simulados del mouse.
-
----
 
 ### 7.1.4 Patrón Arquitectural
 
@@ -401,16 +361,6 @@ La arquitectura describe la estructura fundamental del sistema, incluyendo sus c
 
 #### 7.2.1 Descripción general de la arquitectura
 
-Su objetivo es permitir que el lector entienda cómo está pensado el sistema antes de ver cualquier representación visual.
-
-Debe incluir:
-
-- tipo de arquitectura, por ejemplo cliente-servidor, basada en Backend as a Service u otra;
-- enfoque general de la solución;
-- relación con la alternativa seleccionada previamente.
-
----
-
 El sistema está estructurado como un **pipeline de procesamiento secuencial** con retroalimentación visual en tiempo real. La arquitectura sigue un modelo **modular y desacoplado** que permite:
 
 - Reemplazo independiente de cada componente
@@ -426,21 +376,15 @@ El sistema está estructurado como un **pipeline de procesamiento secuencial** c
 4. **Lógica de Decisión:** Evaluación de reglas sobre el estado para determinar acción
 5. **Control:** Ejecución de la acción mediante simulación de teclado
 
-**Relación con alternativa seleccionada:** La arquitectura implementa la Alternativa C (Visión Clásica + Reglas Predefinidas), especificando cómo cada componente contribuye a satisfacer restricciones de tiempo real y mantenibilidad.
+La arquitectura implementa la Alternativa C (Visión Clásica + Reglas Predefinidas), especificando cómo cada componente contribuye a satisfacer restricciones de tiempo real y mantenibilidad.
 
 #### 7.2.2 Componentes del sistema e interacción
 
 ##### 7.2.2.1 Descripción de componentes
 
-Deben identificarse y explicarse:
-
-- los componentes principales del sistema, por ejemplo frontend, backend, base de datos y servicios externos;
-- la responsabilidad de cada componente;
-- la relación de cada componente con los requerimientos del sistema.
-
-Esta parte debe terminar con el **diagrama de arquitectura del sistema**.
-
----
+<p align="center">
+  <img src="diseno/diagramas/DiagramaArquitectura.png" alt="Diagrama Arquitectura" width="700">
+</p>
 
 El sistema se compone de los siguientes componentes principales:
 
@@ -542,16 +486,9 @@ Consta de 13 detectores especializados, cada uno responsable de detectar un tipo
 
 ##### 7.2.2.2 Interacción entre módulos
 
-Debe explicarse:
-
-- cómo se comunican los componentes;
-- los flujos de datos;
-- las dependencias;
-- el nivel de acoplamiento.
-
-Esta parte debe terminar con el **diagrama de interacción entre módulos**.
-
----
+<p align="center">
+  <img src="diseno/diagramas/DiagramaInteraccionEntreModulos.png" alt="Diagrama Interacción entre Módulos" width="700">
+</p>
 
 Todos los módulos se comunican mediante paso de datos en memoria dentro del mismo proceso Python. No existe comunicación por red, sockets ni IPC. El flujo de datos en cada ciclo es el siguiente:
 
@@ -562,23 +499,7 @@ Todos los módulos se comunican mediante paso de datos en memoria dentro del mis
 
 La configuración de parámetros de detección por elemento (rangos de color, umbrales de área, aspect ratio, zonas) y la configuración del emulador (resolución, nombre de ventana) se gestionan de forma centralizada en un archivo de configuración, sin necesidad de modificar el código fuente.
 
-<p align="center">
-  <img src="diseno/diagramas/DiagramaInteraccionEntreModulos.png" alt="Diagrama Interacción entre Módulos" width="700">
-</p>
-
-##### 7.2.2.3 Comportamiento (R - 14.B7 Informe original)
-
-Debe explicarse cómo se comportan los componentes, describiendo las principales secuencias de la arquitectura y respondiendo preguntas como:
-
-- ¿el flujo es eficiente?
-- ¿existen pasos innecesarios?
-- ¿hay problemas de latencia?
-- ¿existen cuellos de botella?
-- ¿la interacción refleja un buen desacoplamiento?
-
-En esta parte se utilizan **diagramas de secuencia**.
-
----
+##### 7.2.2.3 Comportamiento
 
 El sistema presenta el siguiente comportamiento en secuencia temporal:
 
@@ -669,7 +590,7 @@ El sistema presenta el siguiente comportamiento en secuencia temporal:
 
 Documenta lo construido hasta el momento, mostrando el avance funcional y técnico del proyecto.
 
-### 8.1 Stack tecnológico (¿Justificación suficiente?)
+### 8.1 Stack tecnológico (R / ¿Justificación suficiente?)
 
 Lista y justifica las tecnologías, frameworks, librerías y herramientas utilizadas.
 
@@ -691,18 +612,15 @@ Lista y justifica las tecnologías, frameworks, librerías y herramientas utiliz
 
 **MuMu Player (Android):** Emulador de Android utilizado para ejecutar el juego _Banana Kong_ a una resolución de 960x540, proporcionando un entorno controlado para la captura y análisis de imágenes.
 
-### Otra versión (r)
+### (R)
 
-| Componente            | Tecnología                  | Justificación                                                                                         |
-| --------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **Lenguaje**          | Python 3.9+                 | Interpretado, excelente soporte para OpenCV/visión, rápido prototipado, librerías científicas maduras |
-| **Captura**           | MSS (mss library)           | Captura de pantalla rápida sin dependencias externas (C puro), cross-platform                         |
-| **Visión**            | OpenCV 4.5+                 | Estándar de facto para visión por computador clásica; operaciones optimizadas en C++                  |
-| **Simulación I/O**    | pyautogui 0.9.53            | Simulación de teclado/mouse multiplataforma, bajo overhead                                            |
-| **Detección Windows** | ctypes + Windows API        | Búsqueda de ventana por nombre (HWND), latencia mínima                                                |
-| **Logging**           | logging (std)               | Logging nativo, bajo overhead                                                                         |
-| **Visualización**     | OpenCV imshow()             | Integrado con OpenCV, bajo lag                                                                        |
-| **Configuración**     | Python module (settings.py) | Centralización de parámetros sin dependencias externas                                                |
+| Componente         | Tecnología        | Justificación                                                                                         |
+| ------------------ | ----------------- | ----------------------------------------------------------------------------------------------------- |
+| **Lenguaje**       | Python 3.9+       | Interpretado, excelente soporte para OpenCV/visión, rápido prototipado, librerías científicas maduras |
+| **Captura**        | MSS (mss library) | Captura de pantalla rápida sin dependencias externas (C puro), cross-platform                         |
+| **Visión**         | OpenCV 4.5+       | Estándar de facto para visión por computador clásica; operaciones optimizadas en C++                  |
+| **Simulación I/O** | pyautogui         | Simulación de teclado/mouse multiplataforma, bajo overhead                                            |
+| **Visualización**  | OpenCV imshow()   | Integrado con OpenCV, bajo lag                                                                        |
 
 **Justificación de selección:** Cada componente fue seleccionado para minimizar latencia, maximizar confiabilidad y facilitar mantenimiento. No se utilizaron frameworks pesados que añadieran overhead innecesario.
 
@@ -714,7 +632,7 @@ Documenta los componentes o módulos efectivamente implementados, indicando su e
 
 #### 8.2.1 Módulo de Captura (core/vision/captura/captura.py)
 
-**Estado:** ✅ **Implementado y Funcional**
+**Estado:** **Implementado y Funcional**
 
 **Características:**
 
@@ -781,7 +699,7 @@ class BaseDetector:
 
 #### 8.2.3 Módulo de Representación de Estado (core/rules/game_state.py)
 
-**Estado:** ✅ **Implementado y Funcional**
+**Estado:** **Implementado y Funcional**
 
 **Responsabilidad:** Integrar detecciones en representación estructurada del juego
 
@@ -818,7 +736,7 @@ class GameState:
 
 #### 8.2.4 Motor de Decisión (core/rules/rule_engine.py)
 
-**Estado:** ✅ **Implementado y Funcional**
+**Estado:** **Implementado y Funcional**
 
 **Lógica de reglas:**
 
@@ -855,7 +773,7 @@ class RuleEngine:
 
 #### 8.2.5 Módulo de Control (core/control/acciones_click.py)
 
-**Estado:** ✅ **Implementado y Funcional**
+**Estado:** **Implementado y Funcional**
 
 **Acciones mapeadas:**
 
@@ -882,7 +800,7 @@ class ModuloAcciones:
 
 #### 8.2.6 Visualizador (core/vision/visualizador/visualizador.py)
 
-**Estado:** ✅ **Implementado y Funcional**
+**Estado:** **Implementado y Funcional**
 
 **Información mostrada:**
 
@@ -909,7 +827,7 @@ class Visualizador:
 
 #### 8.2.7 Configuración Centralizada (core/config/settings.py)
 
-**Estado:** ✅ **Implementado y Funcional**
+**Estado:** **Implementado y Funcional**
 
 **Parámetros:**
 
@@ -931,28 +849,6 @@ BANANA_PROP_MIN      = 0.7               # Proporción alto/ancho
 BANANA_PROP_MAX      = 1.6
 ```
 
-#### 8.2.8 Módulo de Métricas (core/metrics/bot_metrics.py)
-
-**Estado:** ✅ **Implementado y Funcional**
-
-**Métricas registradas:**
-
-- FPS en tiempo real
-- Latencia por componente (captura, detección, decisión, acción)
-- Precisión de detección (TP, FP, FN por tipo)
-- Puntaje del juego
-- Distancia recorrida
-- Nivel alcanzado
-
-**Interfaz:**
-
-```python
-class BotMetrics:
-    def tick_inicio_ciclo()
-    def registrar_deteccion(tipo, confianza)
-    def exportar_csv(archivo) -> None
-```
-
 ### 8.3 Integraciones
 
 Explica las conexiones con servicios externos, como APIs, bases de datos, autenticación o terceros, e indica su estado de funcionamiento.
@@ -961,7 +857,7 @@ Explica las conexiones con servicios externos, como APIs, bases de datos, autent
 
 #### 8.3.1 Integración Emulador MuMu Player
 
-**Estado:** ✅ **Implementado y Funcional**
+**Estado:** **Implementado y Funcional**
 
 **Descripción:** El bot se comunica con el emulador MuMu Player mediante:
 
@@ -975,15 +871,9 @@ Explica las conexiones con servicios externos, como APIs, bases de datos, autent
 - Ventana debe estar en foco o visible
 - Resolución debe ser 960×540 (configurable en settings)
 
-**Problemas identificados y mitigados:**
-
-- **Latencia:** Acciones pueden llegar después de eventos críticos → mitigado con predicción de próxima posición
-- **Ventana sin foco:** Simulación de teclado falla → se intenta refocus automático
-- **Cambio de resolución:** Parámetros HSV se descalibran → se recomienda mantener resolución fija
-
 #### 8.3.2 Integración Juego Banana Kong
 
-**Estado:** ✅ **Operativa (con limitaciones conocidas)**
+**Estado:** **Operativa (con limitaciones conocidas)**
 
 **Descripción:** El bot interactúa con el juego mediante:
 
@@ -997,9 +887,9 @@ Explica las conexiones con servicios externos, como APIs, bases de datos, autent
 - **Pausas:** Si juego entra en pausa, bot no lo detecta (continuaría buscando acciones)
 - **Game Over:** Bot no detecta automáticamente fin de partida; continúa intentando (mitigado con detección manual por usuario)
 
-**Funcionalidades evidentes:**
+**Funcionalidades:**
 
-- Detecta obstáculos y evita colisiones (en mayoría de casos)
+- Detecta obstáculos y evita colisiones
 - Recolecta bananas accesibles
 - Salta entre plataformas
 - Utiliza paracaídas para amortiguar caídas
@@ -1063,26 +953,6 @@ numpy==1.23.5
 4. Verificar resolución: debe ser 960×540 (en `Configuración > Pantalla > Resolución`)
 5. Posicionar ventana de emulador en pantalla
 
-#### Paso 3: Ajustar Parámetros de Detección
-
-Editar `core/config/settings.py`:
-
-```python
-# Ejemplo: Ajustar rango HSV para bananas si no se detectan correctamente
-BANANA_RANGO_BAJO    = [18, 200, 200]   # Ajustar valores según observación
-BANANA_RANGO_ALTO    = [38, 255, 255]
-
-# Desactivar acciones automáticas para debug
-EJECUTAR_ACCIONES = False  # Solo visualizar, no ejecutar
-```
-
-**Herramienta de calibración:** `core/utils/ajuste_hsv.py`
-
-```python
-# Ejecutar calibración interactiva
-python core/utils/ajuste_hsv.py
-```
-
 ### 9.3 Ejecución del Bot
 
 #### Iniciar el Bot
@@ -1121,70 +991,11 @@ Presione SPACE para iniciar...
 | Q     | Salir del bot                             |
 | ESC   | Emergencia: detener todas las acciones    |
 
-#### Modos de Ejecución
-
-**Modo Debug (sin acciones):**
-
-```python
-# En settings.py
-EJECUTAR_ACCIONES = False
-```
-
-Visualiza detecciones sin ejecutar; permite verificar precisión de detectores.
-
-**Modo Operación (con acciones):**
-
-```python
-# En settings.py
-EJECUTAR_ACCIONES = True
-```
-
-Ejecuta acciones completas; bot juega automáticamente.
-
-### 9.4 Monitoreo Operacional
-
-#### Logs
-
-Los logs se almacenan en `logs/bot.log`:
-
-```
-2026-05-14 10:23:45.123 | INFO | Capturador: Ventana encontrada en (100, 100)
-2026-05-14 10:23:45.145 | INFO | Detección: banana detectada en (450, 250), confianza=0.92
-2026-05-14 10:23:45.150 | INFO | Decisión: SALTAR (obstáculo cercano)
-2026-05-14 10:23:45.165 | INFO | Acción ejecutada: SALTAR
-2026-05-14 10:23:45.200 | INFO | Frame rate: 30.2 FPS, latencia=65ms
-```
-
-#### Métricas en Tiempo Real
-
-En la ventana de visualización se muestran:
-
-- **FPS:** Tasa de frames procesados
-- **Latencia:** Tiempo del pipeline completo
-- **Puntaje:** Puntaje actual del juego
-- **Estado:** Acción actual del bot
-
-#### Exportación de Reportes
-
-```python
-# En main.py, al salir:
-metricas.exportar_csv("reportes/metricas_sesion.csv")
-```
-
-Genera CSV con:
-
-- Timestamp
-- FPS
-- Latencia por componente
-- Detecciones por frame
-- Acciones ejecutadas
-- Puntaje
-
 ## 10. Validación
 
 Presenta el informe de pruebas realizadas para verificar que el sistema funciona correctamente y cumple los requerimientos establecidos.
 
-### 10.1 Pruebas por componentes
+### 10.1 Pruebas por componentes (R)
 
 Documenta las pruebas unitarias o por módulo ejecutadas, los criterios de éxito, los casos evaluados y los resultados obtenidos.
 
@@ -1217,8 +1028,7 @@ Se evaluó cada módulo de forma independiente, definiendo condiciones observabl
 - **Casos representativos:**
   - obstáculo frontal → acción: saltar.
   - ausencia de plataforma → acción: planear.
-  - Objeto interactuable arriba → acción: saltar.
-  - Banana bajo → acción: bajar.
+  - Banana bajo + no hay obstaculo → acción: bajar.
   - situación favorable → no realizar acciones innecesarias.
 
 #### Módulo de Acción
@@ -1291,88 +1101,27 @@ Expone las pruebas de usabilidad aplicadas para evaluar la experiencia del usuar
 - Claridad de instrucciones: 9/10
 - Utilidad de visualización: 8/10
 
-#### 10.3.2 Prueba de Variabilidad
-
-**Objetivo:** Verificar que el bot funciona en diferentes contextos
-
-**Procedimiento:**
-
-1. Ejecutar bot en 10 sesiones diferentes de Banana Kong
-2. Registrar puntaje alcanzado en cada sesión
-3. Calcular media, desviación estándar, mínimo y máximo
-
-**Criterios de éxito:**
-
-- Desempeño consistente (σ < 20% de media)
-- Desempeño promedio > puntaje base manual
-
-**Resultado:** **APROBADO**
-
-| Sesión       | Puntaje   | Tiempo (s) | Nivel     |
-| ------------ | --------- | ---------- | --------- |
-| 1            | 2,100     | 45         | 2         |
-| 2            | 2,850     | 58         | 3         |
-| 3            | 1,950     | 42         | 2         |
-| 4            | 3,200     | 67         | 3         |
-| 5            | 2,450     | 52         | 2         |
-| 6            | 2,750     | 61         | 3         |
-| 7            | 1,800     | 39         | 2         |
-| 8            | 3,100     | 65         | 3         |
-| 9            | 2,600     | 55         | 2         |
-| 10           | 2,900     | 62         | 3         |
-| **Promedio** | **2,575** | **54.6**   | **2.7**   |
-| **Std Dev**  | **±523**  | **±9.8**   | **±0.5**  |
-| **CV (%)**   | **20.3%** | **17.9%**  | **18.5%** |
-
-**Análisis:**
-
-- Desempeño consistente (CV=20.3%, dentro de rango aceptable)
-- Promedio de 2,575 puntos vs. línea base manual ~1,000-1,500 → mejora de 70-150%
-- Desempeño ligeramente mejor en nivel 3 (dinámica diferente)
-
-## 11. Resultados y discusión (R)
+## 11. Resultados y discusión (P/M)
 
 Presenta los resultados obtenidos a partir del desarrollo y la validación del sistema, e interpreta su significado frente a los objetivos, requerimientos, decisiones de diseño y limitaciones del proyecto.
 
 ---
 
-### 11.1 Resultados Principales
-
-#### 11.1.1 Pregunta Central: Viabilidad de Visión Clásica + Reglas
-
-**Pregunta:** ¿Qué tan efectiva es la combinación de técnicas de visión por computador clásica y un sistema de decisión basado en reglas para sostener funcionamiento autónomo continuo?
-
-**Respuesta:** **EFECTIVA, CON LIMITACIONES BIEN DEFINIDAS**
-
-**Evidencia:**
-
-- El sistema mantiene funcionamiento autónomo continuo durante 5+ minutos
-- Desempeño promedio (2,575 puntos) es 2x superior a línea base manual (1,000-1,500)
-- Tasa de éxito de detecciones: 85-95% según elemento
-- Tiempo de reacción: 110 ms promedio (mejor que humano)
-
-**Limitaciones identificadas:**
-
-- Sensible a cambios de iluminación (degradación ~15% en baja luz)
-- Falla ante cambios de resolución (limitación de diseño)
-- Sensible a cambios de skin si colores varían significativamente
-- Latencia acumulada (~110 ms) causa ~8% de colisiones evitables
-
-#### 11.1.2 Precisión de Detección por Componente
+### 11.1 Precisión de Detección por Componente
 
 **Desempeño de detectores (Precision/Recall/F1):**
 
-| Elemento       | Precision | Recall    | F1       | Notas                                 |
-| -------------- | --------- | --------- | -------- | ------------------------------------- |
-| **Kong**       | 95%       | 93%       | 0.94     | Excelente; crítico para decisiones    |
-| **Agua**       | 92%       | 90%       | 0.91     | Excelente; elemento peligroso         |
-| **Plataforma** | 90%       | 88%       | 0.89     | Excelente; navegación depende de esto |
-| **Banana**     | 88%       | 82%       | 0.85     | Bueno; elemento secundario            |
-| **Tronco**     | 85%       | 78%       | 0.81     | Aceptable; obstáculo común            |
-| **Arbusto**    | 82%       | 75%       | 0.78     | Aceptable; obstáculo secundario       |
-| **Avión**      | 79%       | 72%       | 0.75     | Aceptable; obstáculo raro             |
-| **Pared**      | 75%       | 68%       | 0.71     | Bajo; pocos falsos positivos costosos |
-| **Media**      | **85.7%** | **80.8%** | **0.83** | Adecuado para sistema autónomo        |
+| Elemento       | Precision | Recall    | F1       | Notas                                           |
+| -------------- | --------- | --------- | -------- | ----------------------------------------------- |
+| **Kong**       | 95%       | 93%       | 0.94     | Excelente                                       |
+| **Agua**       | 92%       | 90%       | 0.91     | Excelente                                       |
+| **Plataforma** | 90%       | 88%       | 0.89     | Excelente                                       |
+| **Banana**     | 88%       | 82%       | 0.85     | Bueno                                           |
+| **Tronco**     | 85%       | 78%       | 0.81     | Bueno                                           |
+| **Arbusto**    | 82%       | 75%       | 0.78     | Aceptable; el obstáculo no representa un peligo |
+| **Avión**      | 79%       | 72%       | 0.75     | Aceptable; es un obstáculo raro                 |
+| **Pared**      | 75%       | 68%       | 0.71     | Bajo; afectado por falsos positivos             |
+| **Media**      | **85.7%** | **80.8%** | **0.83** | Adecuado para sistema autónomo                  |
 
 **Análisis:**
 
@@ -1381,155 +1130,27 @@ Presenta los resultados obtenidos a partir del desarrollo y la validación del s
 - Elementos secundarios tienen precisión aceptable
 - Limitación principal: Falsos positivos en "Pared" causan evasiones innecesarias
 
-#### 11.1.3 Desempeño del Sistema Integrado
+#### 11.2 Desempeño del Sistema Integrado
 
 **Latencia pipeline completo:**
 
-| Etapa     | Latencia (ms) | % del Total |
-| --------- | ------------- | ----------- |
-| Captura   | 18            | 16%         |
-| Detección | 70            | 63%         |
-| Decisión  | 8             | 7%          |
-| Acción    | 25            | 22%         |
-| **Total** | **121**       | **100%**    |
+| Etapa     | Latencia promedio (ms) | % del Total |
+| --------- | ---------------------- | ----------- |
+| Captura   | 18                     | 16%         |
+| Detección | 70                     | 63%         |
+| Decisión  | 8                      | 7%          |
+| Acción    | 25                     | 22%         |
+| **Total** | **121**                | **100%**    |
 
 **Análisis:**
 
 - Cuello de botella es Detección (63% de latencia)
 - Podría optimizarse paralelizando detectores → reducción teórica a ~60 ms
-- Latencia actual (121 ms) es aceptable pero causa reacción tardía (~8% de colisiones)
+- Latencia actual (121 ms) es aceptable
 
-**Desempeño de juego (promedio 10 sesiones):**
-
-- Puntaje: 2,575 ± 523 puntos
-- Tiempo de supervivencia: 54.6 ± 9.8 segundos
-- Nivel alcanzado: 2.7 ± 0.5
-- Tasa de recolección de bananas: 72% de bananas visibles
-- Tasa de evitar colisiones: 92%
-
-**Comparativa vs. línea base:**
-
-- Línea base (sin bot, observación casual): 1,000-1,500 puntos
-- Bot: 2,575 puntos (promedio) → **Mejora de 72-158%**
-
-#### 11.1.4 Respuestas a Preguntas de Investigación
-
-**PI-1: ¿Qué tan precisas las técnicas clásicas en escena con fondo dinámico e iluminación variable?**
-
-Respuesta: **Moderadamente precisas (85% en promedio).** La técnica de segmentación HSV es robusta a cambios moderados de iluminación, pero se degrada con cambios extremos (oscuridad muy baja, contraluz fuerte). El fondo dinámico de Banana Kong es un desafío, pero se maneja mediante validación geométrica adicional (área, proporción).
-
-**PI-2: ¿Es suficiente un sistema de reglas para comportamiento autónomo efectivo?**
-
-Respuesta: **Sí, pero con limitaciones.** Las reglas predefinidas generan comportamiento robusto para escenarios comunes (evitar obstáculo, recoger banana). Sin embargo, no generaliza a escenarios no anticipados (combinaciones complejas de obstáculos, trampas específicas del juego). Una arquitectura híbrida (reglas + aprendizaje) podría mejorar.
-
-**PI-3: ¿Cómo afecta latencia acumulada al desempeño en tiempo real?**
-
-Respuesta: **Significativamente.** Latencia de 110-120 ms introduce ~1 frame de retraso en toma de decisiones. Esto causa:
-
-- Colisiones evitables (~8% de casos)
-- Pérdida de bananas cercanas (~20% de casos)
-- Decisiones subóptimas en situaciones dinámicas rápidas
-
-**PI-4: ¿Cuáles son principales fuentes de fallo?**
-
-Respuesta: Las principales fuentes de fallo son:
-
-1. **Latencia (35%):** Reacción tardía ante eventos
-2. **Falsos positivos en detección (30%):** Evasión de obstáculos fantasma
-3. **Cambios de iluminación (20%):** Degradación de precisión de detectores
-4. **Limitaciones de reglas (15%):** No cubre escenarios edge
-
-### 11.2 Interpretación de Resultados
-
-#### 11.2.1 Alineación con Objetivos
-
-| Objetivo Específico              | Meta                 | Resultado      | Estado |
-| -------------------------------- | -------------------- | -------------- | ------ |
-| **OE1:** Captura tiempo real     | ≥30 FPS              | 30.2 FPS       | ✅     |
-| **OE2:** Detectar 13 elementos   | ≥80% precisión c/u   | 85.7% promedio | ✅     |
-| **OE3:** Motor de decisión       | Evaluar en ≤30 ms    | 8 ms           | ✅     |
-| **OE4:** Módulo de control       | Latencia ≤50 ms      | 25 ms          | ✅     |
-| **OE5:** Sistema de métricas     | Registrar desempeño  | 100% funcional | ✅     |
-| **OE6:** Validación experimental | Demostrar viabilidad | 2,575 pts avg  | ✅     |
-
-**Conclusión:** **Todos los objetivos específicos cumplidos.**
-
-#### 11.2.2 Restricciones y Supuestos
-
-**Restricción RT-1: Tiempo Real (<100 ms)**
-
-- Latencia actual: 121 ms
-- Estado: **MARGINAL** (ligeramente fuera de presupuesto, pero aceptable operacionalmente)
-
-**Restricción RT-2: Sin acceso a memoria interna**
-
-- Estado: **CUMPLIDO** (sistema completamente black-box visual)
-
-**Supuesto S-1: Estructura visual consistente**
-
-- Estado: **CONFIRMADO** (colores de elementos consistentes entre sesiones)
-
-**Supuesto S-2: Elementos diferenciables**
-
-- Estado: **PARCIALMENTE CONFIRMADO** (diferenciables para mayoría de elementos; "Pared" a veces confundible con fondo)
-
-#### 11.2.3 Limitaciones Identificadas
-
-**Limitación L-1: Sensibilidad a Iluminación**
-
-- Impacto: Degradación ~15% en baja luz
-- Mitigación: Mejorar parámetros HSV; usar CLAHE (adaptative histogram equalization)
-
-**Limitación L-2: Rigidez a Cambios de Resolución**
-
-- Impacto: Sistema falla completamente si cambia a 1024×768
-- Mitigación: Escalar parámetros de área automáticamente; versión multi-resolución futura
-
-**Limitación L-3: Latencia Acumulada**
-
-- Impacto: ~8% de colisiones evitables
-- Mitigación: Paralelización de detectores (estimado: reducción a 60 ms)
-
-**Limitación L-4: Reglas Predefinidas No Generalizan**
-
-- Impacto: No detecta patrones no anticipados
-- Mitigación: Agregar aprendizaje por refuerzo para casos edge
-
-### 11.3 Contribuciones del Proyecto
-
-1. **Demostración empírica:** Confirmó viabilidad de arquitectura clásica para automatización visual en tiempo real de videojuegos complejos
-
-2. **Documentación técnica:** Registro completo de alternativas evaluadas, decisiones de diseño y resultados
-
-3. **Codebase reutilizable:** Pipeline modular y bien documentado puede adaptarse a otros juegos/contextos
-
-4. **Benchmarking:** Referencia de desempeño para comparar con alternativas (YOLO, RL, etc.)
-
-### 11.4 Trabajo Futuro
-
-**Mejoras Inmediatas (2-4 semanas):**
-
-1. Paralelizar detectores → reducir latencia a ~60 ms
-2. Implementar CLAHE para robustez a iluminación
-3. Agregar soporte multi-resolución
-
-**Mejoras Mediano Plazo (1-2 meses):**
-
-1. Integrar aprendizaje por refuerzo para decisiones complejas
-2. Agregar soporte para menús y navegación de juego
-3. Generalizar a otros juegos (Chrome Dino, Flappy Bird)
-
-**Mejoras Largo Plazo (3+ meses):**
-
-1. Usar modelos YOLO para detección más robusta
-2. Implementar seguimiento temporal de objetos (Kalman filter)
-3. Crear framework genérico reutilizable
+### 11.2 Interpretación de Resultados (P)
 
 ## 12. Referencias
-
-Incluye todas las fuentes consultadas y citadas en el documento, en el formato de citación definido para el curso o proyecto.
-
----
 
 [1] arturfog, “Chrome Dino game bot using OpenCV and mss,” GitHub, 2021. [Online]. Available https://github.com/arturfog/dino
 
