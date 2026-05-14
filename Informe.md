@@ -399,7 +399,7 @@ La comunicación entre módulos se realiza mediante paso de datos en memoria (si
 
 La arquitectura describe la estructura fundamental del sistema, incluyendo sus componentes, las relaciones entre ellos y la forma en que interactúan para cumplir con los requerimientos planteados.
 
-#### 7.2.1 Descripción general de la arquitectura (Desarrollar más)
+#### 7.2.1 Descripción general de la arquitectura
 
 Su objetivo es permitir que el lector entienda cómo está pensado el sistema antes de ver cualquier representación visual.
 
@@ -411,11 +411,151 @@ Debe incluir:
 
 ---
 
-El sistema sigue un pipeline estructurado en cuatro módulos principales que se ejecutan secuencialmente en cada ciclo de procesamiento:
+El sistema está estructurado como un **pipeline de procesamiento secuencial** con retroalimentación visual en tiempo real. La arquitectura sigue un modelo **modular y desacoplado** que permite:
 
-**Captura → Detección → Decisión → Acción**
+- Reemplazo independiente de cada componente
+- Fácil extensión (agregar nuevos detectores)
+- Prueba aislada de cada módulo
+- Visualización de estado intermedio
+
+**Enfoque general:**
+
+1. **Captura en Tiempo Real:** Obtención continua de frames del emulador
+2. **Percepción Visual:** Análisis de cada frame para detectar elementos
+3. **Representación de Estado:** Estructuración de detecciones en una representación del juego
+4. **Lógica de Decisión:** Evaluación de reglas sobre el estado para determinar acción
+5. **Control:** Ejecución de la acción mediante simulación de teclado
+
+**Relación con alternativa seleccionada:** La arquitectura implementa la Alternativa C (Visión Clásica + Reglas Predefinidas), especificando cómo cada componente contribuye a satisfacer restricciones de tiempo real y mantenibilidad.
 
 #### 7.2.2 Componentes del sistema e interacción
+
+El sistema se compone de los siguientes componentes principales:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      Bot Banana Kong                            │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+   ┌────▼────┐          ┌────▼─────┐        ┌────▼─────┐
+   │ Captura │          │Detección │        │ Decisión │
+   └────┬────┘          └────┬─────┘        └────┬─────┘
+        │                     │                    │
+   ┌───▼─────────────┐  ┌────▼──────────────┐  ┌─▼──────────┐
+   │ Emulador MuMu   │  │ Pipeline OpenCV   │  │Motor Reglas│
+   │ (960x540)       │  │ (13 detectores)   │  │(GameState) │
+   └───┬─────────────┘  └────┬──────────────┘  └─┬──────────┘
+        │                     │                    │
+        └─────────────────────┼────────────────────┘
+                              │
+                         ┌────▼────┐
+                         │ Acción  │
+                         │(teclado)│
+                         └────┬────┘
+                              │
+                      ┌───────▼────────┐
+                      │  Emulador      │
+                      │ (ejecución)    │
+                      └────────────────┘
+```
+
+**Componente 1: Captura (core/vision/captura/captura.py)**
+
+- **Responsabilidad:** Obtener frames del emulador en tiempo real
+- **Entrada:** Nombre de ventana del emulador ("Android Device")
+- **Salida:** Array numpy 960×540×3 (BGR) cada ~33 ms
+- **Técnicas:** Detección de ventana por HWND (Windows API), captura con MSS (mss library)
+- **Latencia típica:** 15-25 ms
+- **Relación con requerimientos:** RF1.1, RF1.2, RF1.3
+
+**Componente 2: Detección (core/vision/detection/)**
+
+Consta de 13 detectores especializados, cada uno responsable de detectar un tipo de elemento:
+
+| Detector                  | Técnica Principal              | Parámetros Clave           | Latencia |
+| ------------------------- | ------------------------------ | -------------------------- | -------- |
+| BananaDetector            | HSV + Contornos                | BANANA_RANGO_BAJO/ALTO     | 8 ms     |
+| TroncoDetector            | HSV + Contornos                | TRONCO_RANGO_BAJO/ALTO     | 8 ms     |
+| ArbustoDetector           | HSV + Contornos                | ARBUSTO_RANGO_BAJO/ALTO    | 8 ms     |
+| AvionDetector             | HSV + Contornos                | AVION_RANGO_BAJO/ALTO      | 8 ms     |
+| ParedDetector             | HSV + Contornos                | PARED_RANGO_BAJO/ALTO      | 8 ms     |
+| RocaDetector              | HSV + Contornos                | ROCA_RANGO_BAJO/ALTO       | 8 ms     |
+| CuevaDetector             | HSV + Contornos                | CUEVA_RANGO_BAJO/ALTO      | 8 ms     |
+| TotemDetector             | HSV + Contornos                | TOTEM_RANGO_BAJO/ALTO      | 8 ms     |
+| TuboDetector              | HSV + Contornos                | TUBO_RANGO_BAJO/ALTO       | 8 ms     |
+| PlataformaDetector        | HSV + Operaciones Morfológicas | PLATAFORMA_RANGO_BAJO/ALTO | 10 ms    |
+| PlataformaAlgodonDetector | Template Matching              | Template + Umbral          | 12 ms    |
+| AguaDetector              | HSV + Dilatación               | AGUA_RANGO_BAJO/ALTO       | 8 ms     |
+| KongDetector              | HSV + Contornos                | KONG_RANGO_BAJO/ALTO       | 8 ms     |
+
+- **Responsabilidad:** Detectar elementos específicos del juego en frame
+- **Entrada:** Frame BGR 960×540
+- **Salida:** Lista de bounding boxes (x, y, w, h) con centroide para cada elemento detectado
+- **Configuración:** Centralizada en `core/config/settings.py`
+- **Latencia total:** ~50-80 ms (ejecutados secuencialmente)
+- **Relación con requerimientos:** RF2.1-RF2.5
+
+**Componente 3: Representación de Estado (core/rules/game_state.py)**
+
+- **Responsabilidad:** Estructurar el resultado de las detecciones en una representación interna del estado del juego
+- **Entrada:** Detecciones de los 13 detectores
+- **Salida:** Objeto `GameState` con propiedades:
+  - `kong_pos`: (x, y) posición actual de Kong
+  - `kong_plataforma`: plataforma en la que está Kong
+  - `obstaculos_cercanos`: lista de obstáculos en rango de colisión
+  - `bananas_visibles`: lista de bananas recolectables
+  - `peligros`: agua, cuevas, etc.
+- **Latencia:** ~2 ms
+- **Relación con requerimientos:** RF3.1
+
+**Componente 4: Motor de Decisión (core/rules/rule_engine.py)**
+
+- **Responsabilidad:** Evaluar reglas sobre el estado actual y determinar acción óptima
+- **Entrada:** `GameState` actual
+- **Salida:** Acción (SALTAR, PLANEAR, BAJAR, DASH, NADA)
+- **Lógica:** Máquina de estados / evaluador de reglas secuencial
+- **Reglas implementadas:**
+  - R1: Si hay obstáculo muy cercano (colisión inminente) → SALTAR
+  - R2: Si hay banana accesible → SALTAR + posicionar
+  - R3: Si Kong cae → PLANEAR (paracaídas)
+  - R4: Si agua debajo → SALTAR o PLANEAR
+  - R5: Si está en plataforma superior → BAJAR (si objetivo está abajo)
+- **Latencia:** ~5 ms
+- **Relación con requerimientos:** RF3.1-RF3.3
+
+**Componente 5: Control / Acciones (core/control/acciones_click.py)**
+
+- **Responsabilidad:** Traducir decisiones en entradas de teclado simuladas
+- **Entrada:** Acción (SALTAR, PLANEAR, etc.)
+- **Salida:** Evento de teclado enviado al emulador
+- **Técnicas:** pyautogui para simulación de mouse
+
+- **Acciones mapeadas:**
+  - SALTAR → tecla 'C'
+  - PLANEAR → tecla 'Space'
+  - BAJAR → tecla 'Down'
+  - DASH → combinación de teclas
+- **Latencia:** ~20-50 ms (latencia del sistema operativo)
+- **Relación con requerimientos:** RF4.1-RF4.4
+
+**Componente 6: Visualización (core/vision/visualizador/visualizador.py)**
+
+- **Responsabilidad:** Mostrar en tiempo real los elementos detectados y estado interno
+- **Entrada:** Frame original + detecciones + estado
+- **Salida:** Frame anotado con rectángulos de color, texto de estado
+- **Información mostrada:** Bounding boxes por tipo de elemento (colores diferentes), centroide de Kong, puntaje actual, FPS
+- **Latencia:** ~10-15 ms
+- **Relación con requerimientos:** RF5.1-RF5.3
+
+**Componente 7: Configuración (core/config/settings.py)**
+
+- **Responsabilidad:** Almacenar y gestionar todos los parámetros del sistema
+- **Contenido:** Rangos HSV, umbrales de área, proporciones mín/máx, nombres de ventanas, rutas de templates, flags de ejecución
+- **Acceso:** Importado como módulo global `settings`
+- **Ventajas:** Modificaciones sin recompilar; fácil experimentación
+- **Relación con requerimientos:** RF6.1-RF6.2
 
 ##### 7.2.2.1 Descripción de componentes
 
