@@ -42,16 +42,71 @@ Incluya una vista general de la estructura de directorios.
 Ejemplo:
 
 ```text
-/
-├── frontend/
-├── backend/
-├── docs/
-├── scripts/
-├── docker/
+banana_kong_bot/
+├── Desarrollo.md          (este documento)
+├── Ficha de Propuesta Videojuego autónomo.md
+├── Instalación.md
+├── Informe.
 ├── README.md
-├── Informe.md
-├── Instalacion.md
-└── Desarrollo.md
+├── requirements.txt
+├── start_bot.ps1
+├── core/
+│   ├── main.py                        (punto de entrada)
+│   ├── simular_reglas.py
+│   ├── config/
+│   │   └── settings.py                (configuración centralizada)
+│   ├── control/
+│   │   ├── acciones.py
+│   │   └── acciones_click.py          (módulo de control)
+│   ├── metrics/
+│   │   ├── __init__.py
+│   │   ├── bot_metrics.py             (sistema de métricas)
+│   │   └── detection_metrics.py
+│   ├── rules/
+│   │   ├── game_state.py              (representación de estado)
+│   │   ├── rule_engine.py             (motor de decisión)
+│   │   └── rules.py                   (definición de reglas)
+│   ├── utils/
+│   │   ├── ajuste_hsv.py              (herramienta de calibración)
+│   │   ├── calibrar_color.py
+│   │   └── prueba_template_matching.py
+│   └── vision/
+│       ├── __init__.py
+│       ├── captura/
+│       │   ├── __init__.py
+│       │   └── captura.py             (módulo de captura)
+│       ├── detection/
+│       │   ├── __init__.py
+│       │   ├── base_detector.py       (clase base)
+│       │   ├── detector.py            (coordinador)
+│       │   ├── detectors/             (13 detectores)
+│       │   │   ├── agua_detector.py
+│       │   │   ├── arbusto_detector.py
+│       │   │   ├── avion_detector.py
+│       │   │   ├── banana_detector.py
+│       │   │   ├── ...
+│       │   │   └── kong_detector.py
+│       │   └── plantillas/            (templates para matching)
+│       └── visualizador/
+│           ├── __init__.py
+│           └── visualizador.py        (módulo de visualización)
+├── diseno/
+│   ├── diagramas/
+│   │   ├── DiagramaArquitectura.txt
+│   │   ├── DiagramaArquitectura.png
+│   │   ├── DiagramaInteraccionEntreModulos.txt
+│   │   ├── DiagramaInteraccionEntreModulos.png
+│   │   ├── SecuenciaDeteccion.txt
+│   │   ├── SecuenciaDeteccion.png
+│   │   ├── SecuenciaTomadeDecision.txt
+│   │   └── SecuenciaTomadeDecision.png
+│   └── vision por computador/
+│       └── README_vision_por_computador.md
+├── reportes/
+│   ├── metricas_deteccion_20260506_143056.csv
+│   └── (otros reportes generados)
+└── .venv/                             (entorno virtual)
+
 ```
 
 ### 3.2 Descripción de directorios y archivos relevantes

@@ -430,36 +430,19 @@ El sistema está estructurado como un **pipeline de procesamiento secuencial** c
 
 #### 7.2.2 Componentes del sistema e interacción
 
-El sistema se compone de los siguientes componentes principales:
+##### 7.2.2.1 Descripción de componentes
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Bot Banana Kong                            │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-   ┌────▼────┐          ┌────▼─────┐        ┌────▼─────┐
-   │ Captura │          │Detección │        │ Decisión │
-   └────┬────┘          └────┬─────┘        └────┬─────┘
-        │                     │                    │
-   ┌───▼─────────────┐  ┌────▼──────────────┐  ┌─▼──────────┐
-   │ Emulador MuMu   │  │ Pipeline OpenCV   │  │Motor Reglas│
-   │ (960x540)       │  │ (13 detectores)   │  │(GameState) │
-   └───┬─────────────┘  └────┬──────────────┘  └─┬──────────┘
-        │                     │                    │
-        └─────────────────────┼────────────────────┘
-                              │
-                         ┌────▼────┐
-                         │ Acción  │
-                         │(teclado)│
-                         └────┬────┘
-                              │
-                      ┌───────▼────────┐
-                      │  Emulador      │
-                      │ (ejecución)    │
-                      └────────────────┘
-```
+Deben identificarse y explicarse:
+
+- los componentes principales del sistema, por ejemplo frontend, backend, base de datos y servicios externos;
+- la responsabilidad de cada componente;
+- la relación de cada componente con los requerimientos del sistema.
+
+Esta parte debe terminar con el **diagrama de arquitectura del sistema**.
+
+---
+
+El sistema se compone de los siguientes componentes principales:
 
 **Componente 1: Captura (core/vision/captura/captura.py)**
 
@@ -556,16 +539,6 @@ Consta de 13 detectores especializados, cada uno responsable de detectar un tipo
 - **Acceso:** Importado como módulo global `settings`
 - **Ventajas:** Modificaciones sin recompilar; fácil experimentación
 - **Relación con requerimientos:** RF6.1-RF6.2
-
-##### 7.2.2.1 Descripción de componentes
-
-Deben identificarse y explicarse:
-
-- los componentes principales del sistema, por ejemplo frontend, backend, base de datos y servicios externos;
-- la responsabilidad de cada componente;
-- la relación de cada componente con los requerimientos del sistema.
-
-Esta parte debe terminar con el **diagrama de arquitectura del sistema**.
 
 ##### 7.2.2.2 Interacción entre módulos
 
