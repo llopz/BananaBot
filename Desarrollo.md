@@ -12,16 +12,16 @@ Bot autónomo para el videojuego **Banana Kong** ejecutado en un emulador Androi
 Captura de pantalla → Detección → Estado del juego → Motor de reglas → Acción (clic)
 ```
 
-### 2.1 Tecnologías principales (Pendiente)
+### 2.1 Tecnologías principales
 
-- Python 3.x
+- Python 3.13
 - OpenCV (`cv2`)
 - mss
 - numpy
 - pygetwindow
 - pyautogui
 - keyboard
-- MuMu Player (Emulador Android)
+- MuMu Player / BlueStacks (Emulador Android)
 
 ## 3. Estructura del Proyecto
 
@@ -352,7 +352,18 @@ Rule(name="mi_regla", condition=mi_regla, action=SALTAR, priority=5),
 
 3. Probar en ejecución real con `EJECUTAR_ACCIONES = False` antes de habilitar acciones automáticas.
 
-### 6.3 Ejecución de pruebas y validaciones (P)
+### 6.3 Ejecución de pruebas y validaciones
+
+Checklist mínimo de validación técnica:
+
+- Ejecutar `./start_bot.ps1` y confirmar inicio sin excepciones.
+- Verificar detección de ventana del emulador (`EMULADOR_TITULO` correcto).
+- Confirmar funcionamiento de teclas de control (`SPACE`, `P`, `Q`).
+- Probar modo seguro con `EJECUTAR_ACCIONES=False`.
+- Probar modo activo con `EJECUTAR_ACCIONES=True` solo después de validar detección.
+- Verificar que la detección forzada responda ante obstáculos cercanos.
+- Activar evaluación (`EVAL_DETECCION_HABILITADA=True`) y registrar muestras con `1/2`.
+- Exportar métricas con `E` y validar creación de CSV en `./reportes/`.
 
 ### 6.4 Integración de cambios
 
@@ -378,53 +389,66 @@ Describa las convenciones usadas para mantener consistencia en el desarrollo.
 | Claves del dict `resultados`        | plural: `"troncos"`, `"bananas"`                             |
 | Parámetros de settings              | prefijo del tipo + sufijo descriptivo: `TRONCO_AREA_MIN_PCT` |
 
-### 7.2 Convenciones de repositorio (Pendiente)
+### 7.2 Convenciones de repositorio
 
 Documente prácticas relacionadas con el trabajo colaborativo.
 
-Ejemplo:
+- Ramas: usar prefijos `feat/`, `fix/`, `docs/`, `refactor/`.
+- Commits: seguir prefijos semánticos (`feat:`, `fix:`, `docs:`, `refactor:`).
+- Pull requests: incluir resumen técnico, archivos impactados y evidencia de validación.
+- Alcance por commit: evitar mezclar refactor, documentación y cambios funcionales en un solo commit.
+- Integración: hacer merge solo después de validar ejecución local del loop principal.
 
-- nombres de ramas;
-- mensajes de commit;
-- manejo de issues;
-- versionado.
-
-### 7.3 Convenciones de documentación (Pendiente)
+### 7.3 Convenciones de documentación
 
 Indique cómo debe mantenerse actualizada la documentación del proyecto.
 
-## 8. Problemas frecuentes y recomendaciones (Pendiente)
+- Si se agrega o elimina un detector, actualizar árbol de proyecto, módulo de detección y tabla de detectores.
+- Si se agrega o modifica una regla, actualizar secciones de `rules/` y el flujo de decisión.
+- Mantener sincronizados este manual, `README.md` e `INFORME_FINAL_PROYECTO.md`.
+- Registrar decisiones técnicas en la sección 9.
+- Mantener ejemplos de ejecución en entorno Windows.
+
+## 8. Problemas frecuentes y recomendaciones
 
 Documente errores comunes, limitaciones conocidas, deuda técnica o advertencias importantes para futuros equipos.
 
 ### 8.1 Problemas frecuentes
 
-Ejemplo:
-
-- errores de puertos;
-- variables de entorno faltantes;
-- problemas de conexión a la base de datos;
-- conflictos entre versiones;
-- errores de permisos.
+- El bot no detecta la ventana del emulador:
+  - Revisar `EMULADOR_TITULO` y confirmar que la ventana no esté minimizada.
+- Detecciones inestables:
+  - Recalibrar HSV usando `core/utils/ajuste_hsv.py`.
+- No se ejecutan acciones:
+  - Verificar foco del emulador y estado de `EJECUTAR_ACCIONES`.
+- Latencia alta o FPS bajo:
+  - Ajustar `DETECTAR_CADA_N_FRAMES` y carga del equipo.
 
 ### 8.2 Deuda técnica conocida
 
-Liste componentes incompletos, decisiones provisionales, refactors pendientes o limitaciones actuales del sistema.
+- No existe una suite formal de tests automáticos unitarios/integración.
+- Dependencia de calibración visual manual ante cambios de escena o resolución.
+- Sensibilidad a cambios de UI entre versiones del emulador.
+- Falta de perfiles de configuración por entorno (resolución/equipo).
 
 ### 8.3 Recomendaciones para continuidad
 
-Indique sugerencias concretas para futuros grupos que deban continuar el proyecto.
+- Priorizar pruebas unitarias para `GameState` y reglas críticas.
+- Crear perfiles de `settings.py` por resolución y emulador.
+- Mantener set de capturas etiquetadas para regresión de detección.
+- Evitar incorporar lógica nueva sin actualizar este manual en la misma tarea.
 
-## 9. Historial de decisiones técnicas relevantes (Pendiente)
+## 9. Historial de decisiones técnicas relevantes
 
 Documente decisiones importantes tomadas durante el desarrollo y la razón detrás de ellas.
 
-Ejemplo:
-
-- elección de framework;
-- cambio de base de datos;
-- adopción o descarte de contenedores;
-- reestructuración de módulos;
-- cambio en estrategia de autenticación.
+- Se consolidó `acciones_click.py` como módulo de control activo para simplificar la capa de ejecución.
+- Se eliminó detección de barriles y plataformas normales para reducir ruido y complejidad del sistema.
+- Se mantuvo enfoque de visión clásica (HSV + template matching) por costo computacional bajo y alta interpretabilidad.
+- Se incorporó estado `dash_disponible` y regla `dash` de prioridad máxima para respuesta en peligros inmediatos.
+- Se centralizó configuración en `settings.py` para evitar valores mágicos dispersos.
 
 ## 10. Referencias relacionadas
+
+
+
