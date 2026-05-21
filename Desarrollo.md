@@ -120,32 +120,28 @@ Este archivo actúa como la única fuente de configuración del proyecto, evitan
 
 Entre los parámetros configurables se encuentran:
 
-- Configuración del emulador.
-- Frecuencia de captura y detección.
-- Rangos HSV para detección por color.
-- Configuración de templates.
-- Parámetros de debugging.
-- Métricas de rendimiento.
-- Evaluación de detección.
-- Activación o desactivación de acciones reales.
+| Sección | Qué configura |
+|---------|--------------|
+| `EMULADOR_*` | Título de la ventana y frecuencia de refresco de coordenadas |
+| `DETECCION_*` | Filtro X mínimo, umbral de forzar detección, frames cada N |
+| `<TIPO>_RANGO_BAJO/ALTO` | Rango HSV del detector de color de ese tipo |
+| `<TIPO>_AREA_MIN/MAX_PCT` | Porcentaje del área de frame permitido |
+| `<TIPO>_PROP_MIN/MAX` | Rango de proporción ancho/alto del bounding box |
+| `<TIPO>_TEMPLATE_*` | Archivo PNG, umbral de match y escala para detectores por template |
+| `EJECUTAR_ACCIONES` | `False` = modo observación seguro (sin clics) |
+| `DEBUG` | Muestra área/proporción de cada detección en pantalla |
+| `DEBUG_REGLAS` | Imprime en consola qué regla se disparó en cada frame |
+| `METRICAS_*` | Ventana de FPS y frecuencia de log |
+| `EVAL_DETECCION_*` | Clases a evaluar, distancia máxima y carpeta de salida |
 
-Gracias a este enfoque, el comportamiento general del sistema puede modificarse sin alterar la lógica interna del código.
 
 ---
 
 ### Núcleo principal (`core/`)
 
-El módulo `core` contiene el punto de entrada principal del proyecto (`main.py`) y coordina el funcionamiento general del bot.
+Punto de entrada. Instancia todos los módulos, mantiene el estado del bot (`deteccion_activa`, `pausado`) y ejecuta el loop principal. El resultado del detector se guarda en `resultados` entre frames para reutilizar la última detección si no toca detectar (según `DETECTAR_CADA_N_FRAMES`).
 
-Sus responsabilidades incluyen:
-
-- Inicializar todos los módulos.
-- Mantener estados globales del sistema.
-- Ejecutar el loop principal.
-- Coordinar captura, detección, reglas y acciones.
-- Reutilizar detecciones entre frames para optimizar rendimiento.
-
-También implementa mecanismos de optimización como la detección forzada cuando un obstáculo se encuentra demasiado cerca del personaje.
+**Detección forzada:** si hay un obstáculo a menos de `DETECCION_FORZAR_DX_UMBRAL` píxeles de Kong, se fuerza la detección aunque no haya llegado el frame N.
 
 ---
 
@@ -155,13 +151,11 @@ El módulo de visión es responsable de toda la interacción visual con el juego
 
 **Captura (`vision/captura`)**
 
-Encargado de capturar frames del emulador utilizando `mss`.
+**`Capturador`** usa `mss` para capturar la región de la ventana del emulador. Localiza la ventana por título (`EMULADOR_TITULO`) y refresca sus coordenadas cada `EMULADOR_REFRESCAR_CADA` frames.
 
-Además:
+- `capturar()` → `np.ndarray` BGR
+- `capturar_y_congelar(frame_congelado, pausado)` → devuelve el frame congelado si `pausado=True`
 
-- Localiza automáticamente la ventana del emulador.
-- Refresca periódicamente sus coordenadas.
-- Permite congelar el último frame cuando el sistema se encuentra pausado.
 
 ---
 
@@ -169,18 +163,50 @@ Además:
 
 Implementa toda la lógica de detección de elementos del juego.
 
-La arquitectura de detección se basa en:
+#### `base_detector.py`
 
-- Una clase base reutilizable (`BaseDetector`).
-- Detectores independientes por tipo de elemento.
-- Un orquestador que ejecuta detectores en paralelo.
+Clase base que expone dos métodos de detección reutilizables:
 
-El sistema soporta dos métodos principales de detección:
+**`_detectar_elemento(...)`** — Detección por color:
+1. Convierte el frame al espacio de color indicado (con caché por frame para evitar reconversiones).
+2. Aplica `cv2.inRange` para crear una máscara binaria.
+3. Aplica erosión y dilatación opcional.
+4. Extrae blobs con `connectedComponentsWithStats`.
+5. Filtra por área, proporción y zona Y.
+6. Devuelve `(elementos, descartados, mascara)`.
 
-- Detección por color HSV.
-- Detección por template matching.
+**`_detectar_por_template(...)`** — Detección por template matching:
+1. Convierte la ROI a gris.
+2. Aplica `cv2.matchTemplate` con `TM_CCOEFF_NORMED`.
+3. Agrupa detecciones solapadas con `cv2.groupRectangles`.
+4. Devuelve `(elementos, descartados, mascara)`.
 
-Cada detector se encuentra desacoplado en archivos independientes dentro de `detectors/`, lo que facilita agregar nuevos elementos sin modificar la arquitectura general.
+La clase `Elemento` (dataclass) contiene: `x, y, w, h, centro_x, centro_y, area, proporcion, tipo`.
+
+#### `detector.py`
+
+Orquestador que divide los detectores en dos grupos y los ejecuta en paralelo usando `ThreadPoolExecutor`. Tras la ejecución aplica `_aplicar_filtro_x_minimo` para descartar detecciones a la izquierda de `DETECCION_X_MIN` (excepto kong y barras potenciadoras).
+
+#### `detectors/`
+
+Un archivo por tipo de elemento. Todos heredan de `BaseDetector` e implementan `detectar(frame) → (elementos, descartados, mascara)`.
+
+| Detector | Método | Notas |
+|----------|--------|-------|
+| `BananaDetector` | color HSV | Zona Y limitada |
+| `TroncoDetector` | color HSV | |
+| `ArbustoDetector` | color HSV | |
+| `AvionDetector` | color HSV | Expande bounding box un 50%/60% para cubrir cola |
+| `KongDetector` | color HSV | No aplica filtro X mínimo |
+| `ParedDetector` | color HSV | |
+| `RocaDetector` | color HSV | |
+| `AguaDetector` | color HSV | Solo franja inferior; doble dilatación H+V |
+| `PlataformaMaderaDetector` | color HSV | Zona Y muy restringida; altura normalizada |
+| `CuevaDetector` | template PNG | Zona Y inferior |
+| `BarraPotenciadoraDetector` | template PNG | Filtro por posición fija en pantalla |
+| `TotemDetector` | color HSV | Dilatación fuerte para unir fragmentos |
+| `TuboDetector` | color HSV | Extensión izquierda del bounding box |
+
 
 ---
 
@@ -192,60 +218,61 @@ Se compone de tres partes principales.
 
 **Estado del juego (`game_state.py`)**
 
-Construye una representación lógica del entorno mediante un sistema basado en carriles.
+`GameState` mantiene un modelo de 5 carriles (`0` = suelo, `4` = más alto). Cada carril almacena:
 
-Este estado almacena información como:
+- `suelo` (bool): hay plataforma sólida en ese carril frente a Kong.
+- `banana_cercana`: tupla `(Elemento, dx, dy)` de la banana más próxima en ese carril.
+- `obstaculo_cercano`: tupla `(Elemento, dx, dy)` del obstáculo más próximo en ese carril.
+- `dash_disponible` (bool): se activa al detectar barra potenciadora y se consume al ejecutar DASH.
 
-- Suelo disponible.
-- Obstáculos cercanos.
-- Bananas cercanas.
-- Disponibilidad de dash.
+El método `actualizar()` se llama cada frame con las listas de detecciones y recalcula todo el estado. También recibe `barras_potenciadoras` para habilitar el estado de dash. El mapping `Y → carril` está en `_obtener_carril()`.
 
-Toda la información detectada visualmente se transforma aquí en información utilizable por las reglas.
+**Para modificar la lógica de carriles** (p.ej. cambiar los rangos de Y), editar `_obtener_carril()` en `game_state.py` y la zona de plataformas de madera (`PLATAFORMA_MADERA_ZONA_Y_INICIO` y `PLATAFORMA_MADERA_ZONA_Y_FIN`) en `settings.py`.
 
 ---
 
 **Motor de reglas (`rule_engine.py`)**
 
-Evalúa las reglas activas según prioridad y selecciona la primera acción válida.
+`RuleEngine` ordena las reglas por prioridad (menor número = mayor prioridad) y devuelve la acción de la primera regla cuya condición sea `True`. Si ninguna regla aplica, devuelve `NADA`.
 
-Si ninguna regla aplica, el sistema retorna la acción `NADA`.
+#### `rules.py`
 
----
+Define las funciones de condición y la tabla de reglas activas:
 
-**Reglas (`rules.py`)**
+| Nombre | Condición | Acción | Prioridad |
+|--------|-----------|--------|-----------|
+| `dash` | Dash disponible y peligro inmediato (obstáculo o hueco) | DASH | 0 |
+| `saltar_obstaculo` | Obstáculo peligroso en carril actual | SALTAR | 1 |
+| `saltar_vacio` | Carril 0 sin suelo bajo Kong | SALTAR | 2 |
+| `caida_peligrosa` | Carril actual y carril inferior sin suelo | PLANEAR | 3 |
+| `recolectar_banana` | Banana cercana en carril superior sin peligro inmediato arriba | SALTAR | 4 |
 
-Define el comportamiento del bot mediante reglas específicas, por ejemplo:
+Las distancias de reacción por tipo de obstáculo se configuran en el dict `OBST_DIST` al inicio de `rules.py`.
+La disponibilidad de dash se consume dentro de la regla `dash` (`dash_rule`) para evitar usos repetidos del mismo power-up.
 
-- Saltar obstáculos.
-- Evitar huecos.
-- Planear caídas.
-- Recolectar bananas.
-- Utilizar dash en situaciones críticas.
+`plataforma_rule` sigue implementada como regla auxiliar, pero no forma parte de la tabla activa por prioridad.
 
-El diseño basado en prioridades permite extender fácilmente el comportamiento agregando nuevas reglas sin modificar el motor principal.
+**Para agregar una regla nueva:** ver sección [Agregar una nueva regla](#agregar-una-nueva-regla).
 
 ---
 
 ### Control (`control/`)
 
-El módulo de control ejecuta las acciones físicas dentro del juego mediante automatización de entradas usando `pyautogui`.
+#### `acciones_click.py` (activo)
 
-Las acciones del sistema se abstraen mediante constantes como:
+`ModuloAcciones` controla el juego mediante clicks de ratón sobre la ventana del emulador usando `pyautogui`.
 
-- `SALTAR`
-- `PLANEAR`
-- `DASH`
-- `BAJAR`
-- `NADA`
+| Constante | Valor | Acción |
+|-----------|-------|--------|
+| `NADA` | `"nada"` | Suelta el botón si estaba presionado |
+| `SALTAR` | `"saltar"` | Click simple (salto) |
+| `PLANEAR` | `"planear"` | Mantiene click presionado |
+| `BAJAR` | `"bajar"` | Arrastra hacia abajo |
+| `DASH` | `"dash"` | Arrastra horizontalmente |
 
-Cada acción se implementa utilizando clicks, arrastres o pulsaciones sostenidas sobre la ventana del emulador.
+El módulo tiene un cooldown configurable en `self.cooldown` para evitar saltos repetidos demasiado rápidos.
+Además, el módulo usa `pyautogui.PAUSE = 0.05` para estabilizar entradas y en `dash()` suelta primero cualquier click sostenido antes de ejecutar el arrastre.
 
-Además, el módulo incorpora:
-
-- Cooldowns entre acciones.
-- Estabilización de entradas.
-- Liberación segura de clicks sostenidos.
 
 ---
 
@@ -332,6 +359,26 @@ self._registrar("nuevo", NuevoDetector(self.config).detectar)
 
 7. Opcionalmente, añadir el tipo a `tipos_obstaculos` en `main.py` si debe influir en la detección forzada.
 
+## Configuración de detectores
+
+Todos los parámetros de detección están en `config/settings.py`. La convención de nombres es:
+
+```
+<TIPO>_ESPACIO           → espacio de color ("HSV")
+<TIPO>_RANGO_BAJO        → [H_min, S_min, V_min]
+<TIPO>_RANGO_ALTO        → [H_max, S_max, V_max]
+<TIPO>_AREA_MIN_PCT      → porcentaje mínimo del frame (e.g. 0.002 = 0.2%)
+<TIPO>_AREA_MAX_PCT      → porcentaje máximo del frame
+<TIPO>_PROP_MIN          → w/h mínimo
+<TIPO>_PROP_MAX          → w/h máximo
+<TIPO>_TEMPLATE_ARCHIVO  → nombre del PNG en vision/detection/plantillas/
+<TIPO>_TEMPLATE_UMBRAL   → score mínimo de matchTemplate [0–1]
+<TIPO>_TEMPLATE_ESCALA   → escala del template antes de matching
+```
+
+**Herramientas de calibración** (en `core/utils/`):
+- `ajuste_hsv.py`: abre la pantalla del emulador con trackbars para ajustar rangos HSV en tiempo real.
+
 ---
 
 ### Agregar una nueva regla
@@ -351,6 +398,25 @@ Rule(name="mi_regla", condition=mi_regla, action=SALTAR, priority=5),
 ```
 
 3. Probar en ejecución real con `EJECUTAR_ACCIONES = False` antes de habilitar acciones automáticas.
+
+## Sistema de carriles
+
+El juego se divide verticalmente en 5 carriles basados en la coordenada Y:
+
+```
+Carril 4  →  y < 149      (plataformas altas)
+Carril 3  →  149 < y ≤ 250
+Carril 2  →  250 < y ≤ 350
+Carril 1  →  350 < y ≤ 450
+Carril 0  →  y > 450      (suelo)
+```
+
+Kong siempre tiene un carril actual. Las reglas consultan el estado del carril actual y los carriles adyacentes (+1 arriba, -1 abajo) para decidir la acción.
+
+El mapping está en `GameState._obtener_carril(y)`. Si los rangos de Y del juego cambian (p.ej. en una resolución diferente), hay que actualizar tanto `_obtener_carril()` como `PLATAFORMA_ZONAS_Y` en `settings.py`.
+
+---
+
 
 ### 6.3 Ejecución de pruebas y validaciones
 
@@ -426,14 +492,12 @@ Documente errores comunes, limitaciones conocidas, deuda técnica o advertencias
 
 ### 8.2 Deuda técnica conocida
 
-- No existe una suite formal de tests automáticos unitarios/integración.
 - Dependencia de calibración visual manual ante cambios de escena o resolución.
 - Sensibilidad a cambios de UI entre versiones del emulador.
 - Falta de perfiles de configuración por entorno (resolución/equipo).
 
 ### 8.3 Recomendaciones para continuidad
 
-- Priorizar pruebas unitarias para `GameState` y reglas críticas.
 - Crear perfiles de `settings.py` por resolución y emulador.
 - Mantener set de capturas etiquetadas para regresión de detección.
 - Evitar incorporar lógica nueva sin actualizar este manual en la misma tarea.
