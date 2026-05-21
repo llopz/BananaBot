@@ -44,7 +44,9 @@ class GameState:
 
         if barras_potenciadoras:
             self.Dash = True
-        
+        else:
+            self.Dash = False
+            
         self.carril_actual = self.obtener_carril(kong_y)
         
         for a in aguas:
