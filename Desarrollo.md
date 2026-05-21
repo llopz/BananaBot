@@ -6,330 +6,379 @@ Este documento tiene como objetivo servir de guía técnica para comprender, man
 
 ## 2. Descripción general del proyecto desde la perspectiva de desarrollo
 
-Describa brevemente el proyecto desde el punto de vista técnico, indicando qué tipo de solución es, cuáles son sus componentes principales y cómo se organiza su desarrollo.
+Bot autónomo para el videojuego **Banana Kong** ejecutado en un emulador Android (BlueStacks / MuMu Player). El bot captura la pantalla del emulador en tiempo real, detecta elementos del juego mediante visión por computador (color HSV + template matching), deduce el estado del juego con un modelo de carriles y aplica un motor de reglas por prioridad para decidir la acción a ejecutar (click de ratón).
 
-### 2.1 Tecnologías principales
+```
+Captura de pantalla → Detección → Estado del juego → Motor de reglas → Acción (clic)
+```
 
-Liste los lenguajes, frameworks, librerías, servicios e infraestructura usados en el desarrollo.
+### 2.1 Tecnologías principales (Pendiente)
 
-Ejemplo:
+- Python 3.x
+- OpenCV (`cv2`)
+- mss
+- numpy
+- pygetwindow
+- pyautogui
+- keyboard
+- MuMu Player (Emulador Android)
 
-- **Frontend:** [tecnología]
-- **Backend:** [tecnología]
-- **Base de datos:** [tecnología]
-- **Contenedores:** [tecnología]
-- **Infraestructura adicional:** [tecnología]
-
-### 2.2 Componentes principales
-
-Describa los principales componentes implementados y su función dentro del sistema.
-
-Ejemplo:
-
-- **Cliente web:** [descripción]
-- **Servidor/API:** [descripción]
-- **Base de datos:** [descripción]
-- **Servicios externos:** [descripción]
-
-## 3. Estructura del repositorio
-
-Explique cómo está organizado el repositorio y cuál es el propósito de cada carpeta o archivo relevante.
+## 3. Estructura del Proyecto
 
 ### 3.1 Árbol general del repositorio
 
-Incluya una vista general de la estructura de directorios.
-
-Ejemplo:
-
-```text
+```
 banana_kong_bot/
-├── Desarrollo.md          (este documento)
-├── Ficha de Propuesta Videojuego autónomo.md
-├── Instalación.md
-├── Informe.
-├── README.md
-├── requirements.txt
-├── start_bot.ps1
 ├── core/
-│   ├── main.py                        (punto de entrada)
-│   ├── simular_reglas.py
+│   ├── main.py                   ← Punto de entrada del bot
 │   ├── config/
-│   │   └── settings.py                (configuración centralizada)
+│   │   └── settings.py           ← Todos los parámetros configurables
 │   ├── control/
-│   │   ├── acciones.py
-│   │   └── acciones_click.py          (módulo de control)
+│   │   ├── acciones_click.py     ← Módulo de control activo (mouse clicks)
 │   ├── metrics/
-│   │   ├── __init__.py
-│   │   ├── bot_metrics.py             (sistema de métricas)
-│   │   └── detection_metrics.py
+│   │   ├── bot_metrics.py        ← Métricas de rendimiento y evaluación
+│   │   └── detection_metrics.py  ← Tracker de métricas de detección (F1, Precision…)
 │   ├── rules/
-│   │   ├── game_state.py              (representación de estado)
-│   │   ├── rule_engine.py             (motor de decisión)
-│   │   └── rules.py                   (definición de reglas)
-│   ├── utils/
-│   │   ├── ajuste_hsv.py              (herramienta de calibración)
-│   │   ├── calibrar_color.py
-│   │   └── prueba_template_matching.py
+│   │   ├── game_state.py         ← Modelo de estado del juego por carriles
+│   │   ├── rule_engine.py        ← Motor de reglas por prioridad
+│   │   ├── rules.py              ← Definición de reglas de decisión
+│   ├── utils/                    ← Herramientas de desarrollo (calibración HSV, etc.)
 │   └── vision/
-│       ├── __init__.py
 │       ├── captura/
-│       │   ├── __init__.py
-│       │   └── captura.py             (módulo de captura)
+│       │   └── captura.py        ← Captura de pantalla del emulador (mss)
 │       ├── detection/
-│       │   ├── __init__.py
-│       │   ├── base_detector.py       (clase base)
-│       │   ├── detector.py            (coordinador)
-│       │   ├── detectors/             (13 detectores)
-│       │   │   ├── agua_detector.py
-│       │   │   ├── arbusto_detector.py
-│       │   │   ├── avion_detector.py
-│       │   │   ├── banana_detector.py
-│       │   │   ├── ...
-│       │   │   └── kong_detector.py
-│       │   └── plantillas/            (templates para matching)
+│       │   ├── base_detector.py  ← Clase base con métodos de detección compartidos
+│       │   ├── detector.py       ← Orquestador paralelo de todos los detectores
+│       │   ├── detectors/        ← Un archivo por tipo de elemento detectado
+│       │   └── plantillas/       ← Imágenes PNG usadas para template matching
 │       └── visualizador/
-│           ├── __init__.py
-│           └── visualizador.py        (módulo de visualización)
-├── diseno/
-│   ├── diagramas/
-│   │   ├── DiagramaArquitectura.txt
-│   │   ├── DiagramaArquitectura.png
-│   │   ├── DiagramaInteraccionEntreModulos.txt
-│   │   ├── DiagramaInteraccionEntreModulos.png
-│   │   ├── SecuenciaDeteccion.txt
-│   │   ├── SecuenciaDeteccion.png
-│   │   ├── SecuenciaTomadeDecision.txt
-│   │   └── SecuenciaTomadeDecision.png
-│   └── vision por computador/
-│       └── README_vision_por_computador.md
-├── reportes/
-│   ├── metricas_deteccion_20260506_143056.csv
-│   └── (otros reportes generados)
-└── .venv/                             (entorno virtual)
-
+│           └── visualizador.py   ← Dibuja detecciones y estado sobre el frame
+├── diseno/                       ← Diagramas de arquitectura
+├── reportes/                     ← CSVs de métricas de detección exportados
+└── requirements.txt
 ```
 
-### 3.2 Descripción de directorios y archivos relevantes
+### 3.2 Flujo de ejecución
 
-Documente las carpetas y archivos principales del repositorio.
+```
+main.py::main()
+│
+├─ Inicialización
+│   ├── Capturador(título_ventana)       # localiza la ventana del emulador
+│   ├── Detector(settings)               # instancia todos los detectores
+│   ├── Visualizador(settings)
+│   ├── ModuloAcciones()                 # control por click de ratón
+│   └── RuleEngine(rules)
+│
+└─ Loop principal (while True)
+    │
+    ├── 1. CAPTURA    → Capturador.capturar_y_congelar()
+    ├── 2. DETECCIÓN  → Detector.detectar_todos(frame)      ← paralelo en 2 hilos
+    ├── 3. ESTADO     → GameState.actualizar(resultados)
+    ├── 4. DECISIÓN   → RuleEngine.decide(estado)
+    ├── 5. ACCIÓN     → ModuloAcciones.ejecutar(accion)     ← si EJECUTAR_ACCIONES=True
+    ├── 6. VISUAL     → Visualizador.dibujar_todo(frame, resultados)
+    └── 7. MÉTRICAS   → BotMetrics.log()
+```
 
-Ejemplo:
+**Teclas durante la ejecución:**
 
-- **frontend/**: contiene la aplicación cliente
-- **backend/**: contiene la lógica de negocio y la API
-- **scripts/**: contiene scripts auxiliares de desarrollo, pruebas o despliegue
-- **docker/**: contiene archivos relacionados con contenedores
-- **docs/**: contiene documentación técnica adicional
+| Tecla   | Función                                   |
+| ------- | ----------------------------------------- |
+| `SPACE` | Iniciar / detener detección               |
+| `P`     | Pausar / reanudar (congela el frame)      |
+| `Q`     | Salir                                     |
+| `N`     | Cambiar clase activa en evaluación        |
+| `1`     | Etiquetar frame como positivo real (eval) |
+| `2`     | Etiquetar frame como negativo real (eval) |
+| `M`     | Mostrar métricas de la clase activa       |
+| `E`     | Exportar métricas a CSV en `./reportes/`  |
+
+---
 
 ## 4. Organización de la solución a nivel de código
 
-Explique cómo se traduce la arquitectura del sistema en la estructura real del código.
+### 4.1 Organización por módulos
 
-### 4.1 Organización por módulos o capas
+El proyecto está diseñado siguiendo una arquitectura modular, donde cada módulo tiene una responsabilidad específica dentro del funcionamiento general del bot. Esta organización permite mantener el código desacoplado, facilitar el mantenimiento y simplificar la incorporación de nuevas funcionalidades.
 
-Describa si el proyecto está organizado por capas, módulos, dominios, servicios u otro criterio.
+La estructura del sistema se divide en cinco áreas principales:
 
-Ejemplo:
-
-- capa de presentación;
-- capa de lógica de negocio;
-- capa de persistencia;
-- integración con servicios externos.
+- Configuración
+- Núcleo principal
+- Visión computacional
+- Motor de reglas
+- Control de acciones
 
 ### 4.2 Relación entre componentes del sistema y código fuente
 
-Explique en qué parte del repositorio se encuentra implementado cada componente principal del sistema.
+### Configuración (`config/`)
 
-## 5. Contenedores
+El módulo de configuración centraliza todos los parámetros ajustables del sistema en el archivo `settings.py`.
 
-Documente el uso de contenedores dentro del proyecto, si aplica.
+Este archivo actúa como la única fuente de configuración del proyecto, evitando que existan valores definidos directamente dentro de detectores, reglas o módulos internos.
 
-### 5.1 Contenedores utilizados
+Entre los parámetros configurables se encuentran:
 
-Indique qué contenedores existen y qué función cumple cada uno.
+- Configuración del emulador.
+- Frecuencia de captura y detección.
+- Rangos HSV para detección por color.
+- Configuración de templates.
+- Parámetros de debugging.
+- Métricas de rendimiento.
+- Evaluación de detección.
+- Activación o desactivación de acciones reales.
 
-Ejemplo:
+Gracias a este enfoque, el comportamiento general del sistema puede modificarse sin alterar la lógica interna del código.
 
-- contenedor del frontend;
-- contenedor del backend;
-- contenedor de base de datos;
-- contenedor de proxy o servicios auxiliares.
+---
 
-### 5.2 Archivos relacionados con contenedores
+### Núcleo principal (`core/`)
 
-Liste y describa los archivos usados para construir y orquestar contenedores.
+El módulo `core` contiene el punto de entrada principal del proyecto (`main.py`) y coordina el funcionamiento general del bot.
 
-Ejemplo:
+Sus responsabilidades incluyen:
 
-- `Dockerfile`
-- `docker-compose.yml`
-- `docker-compose.override.yml`
+- Inicializar todos los módulos.
+- Mantener estados globales del sistema.
+- Ejecutar el loop principal.
+- Coordinar captura, detección, reglas y acciones.
+- Reutilizar detecciones entre frames para optimizar rendimiento.
 
-### 5.3 Construcción y ejecución de contenedores
+También implementa mecanismos de optimización como la detección forzada cuando un obstáculo se encuentra demasiado cerca del personaje.
 
-Explique cómo construir y levantar los contenedores.
+---
 
-Ejemplo:
+### Visión computacional (`vision/`)
 
-```bash
-docker compose build
-docker compose up -d
-```
+El módulo de visión es responsable de toda la interacción visual con el juego y se divide en dos componentes principales.
 
-### 5.4 Redes, puertos y volúmenes
+**Captura (`vision/captura`)**
 
-Explique cómo se comunican los contenedores, qué puertos exponen y qué volúmenes utilizan.
+Encargado de capturar frames del emulador utilizando `mss`.
 
-### 5.5 Recomendaciones para modificar contenedores
+Además:
 
-Documente advertencias o buenas prácticas para modificar imágenes, servicios, redes o volúmenes sin afectar el sistema.
+- Localiza automáticamente la ventana del emulador.
+- Refresca periódicamente sus coordenadas.
+- Permite congelar el último frame cuando el sistema se encuentra pausado.
 
-## 6. Scripts y automatizaciones
+---
 
-Describa los scripts disponibles en el proyecto y su propósito.
+**Detección (`vision/detection`)**
 
-### 6.1 Scripts principales
+Implementa toda la lógica de detección de elementos del juego.
 
-Liste los scripts relevantes y explique para qué sirve cada uno.
+La arquitectura de detección se basa en:
 
-Ejemplo:
+- Una clase base reutilizable (`BaseDetector`).
+- Detectores independientes por tipo de elemento.
+- Un orquestador que ejecuta detectores en paralelo.
 
-- `npm run dev`: inicia el ambiente de desarrollo
-- `npm run build`: genera la versión de producción
-- `npm run test`: ejecuta las pruebas
-- `npm run lint`: ejecuta validaciones de estilo
-- `npm run migrate`: ejecuta migraciones
+El sistema soporta dos métodos principales de detección:
 
-### 6.2 Ubicación de scripts auxiliares
+- Detección por color HSV.
+- Detección por template matching.
 
-Indique dónde se encuentran scripts personalizados, por ejemplo en carpetas como `scripts/`, `tools/` o similares.
+Cada detector se encuentra desacoplado en archivos independientes dentro de `detectors/`, lo que facilita agregar nuevos elementos sin modificar la arquitectura general.
 
-### 6.3 Consideraciones para su uso
+---
 
-Explique dependencias, permisos, variables requeridas o precauciones para ejecutar scripts.
+### Motor de reglas (`rules/`)
 
-## 7. Variables de entorno
+El módulo de reglas implementa la lógica de toma de decisiones del bot.
 
-Documente las variables de entorno necesarias para el funcionamiento del sistema.
+Se compone de tres partes principales.
 
-### 7.1 Variables requeridas
+**Estado del juego (`game_state.py`)**
 
-Liste las variables obligatorias para ejecutar el proyecto.
+Construye una representación lógica del entorno mediante un sistema basado en carriles.
 
-Ejemplo:
+Este estado almacena información como:
 
-- `PORT`
-- `DATABASE_URL`
-- `JWT_SECRET`
-- `API_KEY`
-- `FRONTEND_URL`
+- Suelo disponible.
+- Obstáculos cercanos.
+- Bananas cercanas.
+- Disponibilidad de dash.
 
-### 7.2 Variables por ambiente
+Toda la información detectada visualmente se transforma aquí en información utilizable por las reglas.
 
-Indique qué variables cambian según el ambiente.
+---
 
-Ejemplo:
+**Motor de reglas (`rule_engine.py`)**
 
-- desarrollo;
-- pruebas;
-- producción.
+Evalúa las reglas activas según prioridad y selecciona la primera acción válida.
 
-### 7.3 Archivos de configuración
+Si ninguna regla aplica, el sistema retorna la acción `NADA`.
 
-Explique qué archivos de entorno se usan y cómo deben configurarse.
+---
 
-Ejemplo:
+**Reglas (`rules.py`)**
 
-- `.env`
-- `.env.development`
-- `.env.production`
-- `.env.example`
+Define el comportamiento del bot mediante reglas específicas, por ejemplo:
 
-### 7.4 Manejo seguro de secretos
+- Saltar obstáculos.
+- Evitar huecos.
+- Planear caídas.
+- Recolectar bananas.
+- Utilizar dash en situaciones críticas.
 
-Indique qué variables son sensibles, cómo deben gestionarse y cuáles no deben subirse al repositorio.
+El diseño basado en prioridades permite extender fácilmente el comportamiento agregando nuevas reglas sin modificar el motor principal.
 
-## 8. Flujo de trabajo de desarrollo
+---
+
+### Control (`control/`)
+
+El módulo de control ejecuta las acciones físicas dentro del juego mediante automatización de entradas usando `pyautogui`.
+
+Las acciones del sistema se abstraen mediante constantes como:
+
+- `SALTAR`
+- `PLANEAR`
+- `DASH`
+- `BAJAR`
+- `NADA`
+
+Cada acción se implementa utilizando clicks, arrastres o pulsaciones sostenidas sobre la ventana del emulador.
+
+Además, el módulo incorpora:
+
+- Cooldowns entre acciones.
+- Estabilización de entradas.
+- Liberación segura de clicks sostenidos.
+
+---
+
+### Flujo general del sistema
+
+El funcionamiento completo del bot sigue el siguiente flujo:
+
+1. Se captura un frame del emulador.
+2. Los detectores identifican elementos del entorno.
+3. El estado del juego transforma detecciones en información lógica.
+4. El motor de reglas decide la acción más adecuada.
+5. El módulo de control ejecuta la acción dentro del juego.
+
+---
+
+### Ventajas de la arquitectura modular
+
+La organización modular del proyecto ofrece múltiples ventajas:
+
+- Separación clara de responsabilidades.
+- Facilidad de mantenimiento.
+- Escalabilidad.
+- Reutilización de componentes.
+- Facilidad para realizar pruebas.
+- Incorporación sencilla de nuevos detectores o reglas.
+- Menor acoplamiento entre módulos.
+
+## 5. Archivos de configuración
+
+El archivo principal de configuración es:
+
+`config/settings.py`
+
+Todos los módulos leen directamente de este archivo y no definen parámetros internos por defecto.
+
+## 6. Flujo de trabajo de desarrollo
 
 Describa el proceso recomendado para trabajar sobre el proyecto.
 
-### 8.1 Preparación del entorno
+### 6.1 Preparación del entorno
 
-Explique los pasos iniciales para empezar a desarrollar.
+Pasos recomendados para iniciar el entorno de desarrollo:
 
-Ejemplo:
+- Clonar el repositorio.
+- Instalar las dependencias desde requirements.txt.
+- Instalar y configurar un emulador Android compatible (BlueStacks o MuMu Player).
+- Ajustar los parámetros necesarios en config/settings.py.
 
-- clonar el repositorio;
-- instalar dependencias;
-- configurar variables de entorno;
-- levantar servicios requeridos.
+### 6.2 Desarrollo de nuevas funcionalidades
 
-### 8.2 Desarrollo de nuevas funcionalidades
+### Agregar un nuevo detector
 
-Explique cómo se recomienda implementar cambios o nuevas funcionalidades.
+1. **Crear el archivo** `core/vision/detection/detectors/nuevo_detector.py`:
 
-Puede incluir:
+```python
+from ..base_detector import BaseDetector
 
-- creación de ramas;
-- estructura sugerida de cambios;
-- actualización de pruebas;
-- validaciones previas a integrar.
+class NuevoDetector(BaseDetector):
+    def detectar(self, frame):
+        cfg = self.config
+        return self._detectar_elemento(
+            frame,
+            cfg.NUEVO_RANGO_BAJO, cfg.NUEVO_RANGO_ALTO,
+            cfg.NUEVO_AREA_MIN_PCT, cfg.NUEVO_AREA_MAX_PCT,
+            cfg.NUEVO_PROP_MIN, cfg.NUEVO_PROP_MAX,
+            "nuevo",
+            espacio=cfg.NUEVO_ESPACIO,
+        )
+```
 
-### 8.3 Ejecución de pruebas y validaciones
+2. **Añadir parámetros** en `config/settings.py` (sección con el nombre del tipo).
 
-Indique cómo ejecutar pruebas, linting, build u otras verificaciones antes de integrar cambios.
+3. **Exportar** el detector en `core/vision/detection/detectors/__init__.py`.
 
-### 8.4 Integración de cambios
+4. **Registrar** en `Detector._registrar_detectores()` (`detector.py`):
 
-Explique cómo se incorporan cambios al repositorio principal.
+```python
+self._registrar("nuevo", NuevoDetector(self.config).detectar)
+```
 
-Puede incluir:
+5. **Añadir al `resultados` inicial** en `main.py` y extraer con `.get("nuevo", [])`.
 
-- estrategia de ramas;
-- pull requests;
-- revisiones;
-- criterios mínimos para integrar.
+6. **Añadir un color** en `visualizador.py` (dict de colores y bloque `if el.tipo == "nuevo":`).
 
-## 9. Dependencias y servicios externos
+7. Opcionalmente, añadir el tipo a `tipos_obstaculos` en `main.py` si debe influir en la detección forzada.
 
-Documente las dependencias técnicas y servicios de terceros utilizados por el proyecto.
+---
 
-### 9.1 Servicios externos integrados
+### Agregar una nueva regla
 
-Liste servicios externos relevantes.
+1. **Definir la función de condición** en `rules/rules.py`:
 
-Ejemplo:
+```python
+def mi_regla(state: GameState) -> bool:
+    # state.carril_actual, state.carriles[i]["suelo"], etc.
+    ...
+```
 
-- autenticación;
-- almacenamiento;
-- envío de correos;
-- analítica;
-- APIs de terceros.
+2. **Añadirla a la tabla** `rules` con la prioridad deseada (menor = más urgente):
 
-### 9.2 Requisitos de acceso
+```python
+Rule(name="mi_regla", condition=mi_regla, action=SALTAR, priority=5),
+```
 
-Indique qué accesos, cuentas, credenciales o configuraciones necesita un equipo nuevo para trabajar con estas integraciones.
+3. Probar en ejecución real con `EJECUTAR_ACCIONES = False` antes de habilitar acciones automáticas.
 
-### 9.3 Consideraciones de desarrollo y pruebas
+### 6.3 Ejecución de pruebas y validaciones (P)
 
-Explique si existen entornos sandbox, mocks, datos de prueba o limitaciones de uso.
+### 6.4 Integración de cambios
 
-## 10. Convenciones del proyecto
+Se recomienda:
+
+- Desarrollar nuevas funcionalidades en ramas separadas;
+- Mantener la estructura modular existente;
+- Probar detectores y reglas en modo observación antes de habilitar acciones automáticas;
+- Documentar cualquier nuevo detector o regla agregado al sistema.
+
+## 7. Convenciones del proyecto
 
 Describa las convenciones usadas para mantener consistencia en el desarrollo.
 
-### 10.1 Convenciones de código
+### 7.1 Convenciones de código
 
-Explique criterios de estilo, formato y organización.
+| Elemento                            | Convención                                                   |
+| ----------------------------------- | ------------------------------------------------------------ |
+| Variables y funciones               | `snake_case`                                                 |
+| Clases                              | `PascalCase`                                                 |
+| Constantes / settings               | `SCREAMING_SNAKE_CASE`                                       |
+| Tipos de elemento (`Elemento.tipo`) | singular en minúsculas: `"tronco"`, `"banana"`               |
+| Claves del dict `resultados`        | plural: `"troncos"`, `"bananas"`                             |
+| Parámetros de settings              | prefijo del tipo + sufijo descriptivo: `TRONCO_AREA_MIN_PCT` |
 
-Ejemplo:
-
-- nomenclatura de archivos;
-- convenciones de nombres;
-- estructura de módulos;
-- uso de linters y formateadores.
-
-### 10.2 Convenciones de repositorio
+### 7.2 Convenciones de repositorio (Pendiente)
 
 Documente prácticas relacionadas con el trabajo colaborativo.
 
@@ -340,15 +389,15 @@ Ejemplo:
 - manejo de issues;
 - versionado.
 
-### 10.3 Convenciones de documentación
+### 7.3 Convenciones de documentación (Pendiente)
 
 Indique cómo debe mantenerse actualizada la documentación del proyecto.
 
-## 11. Problemas frecuentes y recomendaciones
+## 8. Problemas frecuentes y recomendaciones (Pendiente)
 
 Documente errores comunes, limitaciones conocidas, deuda técnica o advertencias importantes para futuros equipos.
 
-### 11.1 Problemas frecuentes
+### 8.1 Problemas frecuentes
 
 Ejemplo:
 
@@ -358,15 +407,15 @@ Ejemplo:
 - conflictos entre versiones;
 - errores de permisos.
 
-### 11.2 Deuda técnica conocida
+### 8.2 Deuda técnica conocida
 
 Liste componentes incompletos, decisiones provisionales, refactors pendientes o limitaciones actuales del sistema.
 
-### 11.3 Recomendaciones para continuidad
+### 8.3 Recomendaciones para continuidad
 
 Indique sugerencias concretas para futuros grupos que deban continuar el proyecto.
 
-## 12. Historial de decisiones técnicas relevantes
+## 9. Historial de decisiones técnicas relevantes (Pendiente)
 
 Documente decisiones importantes tomadas durante el desarrollo y la razón detrás de ellas.
 
@@ -378,14 +427,4 @@ Ejemplo:
 - reestructuración de módulos;
 - cambio en estrategia de autenticación.
 
-## 13. Referencias relacionadas
-
-Incluya enlaces o referencias útiles para continuar el desarrollo.
-
-Ejemplo:
-
-- documentación oficial de tecnologías usadas;
-- enlaces a servicios externos;
-- documentación de arquitectura;
-- instalación del proyecto;
-- informe principal.
+## 10. Referencias relacionadas

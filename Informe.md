@@ -590,11 +590,7 @@ El sistema presenta el siguiente comportamiento en secuencia temporal:
 
 Documenta lo construido hasta el momento, mostrando el avance funcional y técnico del proyecto.
 
-### 8.1 Stack tecnológico (R / ¿Justificación suficiente?)
-
-Lista y justifica las tecnologías, frameworks, librerías y herramientas utilizadas.
-
----
+### 8.1 Stack tecnológico
 
 **Python 3.x:** Se seleccionó como lenguaje principal debido a su simplicidad, versatilidad y amplio ecosistema de librerías para visión por computador y automatización.
 
@@ -611,18 +607,6 @@ Lista y justifica las tecnologías, frameworks, librerías y herramientas utiliz
 **keyboard:** Librería que permite detectar entradas de teclado a nivel global, independiente de la ventana activa, lo cual es útil para implementar controles como pausar o finalizar la ejecución del programa.
 
 **MuMu Player (Android):** Emulador de Android utilizado para ejecutar el juego _Banana Kong_ a una resolución de 960x540, proporcionando un entorno controlado para la captura y análisis de imágenes.
-
-### (R)
-
-| Componente         | Tecnología        | Justificación                                                                                         |
-| ------------------ | ----------------- | ----------------------------------------------------------------------------------------------------- |
-| **Lenguaje**       | Python 3.9+       | Interpretado, excelente soporte para OpenCV/visión, rápido prototipado, librerías científicas maduras |
-| **Captura**        | MSS (mss library) | Captura de pantalla rápida sin dependencias externas (C puro), cross-platform                         |
-| **Visión**         | OpenCV 4.5+       | Estándar de facto para visión por computador clásica; operaciones optimizadas en C++                  |
-| **Simulación I/O** | pyautogui         | Simulación de teclado/mouse multiplataforma, bajo overhead                                            |
-| **Visualización**  | OpenCV imshow()   | Integrado con OpenCV, bajo lag                                                                        |
-
-**Justificación de selección:** Cada componente fue seleccionado para minimizar latencia, maximizar confiabilidad y facilitar mantenimiento. No se utilizaron frameworks pesados que añadieran overhead innecesario.
 
 ### 8.2 Componentes (R)
 
