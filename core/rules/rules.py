@@ -14,9 +14,16 @@ obst_dist = {
     "barril": (200, 50),
 }
 
+# Prueba
 
+def prueba(state):
+    return True
 
-def obstacle_rule(state):
+# Reglas de supervivencia
+
+# Regla : SALTAR si hay un obstáculo cercano
+
+def obstacle_rule(state): 
     carril = state.carril_actual
     obst_data = state.carriles[carril]["obstaculo_cercano"]
 
@@ -37,63 +44,8 @@ def obstacle_rule(state):
             and dy > -limites[1]
         )
 
-def obstacle(obst_data):
+# Regla: SALTAR si hay un vacío (falta de suelo) cercano
 
-    if obst_data:
-        obstaculo, dx, dy = obst_data
-        limites = obst_dist.get(obstaculo.tipo)
-
-        if limites is None:
-            print(f"[REGLAS] Obstáculo sin configuración: {obstaculo.tipo}")
-            return False
-
-        return (
-            (dx + 10) < limites[0]
-        )
-
-def banana_rule_up(state):
-    carril = state.carril_actual
-
-    data = state.carriles[carril + 1]["banana_cercana"]
-
-    if data and not obstacle(state.carriles[carril + 1]["obstaculo_cercano"]):
-        banana, dx, dy = data
-        return dx < 160
-
-def banana_rule_glide(state):
-    carril = state.carril_actual
-    data = state.carriles[carril]["banana_cercana"]
-    suelo = state.carriles[carril]["suelo"]
-
-    if data and not suelo:
-        banana, dx, dy = data
-
-        if dx < 50 and 10< dy < 10:
-            return True
-
-def banana_rule_keep(state):
-    carril = state.carril_actual
-    data = state.carriles[carril]["banana_cercana"]
-    suelo = state.carriles[carril]["suelo"]
-
-    if data and suelo:
-        banana, dx, dy = data
-
-        if dx < 50 and 10< dy < 10:
-            return True
-            
-def plataforma (state):
-    
-    carril = state.carril_actual
-    if carril < 4:
-        suelo_arriba = state.carriles[carril + 1]["suelo"]
-        obstaculo = state.carriles[carril + 1]["obstaculo_cercano"]
-    else:
-        return False
-
-    if suelo_arriba and not obstacle(obstaculo):
-        return True
-    
 def gap_rule(state):
     carril = state.carril_actual
     if carril != 0:
@@ -104,7 +56,9 @@ def gap_rule(state):
         if not suelo_actual:
                 return True
     
-def dangerous_falling(state):
+# Regla: PLANEAR si no hay suelo debajo y el carril es el 0 (evitar caer al vacío)
+
+def dangerous_falling(state): 
     
     carril = state.carril_actual
     suelo_actual = state.carriles[carril]["suelo"]
@@ -118,22 +72,22 @@ def dangerous_falling(state):
     if not suelo_actual and (not suelo_abajo):
             return True
 
-def safe_falling(state):
-    
-    carril = state.carril_actual
-    suelo_actual = state.carriles[carril]["suelo"]
-    obstaculo = state.carriles[carril]["obstaculo_cercano"]
-    
-    if carril == 0 and suelo_actual and not obstacle(obstaculo) :
-            return True
+# Regla: DASH si el dash está disponible y hay un obstáculo peligroso o un vacío cercano debajo del kong
 
-def dash(state):
-    if state.Dash and state.carril_actual != 0:
-        state.Dash = False
+def dash(state): 
+    if state.Dash == False:
+        return False
+    
+    if dash_obstacle_rule(state):
+        return True
+    
+    if dash_gap_under_kong(state):
         return True
 
-'''
-def dash_obstacle_rule(state):
+# Regla: DASH si hay un obstáculo peligroso demasiado cerca
+
+def dash_obstacle_rule(state): 
+    
     carril = state.carril_actual
     data = state.carriles[carril]["obstaculo_cercano"]
 
@@ -143,13 +97,67 @@ def dash_obstacle_rule(state):
         if dx < 80:
             print("DASH por peligro cercano")
             return True
-    
 
-def banana_rule_down(state):
-    if state.banana and state.banana_distance is not None:
-        if state.banana_distance[0] < 150 and state.banana_distance[1] > 50:
+# Regla: DASH si hay un vacío cercano debajo del kong (evitar caer al vacío)
+
+def dash_gap_under_kong(state):
+    if state.Dash == False:
+        return False
+    
+    carril = state.carril_actual
+    suelo_actual = state.carriles[carril]["suelo"]
+
+    if not suelo_actual and carril == 0 : #añadir estado planeando
+        print("DASH por vacío cercano")
+        return True
+    
+# def dash_avalanche(state): - por implementar | falta detectar la avalancha
+
+        
+# Funcion auxiliar: True si hay un obstáculo peligroso, False si no hay obstáculo o es seguro
+
+def obstacle(obst_data): 
+
+    if obst_data:
+        obstaculo, dx, dy = obst_data
+        limites = obst_dist.get(obstaculo.tipo)
+
+        if limites is None:
+            print(f"[REGLAS] Obstáculo sin configuración: {obstaculo.tipo}")
+            return False
+
+        return (
+            (dx + 10) < limites[0]
+        )
+
+# Reglas de recolección
+
+# Regla: SALTAR para recolectar una banana que está en el carril superior y no hay obstáculo peligroso
+
+def banana_rule_up(state):
+    carril = state.carril_actual
+
+    data = state.carriles[carril + 1]["banana_cercana"]
+
+    if data and not obstacle(state.carriles[carril + 1]["obstaculo_cercano"]):
+        banana, dx, dy = data
+        return dx < 160
+
+# Regla: PLANEAR para recolectar una banana que está en el mismo carril y no hay obstáculo peligroso
+
+def banana_rule_glide(state):
+    carril = state.carril_actual
+    data = state.carriles[carril]["banana_cercana"]
+    suelo = state.carriles[carril]["suelo"]
+
+    if data and not suelo:
+        banana, dx, dy = data
+
+        if dx < 50 and 10< dy < 10:
             return True
 
+# Regla: BAJAR para recolectar una banana que está en el carril inferior y no hay obstáculo peligroso
+'''
 def banana_rule_down(state):
     carril = state.carril_actual
 
@@ -162,8 +170,39 @@ def banana_rule_down(state):
 
             if dx < 150:
                 return True
+'''
+
+# Reglas de movilidad
+def plataforma (state):
+    
+    carril = state.carril_actual
+    if carril < 4:
+        suelo_arriba = state.carriles[carril + 1]["suelo"]
+        obstaculo = state.carriles[carril + 1]["obstaculo_cercano"]
+    else:
+        return False
+
+    if suelo_arriba and not obstacle(obstaculo):
+        return True
+
+
+'''
+def safe_falling(state):
+    
+    carril = state.carril_actual
+    suelo_actual = state.carriles[carril]["suelo"]
+    obstaculo = state.carriles[carril]["obstaculo_cercano"]
+    
+    if carril == 0 and suelo_actual and not obstacle(obstaculo) :
+            return True
+
 
 # no implementadas
+
+def banana_rule_down(state):
+    if state.banana and state.banana_distance is not None:
+        if state.banana_distance[0] < 150 and state.banana_distance[1] > 50:
+            return True
 
 
 def banana_up_plataform_rule(state): # SALTAR
@@ -185,29 +224,20 @@ def banana_down_plataform_rule(state): # SALTAR
     ):
         if state.banana_distance[0] > 150 and state.banana_distance[1] > 50 and state.platform_distance[0] < 120:
             return True
-
-def dash_obstacle_rule(state):
-    carril = state.carril_actual
-    data = state.carriles[carril]["obstaculo_cercano"]
-
-    if data:
-        obstaculo, dx, dy = data
-
-        if dx < 80:
-            print("DASH por peligro cercano")
-            return True
         
 '''
 
 # Lista de reglas
 
 rules = [
-    Rule(name="saltar_obstaculo", condition=obstacle_rule, action=SALTAR, priority=0),
-    Rule(name="saltar_vacio", condition=gap_rule, action=SALTAR, priority=1),
-    Rule(name="dash", condition=dash, action=DASH, priority=2),
+    Rule(name="dash", condition=dash, action=DASH, priority=0),
+    Rule(name="saltar_obstaculo", condition=obstacle_rule, action=SALTAR, priority=1),
+    Rule(name="saltar_vacio", condition=gap_rule, action=SALTAR, priority=2),
     Rule(name="caida_peligrosa", condition=dangerous_falling, action=PLANEAR, priority=3),
     Rule(name="recolectar_banana", condition=banana_rule_up, action=SALTAR, priority=4),
     #Rule(name="caida_segura", condition=safe_falling, action=BAJAR, priority=5),
     #Rule(name="recolectar_banana_planear", condition=banana_rule_2, action=PLANEAR, priority=6),
     #Rule(name="plataforma", condition=plataforma, action=SALTAR, priority=7),
 ]
+
+#Rule(name="Prueba de movilidad", condition=prueba, action=DASH, priority=0), #Regla de prueba
