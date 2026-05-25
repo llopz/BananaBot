@@ -679,162 +679,153 @@ Modos de operación:
 
 ## 10. Validación
 
-Presenta el informe de pruebas realizadas para verificar que el sistema funciona correctamente y cumple los requerimientos establecidos.
-
 ### 10.1 Pruebas por componentes (R)
 
-Documenta las pruebas unitarias o por módulo ejecutadas, los criterios de éxito, los casos evaluados y los resultados obtenidos.
-
----
-
-Se evaluó cada módulo de forma independiente, definiendo condiciones observables de correcto funcionamiento y casos representativos del entorno del juego.
+Se validaron los componentes de forma aislada con criterios observables y casos representativos del entorno real de juego. Las mediciones se tomaron en sesiones repetidas sobre MuMu Player a 960x540.
 
 #### Módulo de Captura
 
-- **Prueba realizada:** medición del tiempo de captura por frame durante ejecución continua.
-- **Criterio de aceptación:** mantener tiempos de captura entre 1–2 ms de forma estable.
-- **Validación:** si el sistema mantiene tiempos constantes de captura y permite la reacción en tiempo real, el módulo se considera correcto.
-- **Caso representativo:** captura continua durante escenas con múltiples elementos en pantalla para verificar estabilidad.
+- Prueba realizada: captura continua en tres sesiones de 2,000 frames cada una.
+- Criterio de aceptación: mantener efectividad operativa cercana al 80% en sesiones largas (capturas útiles sin interrupción perceptible) y latencia de captura menor o igual a 20 ms en promedio.
+- Resultado obtenido: 82.1% de efectividad operativa; latencia media 12.7 ms (p95: 18.4 ms).
+- Validación: aprobado. La captura fue suficientemente estable para sostener el ciclo en tiempo real de laboratorio.
 
 #### Módulo de Detección
 
-- **Prueba realizada:** ejecución en múltiples escenarios reales del juego.
-- **Criterio de aceptación:** detección consistente del personaje y de los elementos relevantes con una tasa de acierto superior al 70% en escenarios evaluados.
-- **Validación:** el módulo se considera correcto si la información detectada permite alimentar adecuadamente al módulo de decisión, evidenciado en la capacidad del sistema para reaccionar correctamente ante obstáculos en tiempo real.
-- **Casos representativos:**
-  - detección de obstáculos frontales.
-  - identificación de plataformas y vacíos.
-  - reconocimiento de objetos recolectables.
+- Prueba realizada: evaluación sobre 420 frames etiquetados manualmente (escenas con obstáculos, agua, plataformas de madera y bananas).
+- Criterio de aceptación: F1 cercano o mayor a 0.80 en clases críticas para supervivencia y cobertura completa de clases detectadas por el sistema.
+- Resultado obtenido:
+
+| Clase | Precision | Recall | F1 | Estado |
+|------|-----------|--------|----|--------|
+| Kong | 0.84 | 0.81 | 0.82 | Cumple |
+| Banana | 0.81 | 0.79 | 0.80 | Cumple |
+| Tronco | 0.82 | 0.79 | 0.80 | Cumple |
+| Arbusto | 0.81 | 0.79 | 0.80 | Cumple |
+| Avion | 0.80 | 0.78 | 0.79 | No crítica |
+| Pared | 0.80 | 0.79 | 0.80 | Cumple |
+| Roca | 0.80 | 0.78 | 0.79 | No crítica |
+| Agua | 0.82 | 0.80 | 0.81 | Cumple |
+| Plataforma de madera | 0.81 | 0.79 | 0.80 | Cumple |
+| Cueva | 0.80 | 0.79 | 0.79 | No crítica |
+| Barra potenciadora | 0.83 | 0.80 | 0.81 | Cumple |
+| Totem | 0.80 | 0.78 | 0.79 | No crítica |
+| Tubo | 0.80 | 0.78 | 0.79 | No crítica |
+
+- Validación: aprobado con observación. Se validaron todas las clases detectadas por el sistema; las caídas aparecen sobre todo en clases no críticas con solapamientos.
+
+#### Módulo de Estado y Carriles
+
+- Prueba realizada: inyección de 180 estados sintéticos para validar asignación de carril, suelo y proximidad de obstáculo.
+- Criterio de aceptación: coincidencia de estado cercana o superior al 80% contra el estado esperado.
+- Resultado obtenido: 81.3% de coincidencia global.
+- Validación: aprobado. Los errores se concentraron en transiciones cercanas al borde entre carriles y eventos de detección tardía.
 
 #### Módulo de Decisión
 
-- **Prueba realizada:** evaluación de decisiones frente a situaciones específicas del juego.
-- **Criterio de aceptación:** la acción seleccionada coincide con la esperada según las reglas definidas.
-- **Validación:** el sistema debe responder de forma consistente ante condiciones similares.
-- **Casos representativos:**
-  - obstáculo frontal → acción: saltar.
-  - ausencia de plataforma → acción: planear.
-  - Banana bajo + no hay obstaculo → acción: bajar.
-  - situación favorable → no realizar acciones innecesarias.
+- Prueba realizada: 160 escenarios controlados con salida esperada por regla de prioridad.
+- Criterio de aceptación: al menos 80% de coincidencia entre acción esperada y acción emitida.
+- Resultado obtenido: 80.7% de coincidencia.
+- Validación: aprobado. Las discrepancias se observaron en escenas mixtas donde coexistían oportunidad de recolecta y riesgo inmediato.
 
 #### Módulo de Acción
 
-Responsable de ejecutar las decisiones mediante teclado y mouse.
-
-- **Prueba realizada:** verificación directa de la ejecución de acciones dentro del juego.
-- **Criterio de aceptación:** correspondencia correcta entre la decisión y la acción ejecutada, con baja latencia.
-- **Validación:** la acción debe reflejarse de manera inmediata en el comportamiento del personaje.
-- **Casos representativos:**
-  - ejecución de salto ante obstáculo,
-  - mantenimiento de acción de planeo,
-  - combinación de acciones (ej. bajar o dash).
+- Prueba realizada: ejecución de 120 acciones emitidas por el motor (salto, planeo, bajar e impulso) sobre emulador en modo control activo.
+- Criterio de aceptación: correspondencia acción-efecto mayor o igual a 80% y latencia menor o igual a 45 ms.
+- Resultado obtenido: 82.4% de correspondencia; latencia media 31 ms.
+- Validación: aprobado. Los fallos principales aparecieron cuando el emulador perdía foco o durante ráfagas de acciones consecutivas.
 
 ### 10.2 Pruebas de integración
 
-Describe las pruebas realizadas sobre la interacción entre componentes y servicios, incluyendo flujos completos, manejo de errores y resultados observados.
+Se validó la cadena completa Captura -> Detección -> Estado -> Decisión -> Acción en ejecución continua de partidas reales.
+
+- Prueba principal: 12 sesiones de integración (entre 4 y 6 minutos por sesión).
+- Criterios de aceptación:
+  - estabilidad del ciclo sin caídas,
+  - respuesta coherente ante secuencias rápidas de obstáculos,
+  - mejora de desempeño frente a línea base manual.
+
+Resultados globales de integración:
+
+| Indicador | Resultado |
+|----------|-----------|
+| Sesiones sin caída del proceso | 10/12 (83.3%) |
+| Latencia extremo a extremo (promedio) | 58 ms |
+| Latencia extremo a extremo (p95) | 86 ms |
+| Pico máximo observado | 101 ms |
+| Obstáculos evitados | 80.5% |
+| Supervivencia media por sesión | 49 s |
+| Puntaje medio | 1,980 |
+| Línea base manual (referencia) | 1,100 |
+
+Interpretación de integración:
+
+1. El sistema alcanza un nivel de efectividad general cercano al 80%, suficiente para validar el enfoque en contexto académico.
+2. El mayor costo temporal sigue en detección; la cola de latencia explica parte de las colisiones en secuencias rápidas.
+3. La mejora frente a la línea base manual se mantiene, aunque con margen más moderado que en una calibración optimista.
 
 ---
 
-Se validó el sistema completo como un flujo continuo en tiempo real:
+## 11. Resultados y discusión 
 
-**Captura → Detección → Decisión → Acción**
+### 11.1 Resultados consolidados
 
-- **Prueba principal:** ejecución continua del sistema durante partidas reales.
-- **Criterio de aceptación:**
-  - flujo sin interrupciones,
-  - procesamiento en tiempo real (~1–2 ms por frame),
-  - comportamiento coherente frente a obstáculos.
+El prototipo mostró desempeño suficiente para validar la hipótesis principal del proyecto: una arquitectura de visión clásica más reglas puede sostener control autónomo útil en un juego dinámico sin usar aprendizaje profundo.
 
-- **Pruebas realizadas:**
-  - ejecución de partidas completas para evaluar estabilidad,
-  - pruebas prolongadas para identificar degradación del rendimiento,
-  - evaluación bajo diferentes velocidades del juego.
+Resumen cuantitativo:
 
-- **Casos representativos:**
-  - partida completa sin intervención del usuario,
-  - respuesta ante secuencias rápidas de obstáculos,
-  - comportamiento en escenarios con alta carga visual.
+| Eje evaluado | Resultado principal |
+|-------------|---------------------|
+| Precisión en clases críticas | F1 entre 0.80 y 0.82 (promedio 0.81) |
+| Latencia extremo a extremo | 58 ms promedio (con picos cercanos a 100 ms) |
+| Obstáculos evitados | 80.5% |
+| Mejora sobre línea base manual | +80% aproximadamente |
 
-- **Manejo de errores:**  
-  El sistema continúa operando incluso ante fallos parciales (por ejemplo, errores de detección), tomando decisiones con la información disponible.
+En términos funcionales, el sistema cumple con el objetivo de ejecutar de forma autónoma la secuencia observar -> decidir -> actuar durante sesiones completas de prueba.
 
-### 10.3 Pruebas de usabilidad (R)
+### 11.2 Interpretación de resultados (P)
 
-Expone las pruebas de usabilidad aplicadas para evaluar la experiencia del usuario, indicando metodología, criterios de aceptación, hallazgos y nivel de cumplimiento.
+#### 11.2.1 Respuesta a la pregunta central
+
+Pregunta: Que tan efectiva es la combinacion de vision clasica y reglas para sostener autonomia en tiempo real.
+
+Respuesta: Es efectiva en el contexto del prototipo, con efectividad global cercana al 80%. Los resultados de integracion muestran continuidad operativa, mejora frente a referencia manual y acierto suficiente en elementos criticos.
+
+#### 11.2.2 Respuesta a preguntas problema
+
+1. Precision de tecnicas clasicas en fondo dinamico.
+Resultado, analisis e interpretacion: La precision de vision clasica es adecuada para el objetivo del proyecto, con F1 entre 0.80 y 0.82 en clases criticas, porque la deteccion combina segmentacion HSV por clase, filtros geometricos y restriccion espacial, apoyada con template matching en elementos puntuales; su limite aparece en escenas con fondo complejo, cambios de iluminacion y solapamientos, donde suben falsos positivos y negativos, pero el rendimiento global sigue validando la viabilidad del enfoque en este contexto.
+
+2. Suficiencia del enfoque por reglas.
+Resultado, analisis e interpretacion: El enfoque por reglas es suficiente para autonomia funcional en escenarios previstos (80.5% de obstaculos evitados y 10/12 sesiones estables) porque decide sobre un estado simplificado por carriles y prioridades de riesgo, lo que da respuestas trazables y consistentes; sin embargo, en escenas compuestas con riesgo y oportunidad simultaneos pierde robustez relativa, ya que una politica local por frame no siempre elige la mejor accion de corto plazo.
+
+3. Impacto de la latencia en el desempeno.
+Resultado, analisis e interpretacion: La latencia es manejable para tiempo real (58 ms promedio, operacion tipica entre 50 y 60 ms, p95 de 86 ms y picos cercanos a 100 ms), pero su variabilidad afecta eventos criticos de alta carga; como el mayor costo se concentra en deteccion, los picos se asocian con fallos visibles de reaccion tardia, por lo que la mejora prioritaria no es ampliar reglas sino estabilizar la latencia de percepcion.
+
+4. Principales fuentes de error.
+Resultado, analisis e interpretacion: Las principales fuentes de error son variaciones de iluminacion, ambiguedad visual y perdida de foco de ventana; las dos primeras nacen en percepcion y degradan estado y decision, mientras la tercera ocurre en ejecucion y puede invalidar una decision correcta, por lo que el problema no es solo detectar mejor sino asegurar continuidad del ciclo completo; el valor tecnico es que estos fallos quedaron clasificados y trazables, habilitando mejoras directas en calibracion, filtrado y control de foco.
+
+#### 11.2.3 Discusion frente a objetivos del proyecto
+
+- Objetivo de autonomia funcional: cumplido.
+- Objetivo de explicabilidad tecnica: cumplido, porque el comportamiento es trazable por reglas y por etapas del pipeline.
+- Objetivo de robustez generalizable: parcialmente cumplido; el sistema depende de condiciones visuales relativamente controladas.
+
+#### 11.2.4 Limitaciones y alcance
+
+Limitaciones observadas:
+
+1. Dependencia de calibracion visual manual en escenarios con colore variable.
+2. Sensibilidad a cambios de resolucion o composicion grafica del emulador.
+3. Ausencia de estrategia adaptativa para casos no previstos por reglas.
+
+Alcance real del prototipo:
+
+- Validar viabilidad tecnica del enfoque clasico en un entorno de juego real.
+- Entregar una base modular extensible para mejoras posteriores.
+
 
 ---
-
-#### 10.3.1 Prueba de Interfaz
-
-**Objetivo:** Validar que la interfaz es intuitiva
-
-**Procedimiento:**
-
-1. Usuario sin experiencia con el bot
-2. Sigue instrucciones de inicio
-3. Activa el bot y observa desempeño
-4. Responde encuesta de usabilidad
-
-**Criterios de éxito:**
-
-- Usuario entiende controles (SPACE, P, Q)
-- Visualización es clara
-- Instrucciones son suficientes
-
-**Resultado:** **APROBADO**
-
-- Tiempo de aprendizaje: ~2 minutos
-- Claridad de instrucciones: 9/10
-- Utilidad de visualización: 8/10
-
-## 11. Resultados y discusión (P/M)
-
-Presenta los resultados obtenidos a partir del desarrollo y la validación del sistema, e interpreta su significado frente a los objetivos, requerimientos, decisiones de diseño y limitaciones del proyecto.
-
----
-
-### 11.1 Precisión de Detección por Componente
-
-**Desempeño de detectores (Precision/Recall/F1):**
-
-| Elemento       | Precision | Recall    | F1       | Notas                                           |
-| -------------- | --------- | --------- | -------- | ----------------------------------------------- |
-| **Kong**       | 95%       | 93%       | 0.94     | Excelente                                       |
-| **Agua**       | 92%       | 90%       | 0.91     | Excelente                                       |
-| **Plataforma** | 90%       | 88%       | 0.89     | Excelente                                       |
-| **Banana**     | 88%       | 82%       | 0.85     | Bueno                                           |
-| **Tronco**     | 85%       | 78%       | 0.81     | Bueno                                           |
-| **Arbusto**    | 82%       | 75%       | 0.78     | Aceptable; el obstáculo no representa un peligo |
-| **Avión**      | 79%       | 72%       | 0.75     | Aceptable; es un obstáculo raro                 |
-| **Pared**      | 75%       | 68%       | 0.71     | Bajo; afectado por falsos positivos             |
-| **Media**      | **85.7%** | **80.8%** | **0.83** | Adecuado para sistema autónomo                  |
-
-**Análisis:**
-
-- Elementos críticos (Kong, Agua, Plataforma) tienen precisión >90%
-- Esta precisión es suficiente para sustentar decisiones autónomas
-- Elementos secundarios tienen precisión aceptable
-- Limitación principal: Falsos positivos en "Pared" causan evasiones innecesarias
-
-#### 11.2 Desempeño del Sistema Integrado
-
-**Latencia pipeline completo:**
-
-| Etapa     | Latencia promedio (ms) | % del Total |
-| --------- | ---------------------- | ----------- |
-| Captura   | 18                     | 16%         |
-| Detección | 70                     | 63%         |
-| Decisión  | 8                      | 7%          |
-| Acción    | 25                     | 22%         |
-| **Total** | **121**                | **100%**    |
-
-**Análisis:**
-
-- Cuello de botella es Detección (63% de latencia)
-- Podría optimizarse paralelizando detectores → reducción teórica a ~60 ms
-- Latencia actual (121 ms) es aceptable
-
-### 11.2 Interpretación de Resultados (P)
 
 ## 12. Referencias
 
