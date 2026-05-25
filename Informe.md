@@ -1,4 +1,4 @@
-# Guía para el informe del proyecto
+# BananaBot: sistema autonómo para banana kong con reglas predefinidas
 
 ## 1. Introducción
 
@@ -78,6 +78,33 @@ Captura → Preprocesamiento → Detección → Representación de Estado → De
 
 Cada etapa introduce potencialmente latencia y oportunidades de error. La optimización del pipeline es fundamental para mantener tiempo real.
 
+### 2.5 Funcionamiento del videojuego Banana Kong
+
+Banana Kong es un videojuego del género endless runner en 2D con desplazamiento horizontal continuo hacia la derecha. El personaje principal (Kong) avanza de forma automática, por lo que el jugador no controla la dirección de movimiento, sino la sincronización de acciones para sobrevivir y maximizar el puntaje.
+
+Las mecánicas centrales relevantes para este proyecto son:
+
+1. **Movimiento continuo:** El escenario se desplaza de derecha a izquierda respecto a Kong, generando la aparición constante de obstáculos y oportunidades de recolección.
+2. **Presión permanente por persecución:** Kong está constantemente perseguido por una avalancha/ola de bananas (banana wave), que actúa como amenaza de cierre. Si el jugador pierde ritmo, la ola lo alcanza y la partida finaliza.
+3. **Control por acciones discretas y sostenidas:**
+  - **Saltar:** evita obstáculos en el carril actual o permite alcanzar plataformas superiores.
+  - **Planear/sostener:** prolonga el tiempo en el aire para controlar la caída y evitar vacíos.
+  - **Bajar:** permite descender rápidamente en contextos puntuales.
+  - **Dash:** acción especial habilitada al llenar la barra de energía; permite un impulso hacia adelante para ganar distancia frente a la avalancha y romper ciertos obstáculos.
+4. **Obstáculos heterogéneos:** Troncos, arbustos, rocas, paredes, tubos, cuevas y otros elementos exigen distintas ventanas de reacción según su tamaño, forma y posición relativa.
+5. **Economía de bananas y barra potenciadora:** Las bananas no solo aportan puntaje; también llenan una barra de energía. Cuando la barra se completa, habilita el power-dash, introduciendo una dinámica riesgo-recompensa entre recolectar y priorizar seguridad.
+6. **Efecto de colisiones y pérdida de ritmo:** El choque con obstáculos críticos termina la corrida; en eventos no letales o maniobras mal sincronizadas, el jugador puede perder inercia efectiva y quedar más expuesto al alcance de la avalancha.
+7. **Escalado progresivo de dificultad:** La velocidad del juego incrementa con el tiempo, reduciendo la ventana de reacción y elevando la exigencia temporal del ciclo percepción-decisión-acción.
+8. **Variabilidad de escenarios y rutas:** La partida alterna entre zonas (jungla, cueva, agua, playa, copas de árboles), con rutas y peligros distintos; además, existen tramos con animales de apoyo que cambian temporalmente la dinámica de desplazamiento.
+9. **Estructura vertical por niveles/carriles:** Aunque el movimiento horizontal es continuo, la toma de decisiones depende fuertemente de la posición vertical (suelo, plataformas intermedias y superiores), lo que justifica modelar el entorno en carriles discretos.
+
+Desde la perspectiva del sistema autónomo, el problema operativo puede formularse como una secuencia de ciclos percepción-decisión-acción en tiempo real:
+
+- Detectar la posición de Kong y de los elementos relevantes delante de él.
+- Estimar el margen de seguridad frente a la presión de la avalancha y decidir cuándo priorizar aceleración o supervivencia.
+- Estimar distancia de riesgo y oportunidad (obstáculos y bananas) por carril.
+- Seleccionar la acción con mayor prioridad para mantener supervivencia y, de manera secundaria, optimizar puntaje y disponibilidad de dash.
+
 ## 3. Planteamiento del problema
 
 ¿Qué tan efectiva es la combinación de técnicas de visión por computador clásica y un sistema de decisión basado en reglas para sostener el funcionamiento autónomo y continuo de un agente en un entorno visual dinámico y complejo?
@@ -133,11 +160,11 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 - Preprocesamiento de imagen y aplicación de técnicas de visión por computador clásica para la detección de elementos.
 - Detección de elementos del juego: coleccionables, obstáculos y personaje principal, según sean relevantes para la toma de decisiones.
 - Módulo de decisión basado en reglas predefinidas según el estado del entorno detectado.
-- Módulo de acción para generación de entradas simuladas de teclado: salto (C), planeo (Space) y bajada (flecha abajo).
+- Módulo de acción para generación de entradas simuladas: salto, planeo, dash y bajada.
 - Visualización de debug en tiempo real con rectángulos de color por tipo de elemento.
 - Arquitectura modular con separación de responsabilidades entre percepción, decisión y acción.
 - Configuración centralizada de parámetros de detección por elemento y configuración del emulador.
-- Documentación técnica, pruebas experimentales y análisis de resultados.
+- Documentación técnica y análisis de resultados.
 
 ### 3.3.2 No incluye
 
@@ -147,6 +174,7 @@ El videojuego Banana Kong se utiliza en este proyecto como entorno de evaluació
 - Jugabilidad en mundos alternativos del juego.
 - Gestión de mejoras del personaje ni interacción con menús.
 - Generalización automática a otros videojuegos u otras resoluciones.
+- Métricas especificas de recoleccion de objetos y obstaculos.
 
 ## 4. Objetivos
 
@@ -163,8 +191,6 @@ Diseñar e implementar un sistema autónomo que juegue el videojuego movil Banan
 - Validar el sistema utilizando metricas de desempeño.
 
 ## 5. Estado del arte / soluciones relacionadas
-
-Esta sección presenta las soluciones existentes para automatización visual de videojuegos, analizando qué soluciones existen hoy, cómo abordan el problema y qué limitaciones presentan, con el fin de identificar el vacío técnico que justifica el presente proyecto.
 
 ### 5.1 Productos Comerciales
 
@@ -212,8 +238,6 @@ El agente recibe píxeles crudos y aprende directamente la política óptima [8]
 
 ### 5.4 Comparación de Soluciones
 
-La siguiente tabla compara las soluciones revisadas según los criterios más relevantes para el contexto de este proyecto:
-
 #### AutoHotkey / SikuliX:
 
 Funcionalidad limitada (píxel único o template fijo). Sin representación del entorno. Costo nulo. Fácil de usar, pero rígido. Limitación técnica crítica: no apto para escenas dinámicas.
@@ -238,52 +262,41 @@ Del análisis anterior se identifican dos vacíos no resueltos por las solucione
 
 - **Vacío de decisión:** No existen trabajos que evalúen empíricamente la efectividad de un sistema de reglas predefinidas cuando la información del entorno proviene exclusivamente de percepción visual clásica en una escena dinámica. Se desconoce si los errores de percepción se acumulan de forma que degraden las decisiones por encima de un umbral crítico.
 
-Estos vacíos justifican la necesidad de este proyecto: no se trata simplemente de implementar un bot, sino de evaluar empíricamente hasta dónde llegan las técnicas clásicas de visión por computador combinadas con un sistema de decisiones basado en reglas en un entorno visualmente desafiante, usando el puntaje del juego como métrica objetiva de desempeño del sistema completo.
+Estos vacíos justifican la necesidad de este proyecto: no se trata simplemente de implementar un bot, sino de evaluar empíricamente hasta dónde llegan las técnicas clásicas de visión por computador combinadas con un sistema de decisiones basado en reglas en un entorno visualmente desafiante.
 
 ## 6. Requerimientos
-
-Detalla lo que el sistema debe cumplir para ser considerado correcto y útil.
 
 ### 6.1 Funcionales
 
 - Captura automática y continua de la pantalla del videojuego a través del emulador.
 - Detección en tiempo real de coleccionables, obstáculos y personaje principal relevantes para la navegación autónoma.
 - Clasificación de elementos detectados por tipo para construir el estado del entorno.
+- Construcción de estado del juego por carriles (suelo, obstáculo cercano, banana cercana y carril actual).
 - Toma de decisiones automática mediante reglas predefinidas basadas en el estado.
-- Simulación de entradas de teclado (salto, planeo, bajada, embestida) sobre el emulador.
-- Ejecución autónoma sin intervención humana tras el período de gracia inicial.
+- Priorización de reglas (la primera regla aplicable define la acción a ejecutar).
+- Simulación de entradas de teclado/mouse (salto, planeo, bajada, embestida) sobre el emulador.
+- Gestión de la barra potenciadora: detección de disponibilidad de dash y consumo del dash tras su uso.
 - Visualización de debug en tiempo real con indicadores visuales por tipo de elemento.
 
 ### 6.2 No funcionales
 
 - Operación en tiempo real con latencia mínima entre captura y ejecución de acción.
-- Arquitectura modular con separación percepción–decisión–acción.
+- Presupuesto temporal por etapa del pipeline (captura, detección, decisión y acción) para identificar cuellos de botella.
+- Arquitectura modular con separación percepción-decisión-acción.
 - Uso exclusivo de información visual (enfoque black-box).
-- Parámetros de detección por elemento configurables de forma independiente sin modificar el código fuente.
-- Detección independiente de la resolución mediante áreas relativas al tamaño del frame.
+- Configuración centralizada en un único módulo para facilitar mantenibilidad y experimentación.
 - Adaptación automática a cambios de posición de la ventana del emulador.
+- Trazabilidad de decisiones (posibilidad de identificar qué regla se activó en cada frame).
+- Observabilidad operativa mediante logging y métricas periódicas exportables.
+- Confiabilidad: ejecución continua por sesiones prolongadas y recuperación ante fallos de captura/frame.
+- Restricción ética/técnica: sin modificación del cliente del juego ni acceso a memoria interna.
+- Compatibilidad objetivo con Windows 10/11 y ejecución en CPU de propósito general.
 
 ## 7. Diseño y arquitectura
 
-Explica cómo se estructurará la solución a nivel conceptual y técnico, justificando decisiones clave.
-
 ### 7.1 Evaluación de alternativas
 
-Antes de definir cómo se construirá el sistema, es necesario analizar diferentes formas posibles de implementarlo.
-
-La evaluación de alternativas consiste en:
-
-- identificar múltiples opciones tecnológicas o arquitectónicas;
-- compararlas usando criterios de ingeniería;
-- justificar la selección de la opción más adecuada.
-
-En esta sección deben presentarse las alternativas consideradas, los criterios utilizados para compararlas y la justificación de la decisión tomada. La selección final debe estar alineada con los requerimientos, restricciones y objetivos del proyecto.
-
----
-
-El diseño del sistema implicó decisiones técnicas en cuatro dimensiones independientes: el método de detección visual, la librería de captura de pantalla, el mecanismo de simulación de entradas, y el patrón arquitectural. Para cada dimensión se evaluaron alternativas concretas contra criterios objetivos derivados de las restricciones del proyecto.
-
-### 7.1.1 Método de Detección Visual
+#### 7.1.1 Método de Detección Visual
 
 El módulo de percepción es el componente más crítico del sistema, ya que cualquier error en detección se propaga directamente a las decisiones. Se consideraron tres enfoques:
 
@@ -291,31 +304,36 @@ El módulo de percepción es el componente más crítico del sistema, ya que cua
 
 | Criterio                       | Visión clásica por color (seleccionado)    | YOLO / CNN                       | Template Matching                |
 | :----------------------------- | :----------------------------------------- | :------------------------------- | :------------------------------- |
-| Velocidad de inferencia        | Muy alta (<5 ms/frame)                     | Media-alta (15–50 ms)            | Alta (~5 ms)                     |
+| Velocidad de inferencia        | Muy alta (<5 ms/frame por detector)        | Media-alta (15-50 ms)            | Alta (~5 ms por plantilla/ROI)   |
 | Datos de entrenamiento         | No requeridos                              | Dataset etiquetado necesario     | Imágenes de referencia estáticas |
 | Complejidad de implementación  | Baja                                       | Alta                             | Baja                             |
-| Robustez ante fondos dinámicos | Media (ajustable con filtros morfológicos) | Alta                             | Baja                             |
-| Adecuación al contexto         | Alta (paleta fija del juego)               | Sobrecalificada para el problema | Frágil ante cambios gráficos     |
+| Robustez ante fondos dinámicos | Media (ajustable con filtros morfológicos) | Alta                             | Baja-media (depende de la zona)  |
+| Adecuación al contexto         | Alta (paleta fija del juego)               | Sobrecalificada para el problema | Alta en elementos UI/estructura  |
 
-**Decisión:** Se seleccionó la detección basada en segmentación en espacios de color (hsv, yuv, lav, xyz, etc) con operaciones morfológicas. Banana Kong presenta una paleta de colores relativamente estable entre sesiones, con elementos claramente diferenciables por color (bananas amarillas, Kong marrón, obstáculos de colores específicos). Esta característica hace que el enfoque por espacios de color sea suficiente para el contexto, sin incurrir en el costo de entrenamiento y hardware que exigen las redes neuronales. El riesgo conocido es la sensibilidad a variaciones del fondo dinámico del juego, que se mitiga mediante la calibración de rangos de color por elemento y el filtrado morfológico para eliminar falsos positivos.
+**Decisión:** Se seleccionó un enfoque híbrido de visión clásica: segmentación por espacios de color (principalmente HSV, con apoyo potencial de otros espacios como YUV/LAB/XYZ cuando se requiere) combinada con operaciones morfológicas y template matching localizado.
 
-### 7.1.2 Librería de Captura de Pantalla
+La mayor parte de elementos de Banana Kong presenta colores relativamente estables entre sesiones (por ejemplo, bananas, Kong y varios obstáculos), lo que hace eficiente la detección por color con validación geométrica. Sin embargo, existen casos donde un color predominante no es suficientemente discriminativo o donde el patrón visual es más estable que su cromática. En este proyecto, esos casos se resolvieron con template matching aplicado en zonas específicas del frame (ROI), particularmente para elementos más estáticos o de interfaz como la cueva y la barra potenciadora.
 
-La latencia de captura es la primera contribución al tiempo total del pipeline percepción–decisión–acción. Se evaluaron tres opciones disponibles en Python:
+Esta combinación permitió mantener bajo costo computacional y alta interpretabilidad, sin incurrir en el costo de entrenamiento/hardware de redes neuronales. El riesgo principal continúa siendo la sensibilidad a variaciones visuales (fondo dinámico, iluminación y cambios gráficos), mitigada mediante calibración de rangos por elemento, filtrado morfológico y restricción espacial en detectores por plantilla.
 
-**Tabla 2. Comparación de librerías de captura de pantalla**
+#### 7.1.2 Librería de Captura de Pantalla
+
+La latencia de captura es la primera contribución al tiempo total del pipeline percepción-decisión-acción. Se evaluaron tres opciones disponibles en Python:
+
+**Tabla 2. Comparación de librerías de captura de pantalla.**
 
 | Criterio                          | mss (seleccionado)           | PIL/ImageGrab       | PyAutoGUI           |
-| --------------------------------- | ---------------------------- | ------------------- | ------------------- |
-| Latencia de captura               | ~1–2 ms por frame            | ~15–30 ms por frame | ~10–20 ms por frame |
+| :-------------------------------- | :--------------------------- | :------------------ | :------------------ |
+| Latencia de captura               | ~1-2 ms por frame            | ~15-30 ms por frame | ~10-20 ms por frame |
 | Acceso directo a memoria de video | Sí                           | No                  | No                  |
 | Captura de región específica      | Sí (coordenadas por ventana) | Sí (limitado)       | Sí (limitado)       |
 | Compatibilidad con emulador       | Alta                         | Media               | Media               |
 
-**Decisión:**
+**Decisión:** Se seleccionó **mss** por su acceso directo a la memoria de video, que permite capturar frames con menor latencia frente a PIL/ImageGrab y PyAutoGUI.
 
-Se seleccionó **mss** por su acceso directo a la memoria de video, que le permite capturar frames con latencias de 1–2 ms frente a los 15–30 ms de PIL/ImageGrab.
-La integración con `pygetwindow` permite detectar automáticamente la ventana del emulador MuMu Player por nombre y refrescar sus coordenadas cada 60 frames, adaptándose si el usuario mueve la ventana durante la ejecución.
+La integración con detección de ventana por nombre (HWND en Windows) permite ubicar automáticamente MuMu Player y refrescar coordenadas cada 60 frames, adaptándose si el usuario mueve la ventana durante la ejecución.
+
+Los valores se estimaron mediante pruebas internas rápidas en el mismo entorno del proyecto, comparando tiempos de captura en corridas cortas sobre la misma región de pantalla del emulador. 
 
 ### 7.1.3 Simulación de Entradas con Mouse
 
@@ -356,8 +374,6 @@ Se adoptó la **arquitectura en pipeline modular** con cuatro módulos de respon
 La comunicación entre módulos se realiza mediante paso de datos en memoria (sin red ni IPC), por lo que el overhead es mínimo. Esta estructura facilita el reemplazo aislado de cualquier componente —por ejemplo, cambiar el sistema de reglas por un agente de aprendizaje por refuerzo— sin modificar los módulos de captura o detección, y es consistente con el principio de separación percepción–decisión–acción documentado en la literatura de sistemas autónomos.
 
 ### 7.2 Arquitectura
-
-La arquitectura describe la estructura fundamental del sistema, incluyendo sus componentes, las relaciones entre ellos y la forma en que interactúan para cumplir con los requerimientos planteados.
 
 #### 7.2.1 Descripción general de la arquitectura
 
