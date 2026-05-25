@@ -82,6 +82,10 @@ Cada etapa introduce potencialmente latencia y oportunidades de error. La optimi
 
 Banana Kong es un videojuego del género endless runner en 2D con desplazamiento horizontal continuo hacia la derecha. El personaje principal (Kong) avanza de forma automática, por lo que el jugador no controla la dirección de movimiento, sino la sincronización de acciones para sobrevivir y maximizar el puntaje.
 
+<p align="center">
+  <img src="diseno/diagramas/BananaKong.jpg" alt="Banana Kong" width="700">
+</p>
+
 Las mecánicas centrales relevantes para este proyecto son:
 
 1. **Movimiento continuo:** El escenario se desplaza de derecha a izquierda respecto a Kong, generando la aparición constante de obstáculos y oportunidades de recolección.
@@ -97,6 +101,10 @@ Las mecánicas centrales relevantes para este proyecto son:
 7. **Escalado progresivo de dificultad:** La velocidad del juego incrementa con el tiempo, reduciendo la ventana de reacción y elevando la exigencia temporal del ciclo percepción-decisión-acción.
 8. **Variabilidad de escenarios y rutas:** La partida alterna entre zonas (jungla, cueva, agua, playa, copas de árboles), con rutas y peligros distintos; además, existen tramos con animales de apoyo que cambian temporalmente la dinámica de desplazamiento.
 9. **Estructura vertical por niveles/carriles:** Aunque el movimiento horizontal es continuo, la toma de decisiones depende fuertemente de la posición vertical (suelo, plataformas intermedias y superiores), lo que justifica modelar el entorno en carriles discretos.
+
+<p align="center">
+  <img src="diseno/diagramas/GameplayBananaKong.png" alt="Gameplay Banana Kong" width="700">
+</p>
 
 Desde la perspectiva del sistema autónomo, el problema operativo puede formularse como una secuencia de ciclos percepción-decisión-acción en tiempo real:
 
@@ -400,13 +408,13 @@ La arquitectura implementa la Alternativa C (Visión Clásica + Reglas Predefini
 
 El sistema se apoya en dos dependencias transversales que no forman parte del flujo de procesamiento pero condicionan a todos los demás módulos: la configuración centralizada (`settings.py`), que concentra todos los parámetros operativos y de percepción sin intervenir en la lógica del sistema, y el módulo de visualización y métricas, que consume el resultado de cada etapa del ciclo para presentarlo en pantalla y registrar indicadores de rendimiento y calidad de detección. Sobre esa base, el pipeline activo se estructura en cuatro componentes:
 
-1. **Captura:** es el punto de entrada del sistema y el único componente con acceso directo al entorno externo. Se encarga de localizar la ventana del emulador y extraer continuamente la región de imagen correspondiente al área de juego, entregando un frame matricial al resto del pipeline en cada ciclo. Cualquier cambio en la fuente de imagen —resolución, título de ventana— se gestiona exclusivamente aquí, sin afectar a los demás módulos.
+1. **Captura:** es el punto de entrada del sistema y el único componente con acceso directo al entorno externo. Se encarga de localizar la ventana del emulador y extraer continuamente la región de imagen correspondiente al área de juego, entregando un frame matricial al resto del pipeline en cada ciclo. Cualquier cambio en la fuente de imagen  resolución, título de ventana se gestiona exclusivamente aquí, sin afectar a los demás módulos.
 
-2. **Detección:** recibe el frame capturado y aplica sobre él un conjunto de trece detectores especializados que identifican y localizan entidades relevantes del juego —personaje, obstáculos, coleccionables y superficies de apoyo—. Internamente los detectores se distribuyen en dos grupos que se ejecutan en paralelo para reducir la latencia del ciclo, y producen como resultado un conjunto de detecciones estructuradas listas para ser interpretadas. Es el componente de mayor carga computacional del sistema y el principal determinante de la latencia del ciclo completo; su diseño permite incorporar nuevos detectores sin alterar la lógica de decisión.
+2. **Detección:** recibe el frame capturado y aplica sobre él un conjunto de trece detectores especializados que identifican y localizan entidades relevantes del juego personaje, obstáculos, coleccionables y superficies de apoyo. Internamente los detectores se distribuyen en dos grupos que se ejecutan en paralelo para reducir la latencia del ciclo, y producen como resultado un conjunto de detecciones estructuradas listas para ser interpretadas. Es el componente de mayor carga computacional del sistema y el principal determinante de la latencia del ciclo completo; su diseño permite incorporar nuevos detectores sin alterar la lógica de decisión.
 
-3. **Decisión:** toma las detecciones producidas por el componente anterior y, en primer lugar, las integra en un modelo de cinco carriles que describe la situación táctica actual del juego —presencia de suelo, proximidad de obstáculos y disponibilidad de elementos especiales por nivel de altura—. Sobre esa representación del estado, un motor de reglas ordenadas por prioridad determina la acción más adecuada para el ciclo actual y devuelve una acción discreta: saltar, planear, dash o ninguna. Al combinar interpretación del estado y toma de decisiones en un único componente, se hace explícita la dependencia directa entre ambas responsabilidades, y el comportamiento del sistema resulta completamente trazable, ya que es posible saber exactamente qué condición del estado disparó cada acción.
+3. **Decisión:** toma las detecciones producidas por el componente anterior y, en primer lugar, las integra en un modelo de cinco carriles que describe la situación táctica actual del juego presencia de suelo, proximidad de obstáculos y disponibilidad de elementos especiales por nivel de altura. Sobre esa representación del estado, un motor de reglas ordenadas por prioridad determina la acción más adecuada para el ciclo actual y devuelve una acción discreta: saltar, planear, dash o ninguna. Al combinar interpretación del estado y toma de decisiones en un único componente, se hace explícita la dependencia directa entre ambas responsabilidades, y el comportamiento del sistema resulta completamente trazable, ya que es posible saber exactamente qué condición del estado disparó cada acción.
 
-4. **Acción:** recibe la acción seleccionada y la traduce en comandos concretos de control sobre el emulador mediante clics y arrastres de ratón. Es el único componente, junto con captura, que tiene efecto en el entorno externo. Gestiona un mecanismo de cooldown para evitar inputs repetidos demasiado rápidos, y puede operar en modo observación —sin ejecutar ninguna acción— para validar el comportamiento del sistema de forma segura antes de habilitar el control real.
+4. **Acción:** recibe la acción seleccionada y la traduce en comandos concretos de control sobre el emulador mediante clics y arrastres de ratón. Es el único componente, junto con captura, que tiene efecto en el entorno externo. Gestiona un mecanismo de cooldown para evitar inputs repetidos demasiado rápidos, y puede operar en modo observación sin ejecutar ninguna acción para validar el comportamiento del sistema de forma segura antes de habilitar el control real.
 
 <p align="center">
   <img src="diseno/diagramas/DiagramaArquitectura.png" alt="Diagrama Arquitectura" width="700">
@@ -421,7 +429,7 @@ El flujo de información recorre el pipeline de forma secuencial: la captura ent
 Cada componente depende únicamente del contrato de datos que le entrega el componente anterior, sin conocer detalles de su implementación interna. La configuración centralizada es la única dependencia transversal: todos los módulos la consultan, pero ninguno la modifica en tiempo de ejecución. Esto resulta en un acoplamiento bajo entre etapas y alta cohesión dentro de cada componente, lo que permite extender el sistema —por ejemplo, agregar nuevos detectores o reglas— sin afectar la arquitectura general.
 
 <p align="center">
-  <img src="diseno/diagramas/DiagramaInteraccionEntreModulos.png" alt="Diagrama Interacción entre Módulos" width="700">
+  <img src="diseno/diagramas/DiagramaInteraccionEntreModulos.svg" alt="Diagrama Interacción entre Módulos" width="700">
 </p>
 
 #### 7.2.2.3 Comportamiento
@@ -431,11 +439,11 @@ El sistema arranca con una fase de inicialización en la que valida la disponibi
 El flujo es lineal y sin pasos redundantes: cada etapa consume el resultado de la anterior y produce exactamente lo que necesita la siguiente, lo que lo hace eficiente a nivel arquitectónico. Sin embargo, existe un cuello de botella reconocido en la etapa de percepción visual, que concentra la mayor carga de procesamiento del ciclo y es la principal fuente de latencia acumulada. Esto puede traducirse en reacción tardía ante eventos críticos del juego, aunque en condiciones normales de operación la latencia total es tolerable. El desacoplamiento entre componentes asegura que este cuello de botella sea localizable y abordable de forma independiente, sin necesidad de rediseñar el sistema completo.
 
 <p align="center">
-  <img src="diseno/diagramas/SecuenciaTomadeDecision.png" alt="Secuencia Toma de Decisión" width="700">
+  <img src="diseno/diagramas/SecuenciaTomadeDecision.svg" alt="Secuencia Toma de Decisión" width="700">
 </p>
 
 <p align="center">
-  <img src="diseno/diagramas/SecuenciaDeteccion.png" alt="Secuencia Detección" width="700">
+  <img src="diseno/diagramas/SecuenciaDeteccion.svg" alt="Secuencia Detección" width="700">
 </p>
 
 ## 8. Implementación
@@ -453,9 +461,8 @@ El sistema implementado se construyó con una filosofía de bajo acoplamiento, t
 | Detección de ventana | pygetwindow 0.0.9 | Se decidió detectar la ventana por título para evitar coordenadas fijas y permitir reposicionamiento del emulador durante pruebas. |
 | Control de entrada | pyautogui 0.9.54 | Se eligió para ejecutar clic, arrastre y pulsación sostenida con una API uniforme y suficiente para el control requerido por el juego. |
 | Emulación de juego | MuMu Player (resolución objetivo 960x540) | Se mantuvo como entorno controlado y reproducible para calibración visual. |
-| Configuración | `core/config/settings.py` | Se centralizaron todos los umbrales y flags para evitar valores mágicos dispersos y facilitar ajustes sin modificar lógica. |
 
-En síntesis, la implementación técnica privilegia un pipeline clásico completamente explicable y ajustable, coherente con el objetivo del proyecto: validar autonomía funcional sin entrenamiento de modelos.
+
 
 ### 8.2 Componentes (R)
 
@@ -463,29 +470,26 @@ Antes de entrar a cada módulo, conviene ver la secuencia completa de funcionami
 
 #### 8.2.1 Núcleo Orquestador (`core/main.py`)
 
-Este módulo coordina todo el proceso de extremo a extremo. Primero crea los componentes de captura, percepción, construcción de estado, decisión, control y visualización. Después entra en un ciclo continuo donde cada iteración sigue siempre la misma secuencia: capturar imagen, detectar elementos, convertir esas detecciones en estado del juego, elegir una acción, ejecutarla y mostrar el resultado.
+`main.py` orquesta el pipeline completo: inicializa captura, detección, estado, reglas, control, visualización y métricas; luego ejecuta el ciclo `captura -> detección -> estado -> decisión -> acción -> visualización` por frame.
 
-El reto principal aquí fue equilibrar velocidad y reacción. Si se detecta todo en todos los frames, sube la latencia; si se detecta con menor frecuencia, se puede perder tiempo de respuesta. La solución fue combinar reutilización de resultados recientes con una detección de emergencia cuando aparece un peligro cercano. Con esa estrategia el flujo mantiene continuidad y, al mismo tiempo, conserva respuesta rápida en eventos críticos.
+Entrada/salida concreta: este módulo recibe la imagen actual del juego (`frame_actual`), los objetos detectados (`resultados`) y el estado resumido (`estado_juego`). Con eso, envía una acción al control (`accion`), genera la imagen con anotaciones (`frame_debug`) y actualiza tiempos de rendimiento del ciclo.
 
-Además del ciclo principal, este módulo define el control operativo de la sesión: permite iniciar o detener la detección, pausar sobre un frame fijo para calibración y salir de forma segura. En otras palabras, no solo ejecuta la lógica autónoma, también gobierna el modo de trabajo técnico durante pruebas y ajustes.
-
-En el plano de diseño, también se decidió que este orquestador no asumiera lógica visual ni lógica de reglas, precisamente para evitar que el control del ciclo terminara mezclado con percepción o decisión. Esa separación hizo posible cambiar calibraciones, reglas o incluso criterios de priorización sin tocar la estructura del loop principal.
+Para sostener tiempo real, combina dos estrategias: reutilización de resultados cuando no toca detectar y detección forzada cuando aparece peligro cercano. Además concentra el control operativo (iniciar/detener, pausa y salida segura) sin mezclar lógica de percepción ni de decisión, manteniendo bajo acoplamiento entre módulos.
 
 #### 8.2.2 Módulo de Captura (`core/vision/captura/captura.py`)
 
 La captura se implementó alrededor de la clase `Capturador`, que resuelve primero la ventana del emulador con `pygetwindow` y después obtiene su región activa con `mss`. La decisión de buscar por título, usando `EMULADOR_TITULO`, evitó depender de coordenadas fijas y permitió que el bot siguiera funcionando aunque la ventana se reubicara durante la sesión. Una vez encontrada la ventana, `capturar()` devuelve el frame en formato BGR listo para OpenCV, mientras que `capturar_y_congelar()` conserva el último frame cuando la ejecución entra en pausa.
+Entrada/salida concreta: recibe el título de la ventana, cada cuánto refrescar coordenadas y el estado de pausa. Devuelve la imagen actual del emulador (`frame_actual`) y mantiene una copia congelada (`frame_congelado`) para cuando se pausa o falla una captura.
+Para mantener estabilidad en tiempo real, el módulo incorpora reintentos y reutiliza el último frame válido cuando ocurre un fallo puntual, evitando que el pipeline se detenga por cortes breves. También soporta modo de frame congelado para depuración y ajuste fino de detectores.
 
-Durante las pruebas aparecieron errores de captura intermitentes, así que el flujo interno se reforzó con reintentos y con la reutilización del último frame válido cuando una lectura falla. Ese detalle no es menor: si la captura se rompe por un instante, el resto del pipeline sigue operando con una imagen coherente en lugar de detenerse. El modo de frame congelado también se usa para depuración fina, porque permite inspeccionar exactamente la misma escena mientras se ajustan detectores o reglas.
-
-En operación, el módulo sigue un flujo bastante directo: localizar ventana, capturar región, convertir la imagen al formato que consume visión y devolverla al orquestador. Si el sistema está en pausa, no produce una imagen nueva sino que entrega el congelado; si hay un fallo puntual, reintenta. Esa combinación mantiene estable el ciclo principal sin meter lógica de decisión dentro de la captura.
-
-La decisión de usar `mss` se tomó después de valorar alternativas de captura más pesadas o dependientes de APIs de escritorio menos predecibles. Aquí el costo de cada frame importa, porque unos pocos milisegundos extra se traducen en reacción tardía. Por eso la captura quedó como una operación simple, rápida y fácil de sincronizar con el resto de módulos.
+En síntesis, su flujo es: localizar ventana, capturar región, entregar frame al orquestador y respetar pausa/fallo con recuperación simple. Se priorizó una captura liviana y predecible para no introducir latencia adicional en cada ciclo.
 
 #### 8.2.3 Módulo de Detección (`core/vision/detection/`)
 
 La detección se estructuró alrededor de `BaseDetector`, que concentra la parte repetida del trabajo: conversiones de color, creación de máscaras, filtrado geométrico y, cuando corresponde, template matching. Esa base común permitió que cada detector especializado solo tuviera que definir sus umbrales y su zona de interés, sin duplicar la mecánica interna. Encima de eso, `Detector.detectar_todos()` reparte los detectores en dos grupos y los ejecuta en paralelo con `ThreadPoolExecutor`, de manera que el ciclo no espere a que cada elemento se procese uno por uno.
+Entrada/salida concreta: recibe un frame y devuelve un paquete `resultados` con listas de objetos detectados por tipo (bananas, troncos, Kong, agua, etc.), además de `descartados` (lo que se rechazó y por qué) y `mascaras` (imágenes binarias de apoyo para depuración).
 
-La clase base no solo centraliza el flujo de detección: también define el objeto `Elemento`, que guarda posición, tamaño, centro, área, proporción y tipo. Con eso, el resto del sistema recibe detecciones homogéneas aunque provengan de detectores muy distintos. A nivel de implementación, esa uniformidad es importante porque luego `GameState`, `Visualizador` y `RuleEngine` trabajan con la misma estructura sin depender del detector concreto.
+La clase base también define el objeto `Elemento` (posición, tamaño, centro, área, proporción y tipo), de modo que `GameState`, `Visualizador` y `RuleEngine` consumen una estructura homogénea sin depender del detector concreto.
 
 Detectores activos en la versión implementada:
 
@@ -506,81 +510,94 @@ Detectores activos en la versión implementada:
 
 El desafío más fuerte de esta capa fue reducir falsos positivos sin perder objetos útiles en escenas dinámicas. Antes de cerrar la estrategia de percepción se probaron otros espacios de color, pero se terminó manteniendo HSV porque el separador de tono, saturación y brillo encaja mejor con la calibración manual del juego. Además, `BaseDetector` mantiene un caché de conversiones por frame, así que si varios detectores usan el mismo espacio de color no se repite el trabajo completo en cada uno.
 
+<p align="center">
+  <img src="diseno/diagramas/EjemploDeteccion3.png" alt="Ejemplo de detección 3 con máscara" width="700">
+</p>
+
 Para resolver la detección por color se sigue siempre la misma secuencia interna en `_detectar_elemento()`: convertir al espacio indicado, aplicar `cv2.inRange` para obtener la máscara, limpiar con erosión o dilatación si el detector lo pide, extraer componentes con `connectedComponentsWithStats` y filtrar por área, proporción y zona Y. Ese orden importa porque primero se separa el color y después se valida si la forma realmente pertenece al objeto que interesa.
 
-Ese filtrado geométrico no es decorativo. Los rangos de área evitan que ruido mínimo pase como objeto válido, la proporción ancho/alto separa siluetas compatibles con el elemento esperado y la restricción por zona vertical evita detectar cosas fuera de la parte del escenario donde ese elemento realmente puede aparecer. Por eso, por ejemplo, el detector de bananas trabaja con una franja vertical acotada, el tótem usa una dilatación más fuerte para unir fragmentos y el avión expande su caja de detección para no perder la cola.
+Los rangos de área evitan que ruido mínimo pase como objeto válido, la proporción ancho/alto separa siluetas compatibles con el elemento esperado y la restricción por zona vertical evita detectar cosas fuera de la parte del escenario donde ese elemento realmente puede aparecer. Por eso, por ejemplo, el detector de bananas trabaja con una franja vertical acotada, el tótem usa una dilatación más fuerte para unir fragmentos y el avión expande su caja de detección para no perder la cola.
 
 En los casos donde el color no era suficiente, se usó `_detectar_por_template()` con `cv2.matchTemplate` y posterior agrupación de solapes con `cv2.groupRectangles`. Esto se reservó para patrones más estables que su color, como la cueva o la barra potenciadora, porque ahí la forma visual aporta más que el rango HSV. También se aplicaron recortes espaciales y filtros de posición fija para ignorar ruido en zonas que no aportan a la decisión.
 
-Hubo además una decisión importante de alcance: no todos los objetos del escenario debían detectarse. Los elementos que no cambian de forma directa la supervivencia de Kong se redujeron o se omitieron cuando aumentaban demasiado el costo del ciclo, porque el objetivo era priorizar reacción y no inventariar todo el escenario. En el código eso se traduce en mantener solo los detectores que alimentan reglas reales o que sirven para inferir terreno y peligro.
-
-En ese sentido, también se decidió no construir detectores completos para todas las plataformas. El bot no necesita reconstruir toda la geometría del escenario para operar; le basta con que `GameState` pueda inferir, a partir de los carriles y del suelo detectado, si una zona es transitable. Esa simplificación reduce trabajo en visión y deja que la semántica del terreno la resuelva la capa de estado.
-
-Las plataformas de madera sí se trataron de forma especial, pero tampoco con una detección exhaustiva de cada fragmento. Solo interesaban las que aparecen sobre agua, porque ahí el bot necesita saber con precisión dónde puede seguir vivo. El resto de plataformas superiores se dejó fuera del detector dedicado porque el estado y las reglas ya pueden inferir su uso a partir de la altura, el carril y la acción disponible. Esa decisión ahorró tiempo sin romper el comportamiento en la zona más delicada del juego.
+Hubo además una decisión de alcance: no detectar todo el escenario. Se priorizaron clases que alimentan reglas reales o inferencia de terreno/peligro. Por eso no se implementó reconstrucción completa de plataformas; se enfocó la detección de `plataforma_madera` en zonas sobre agua, donde impacta directamente la supervivencia.
 
 El agua también recibió un tratamiento distinto. No se podía asumir como un objeto de tamaño fijo, porque su extensión visible cambia según el contexto y ocupa una franja variable del escenario. Por eso el detector de agua trabaja con una franja inferior amplia y con una dilatación más agresiva en horizontal y vertical: el objetivo no es dibujar la silueta exacta, sino confirmar que debajo de Kong existe una región de riesgo sin suelo.
 
-La misma lógica de especialización aparece en otros detectores: el tubo amplía su caja hacia la izquierda, la plataforma de madera normaliza su altura y restringe la búsqueda a la banda donde realmente aparece sobre agua, y el detector del personaje se excluye del filtro lateral mínimo porque su posición sirve como referencia para todo el resto. Esa forma de ajustar cada clase por su geometría real evita una capa de reglas posteriores más compleja.
+<p align="center">
+  <img src="diseno/diagramas/EjemploDeteccion1.png" alt="Ejemplo de detección de agua" width="700">
+</p>
 
-Además, para compensar la ralentización que genera la percepción, se optimizó la lógica del dash. En el código eso se refleja en la regla de impulso crítico, que consume la disponibilidad del dash apenas se usa y se coloca en la cima de prioridad dentro de `rules.py`. La idea fue convertirlo en un mecanismo de escape real frente a la avalancha y frente a peligros inmediatos, no en una acción secundaria que llegue tarde.
+La misma lógica de especialización se aplicó en otros detectores: el tubo amplía caja hacia la izquierda, la plataforma de madera normaliza altura y restringe banda de búsqueda, y el detector de Kong se excluye del filtro lateral mínimo para conservar una referencia estable.
 
 Al final de cada iteración de detección, el módulo entrega un paquete consistente para el resto del sistema: listas de elementos detectados por categoría, descartes con su motivo y máscaras de apoyo para depuración visual. Ese formato estandarizado fue clave para desacoplar percepción de estado y de decisión, porque el orquestador solo consume resultados, no detalles internos de cada detector.
 
+<p align="center">
+  <img src="diseno/diagramas/EjemploDetección2.png" alt="Ejemplo de detección 2" width="700">
+</p>
+
 #### 8.2.4 Representación de Estado (`core/rules/game_state.py`)
 
-La capa de estado transforma detecciones crudas en una representación compacta y útil para decidir. En lugar de trabajar con cientos de coordenadas sueltas, `GameState` modela el entorno en cinco carriles verticales y mantiene por cada uno un pequeño diccionario semántico: si hay suelo, cuál banana es la más cercana y cuál obstáculo es el más cercano. Además conserva la información global del personaje, incluida la disponibilidad del impulso especial.
+La capa de estado transforma detecciones crudas en una representación compacta para decidir. `GameState` modela cinco carriles y guarda, por carril, si hay suelo y cuáles son la banana y el obstáculo más cercanos; además conserva el estado global del personaje y del dash.
+Entrada/salida concreta: recibe las listas detectadas (Kong, bananas, obstáculos, plataformas y agua) y actualiza `GameState`. La salida práctica es un estado por carriles que indica si hay suelo, cuál es la banana más cercana y cuál es el obstáculo más cercano, además del carril actual de Kong.
 
-El mapeo de carriles sigue una segmentación fija sobre la coordenada Y: carril 4 por encima de 149 píxeles, carril 3 entre 149 y 250, carril 2 entre 250 y 350, carril 1 entre 350 y 450 y carril 0 por debajo de 450. Esa división no solo organiza el estado: también le da sentido a la transición vertical del personaje, porque las reglas consultan el carril actual y los adyacentes para saber si debe saltar, planear o caer.
+El mapeo vertical fijo (carriles 4 a 0) simplifica la transición entre niveles y permite que las reglas razonen por vecindad de carriles en lugar de operar con coordenadas continuas. En `actualizar()`, el flujo limpia estado previo, ubica a Kong, recalcula suelo y registra proximidades relevantes.
 
-El proceso de actualización sigue una secuencia estable dentro de `actualizar()`: limpiar el estado anterior, ubicar al personaje con `_obtener_carril()`, recalcular suelo según agua y plataformas visibles delante de él, y registrar los elementos más relevantes por proximidad. Este diseño resolvió un problema clave: cuando las reglas operaban con posiciones continuas, el comportamiento era menos estable y más difícil de depurar. Con carriles y proximidad, la interpretación se volvió más robusta y trazable.
-
-Este módulo actúa como puente semántico entre visión y decisión: reduce ruido visual, conserva solo contexto útil para acción inmediata y entrega un resumen estable del entorno por carril. Gracias a ese resumen, `RuleEngine` puede razonar sobre riesgo y oportunidad sin depender de detalles geométricos de bajo nivel.
-
-En la práctica, esta representación también evita que el sistema tenga que decidir a partir de un mapa completo de objetos. Solo se conserva lo que realmente afecta la supervivencia inmediata: si hay suelo, qué hay delante y en qué carril ocurre. Eso hizo la lógica más simple, más rápida y más fácil de ajustar cuando se cambió la calibración de detección o cuando se modificó el conjunto de detectores activos.
+Con este puente semántico, el motor de reglas opera sobre contexto útil y estable, reduciendo ruido visual y mejorando trazabilidad durante calibración.
 
 #### 8.2.5 Motor de Decisión y Reglas (`core/rules/rule_engine.py` y `core/rules/rules.py`)
 
-El motor de decisión evalúa reglas en orden de prioridad y ejecuta la primera condición que se cumple. En `RuleEngine.decide()` eso se traduce en una pasada secuencial por la lista `rules`, ordenada por `priority`, y en la devolución de una sola acción por frame. El comportamiento es determinista, repetible y fácil de depurar. La política activa prioriza supervivencia inmediata: primero riesgo crítico con impulso, luego evasión de obstáculo, luego vacío, luego caída peligrosa y finalmente recolección de banana cuando es segura.
+El motor de decisión evalúa reglas por prioridad y ejecuta la primera condición verdadera (`RuleEngine.decide()`), devolviendo una sola acción por frame. La política activa prioriza supervivencia: riesgo crítico con dash, evasión de obstáculo, vacío, caída peligrosa y, al final, recolección segura.
+Entrada/salida concreta: recibe el estado del juego (`state`) y devuelve una única acción por frame (`SALTAR`, `PLANEAR`, `BAJAR`, `DASH` o `NADA`), junto con el nombre de la regla activada en consola para trazabilidad.
 
-La tabla de reglas activa en `rules.py` quedó intencionalmente corta y muy enfocada. `dash` tiene prioridad 0 porque solo se consume en situaciones críticas y además agota `dash_disponible`; `saltar_obstaculo` atiende obstáculos peligrosos en el carril actual; `saltar_vacio` cubre el caso de perder suelo en el carril 0; `caida_peligrosa` activa `PLANEAR` cuando el carril actual y el inferior ya no sostienen al personaje; y `recolectar_banana` queda al final porque solo se permite cuando no compite con un peligro inmediato. Esta jerarquía refleja la lógica real del juego: primero sobrevivir, luego optimizar recorrido.
+En `rules.py`, la tabla se mantuvo corta y específica. Reglas activas (de mayor a menor prioridad):
 
-En esta fase surgieron dos problemas: respuestas tardías en riesgos cercanos y repetición excesiva de ciertas acciones cuando una condición persistía varios frames. Se mitigó ajustando `OBST_DIST` por tipo de obstáculo, reservando la máxima prioridad para el caso más crítico y consumiendo el impulso especial cuando se usa, para evitar reutilizaciones artificiales en cadena. El resultado fue una política más estable en tiempo real sin perder legibilidad.
+1. `dash` (prioridad 0): usa el impulso cuando hay riesgo crítico inmediato (obstáculo o pérdida de suelo) y consume `dash_disponible` para evitar uso repetido.
+2. `saltar_obstaculo` (prioridad 1): salta cuando detecta un obstáculo peligroso en el carril actual y a distancia de reacción.
+3. `saltar_vacio` (prioridad 2): salta cuando el carril de suelo queda sin soporte frente a Kong.
+4. `caida_peligrosa` (prioridad 3): activa planeo cuando el carril actual y el inferior no ofrecen suelo seguro.
+5. `recolectar_banana` (prioridad 4): intenta recolectar banana cercana solo si no compite con un peligro inmediato.
 
-La salida de este módulo siempre es una acción discreta y única por ciclo. Esa decisión única simplifica el control posterior, evita órdenes contradictorias y mantiene una relación clara entre situación detectada y respuesta ejecutada. Cuando ninguna regla coincide, el sistema devuelve `NADA`, que en control equivale a soltar el botón y dejar al bot en estado neutro.
+Esta jerarquía surgió de pruebas y redujo respuestas tardías y repeticiones al ajustar distancias por tipo y consumo del impulso.
 
-Dentro de esta lógica también se evaluó qué acciones debían reservarse para casos concretos. El salto se mantiene como respuesta general para obstáculos y cambios de nivel; el planeo se reserva para caídas peligrosas; y el dash se dejó como recurso excepcional para escapar de la avalancha o romper situaciones en las que una acción estándar llega tarde. Esa jerarquía no es decorativa: nació de pruebas donde algunas acciones parecían útiles en teoría pero degradaban el desempeño real si se activaban demasiado pronto o demasiado tarde.
+Durante la implementación aparecieron dos retos recurrentes. El primero fue la respuesta tardía en escenarios de alto riesgo (obstáculos muy cercanos o pérdida súbita de suelo), que se mitigó elevando `dash` a prioridad máxima y afinando umbrales de distancia por tipo de obstáculo. El segundo fue la repetición no deseada de acciones cuando una condición permanecía varios frames; para controlarlo se reforzó el consumo de `dash_disponible` al usar impulso y se acotaron mejor las condiciones de activación para evitar encadenamientos artificiales.
+
+Otro desafío fue el equilibrio entre supervivencia y recolección: en pruebas iniciales, priorizar bananas demasiado pronto degradaba la continuidad de la corrida. Por eso `recolectar_banana` quedó como regla de menor prioridad y condicionada a ausencia de peligro inmediato.
+
+El resultado es una política determinista, legible y consistente: sin reglas aplicables, el sistema devuelve `NADA`.
 
 #### 8.2.6 Módulo de Control (`core/control/acciones_click.py`)
 
-El control traduce la decisión lógica en interacción física sobre el emulador mediante mouse. En `ModuloAcciones.ejecutar()` cada acción del motor se convierte en una operación concreta: clic para saltar, presión sostenida para planear, arrastre vertical para bajar, arrastre horizontal para impulso, o liberación de botón cuando no corresponde actuar. La clase concentra aquí toda la entrada activa del bot y evita que el resto del sistema tenga que saber cómo se materializa una acción en el emulador.
+El control traduce la acción lógica en interacción de mouse (`ModuloAcciones.ejecutar()`): clic para saltar, presión sostenida para planear, arrastre vertical para bajar, arrastre horizontal para dash y liberación en `NADA`.
+Entrada/salida concreta: recibe la acción decidida y, cuando aplica, coordenadas para dash. Como salida ejecuta el gesto real en el emulador (clic, mantener, arrastrar o soltar) y actualiza su estado interno para el siguiente ciclo.
 
-El problema más común aquí fue la sincronización fina entre acciones consecutivas. Se añadió una pausa corta global con `pyautogui.PAUSE = 0.05` para estabilizar la entrada y se forzó la liberación del botón antes del impulso horizontal para evitar conflictos entre estados de planeo y dash. Además, se mantuvo un modo seguro para correr todo el pipeline sin ejecutar acciones reales mientras se calibra.
-
-En términos de flujo, este módulo recibe una acción, la convierte en gesto de mouse y confirma el estado final del botón para que el siguiente ciclo no herede una condición incorrecta. Este detalle fue importante para evitar comportamientos acumulativos no deseados entre iteraciones, sobre todo cuando el control entra en secuencias rápidas de salto, planeo y dash.
-
-También aquí se tomó una decisión pragmática: el control debía ser lo bastante simple para no introducir latencia propia. Por eso se evitó añadir capas innecesarias de abstracción y se trabajó directamente con las operaciones mínimas requeridas por el juego, incluyendo el pequeño coste de los arrastres que ya se asumió desde el diseño.
+Para estabilizar secuencias rápidas, se configuró `pyautogui.PAUSE = 0.05` y se fuerza liberar botón antes del dash, evitando conflictos entre planeo e impulso. El módulo mantiene además modo seguro sin acciones reales para calibración.
 
 #### 8.2.7 Visualización (`core/vision/visualizador/visualizador.py`)
 
-La visualización se diseñó como herramienta de diagnóstico en tiempo real. Sobre cada frame se dibujan zonas de referencia, rectángulos y centros de los elementos detectados, y opcionalmente se muestran máscaras por detector para inspección más fina de la segmentación. En el código, `Visualizador` funciona como una capa de observabilidad que permite ver en pantalla lo que el detector y el estado están produciendo antes de que el motor de reglas actúe.
+La visualización funciona como capa de diagnóstico en tiempo real: dibuja zonas, cajas y centros detectados, y permite mostrar máscaras por detector. El uso de colores por tipo (incluido tratamiento diferenciado para agua) y el modo de depuración facilitaron calibración y validación de coherencia entre percepción, estado y reglas.
+Entrada/salida concreta: recibe el frame y los elementos detectados, junto con el estado del bot (activo/pausado). Devuelve un `frame_debug` con cajas, centros y zonas dibujadas para ver en tiempo real qué está entendiendo el sistema.
 
-El uso de colores fijos por tipo permitió detectar errores de clasificación rápidamente. El agua recibió un tratamiento gráfico diferenciado por su impacto directo en la interpretación de suelo. También se dejó información ampliada en modo depuración para no saturar la vista durante operación normal. Esta capa fue clave para acelerar la calibración y validar que la percepción coincide con la lógica de estado.
-
-Su aporte principal dentro del proceso completo es cerrar el ciclo de validación visual: permite verificar en tiempo real si lo que el bot "cree ver" coincide con lo que realmente aparece en pantalla y, por tanto, detectar rápidamente si el problema está en captura, detección, estado o reglas.
-
-En la práctica, esta visualización funcionó como una especie de laboratorio sobre el propio juego: al ver los contornos, la zona de interés y las máscaras, se pudieron ajustar umbrales sin adivinar. Eso fue especialmente útil cuando una clase empezaba a confundirse con el fondo o cuando una región variable, como el agua, requería revisar si el detector estaba abarcando demasiado o demasiado poco.
 
 #### 8.2.8 Configuración Centralizada (`core/config/settings.py`)
 
-La configuración centralizada resolvió la dispersión de umbrales y constantes entre módulos. En un único archivo se agrupan parámetros del emulador, frecuencia de detección, rangos de color, restricciones geométricas, plantillas, depuración, ejecución de acciones y evaluación. La ventaja técnica es clara: ningún detector ni regla calcula sus propios valores por defecto, sino que todos leen la misma fuente de verdad.
+La configuración centralizada en `core/config/settings.py` unifica todos los parámetros operativos y de percepción del sistema. Esto evita valores mágicos en detectores/reglas y permite calibrar el comportamiento sin modificar lógica interna.
 
-En la práctica, ese archivo organiza los ajustes en bloques bastante claros. Un bloque controla la ventana del emulador y el refresco de coordenadas; otro regula la frecuencia de detección y el filtrado espacial; los grupos de rangos, área y proporción definen la forma esperada de cada detector; los parámetros de plantilla configuran la detección basada en coincidencia cuando el color no basta; otro interruptor permite operar en modo observación sin tocar el juego; y los ajustes de depuración abren la trazabilidad visual y textual.
+Parámetros generales del proyecto (según el manual de desarrollo):
 
-Esto permitió ajustar comportamiento sin modificar lógica interna. En la práctica, la calibración se volvió más rápida y con menor riesgo de inconsistencias entre percepción, reglas y control. Cuando cambiaba un umbral de color o una restricción espacial, no había que tocar el algoritmo, solo el parámetro.
+- `EMULADOR_*`: título de ventana y refresco de coordenadas.
+- `DETECCION_*`: filtro X mínimo, umbral de detección forzada y frecuencia de detección.
+- `<TIPO>_RANGO_BAJO/ALTO`: rangos HSV por tipo de elemento.
+- `<TIPO>_AREA_MIN/MAX_PCT`: límites de área permitida por detector.
+- `<TIPO>_PROP_MIN/MAX`: límites de proporción ancho/alto.
+- `<TIPO>_TEMPLATE_*`: archivo, umbral y escala para template matching.
+- `EJECUTAR_ACCIONES`: modo observación (`False`) o control activo (`True`).
+- `DEBUG`: depuración visual de detecciones.
+- `DEBUG_REGLAS`: traza en consola de reglas disparadas.
+- `METRICAS_*`: ventana y frecuencia de métricas.
+- `EVAL_DETECCION_*`: parámetros de evaluación y exportación.
 
-También permitió separar claramente dos tipos de cambios: cambios de lógica (código) y cambios de calibración (parámetros). Esa separación redujo errores al iterar, porque la mayoría de ajustes diarios se hizo en parámetros sin tocar la arquitectura.
-
-Aquí también entró el calibrador HSV. La idea fue tener una herramienta para jugar con tono, saturación y brillo sobre la propia pantalla del emulador, hasta encontrar rangos que separaran de forma confiable cada objeto del fondo. Sin ese apoyo, la calibración habría sido mucho más lenta y menos precisa, sobre todo en elementos con colores cercanos al entorno.
+Esta estructura separa claramente cambios de lógica (código) y cambios de calibración (parámetros), reduciendo errores durante iteración y mantenimiento.
 
 ### 8.3 Integraciones
 

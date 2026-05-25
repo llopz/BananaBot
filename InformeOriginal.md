@@ -593,15 +593,15 @@ La arquitectura modular en pipeline satisface directamente los requerimientos fu
 </p>
 
 <p align="center">
-  <img src="diseno/diagramas/DiagramaInteraccionEntreModulos.png" alt="Diagrama Interacción entre Módulos" width="700">
+  <img src="diseno/diagramas/DiagramaInteraccionEntreModulos.svg" alt="Diagrama Interacción entre Módulos" width="700">
 </p>
 
 <p align="center">
-  <img src="diseno/diagramas/SecuenciaTomadeDecision.png" alt="Secuencia Toma de Decisión" width="700">
+  <img src="diseno/diagramas/SecuenciaTomadeDecision.svg" alt="Secuencia Toma de Decisión" width="700">
 </p>
 
 <p align="center">
-  <img src="diseno/diagramas/SecuenciaDeteccion.png" alt="Secuencia Detección" width="700">
+  <img src="diseno/diagramas/SecuenciaDeteccion.svg" alt="Secuencia Detección" width="700">
 </p>
 
 ## 16. Plan de Pruebas
