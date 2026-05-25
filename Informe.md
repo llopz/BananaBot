@@ -394,205 +394,41 @@ El sistema está estructurado como un **pipeline de procesamiento secuencial** c
 
 La arquitectura implementa la Alternativa C (Visión Clásica + Reglas Predefinidas), especificando cómo cada componente contribuye a satisfacer restricciones de tiempo real y mantenibilidad.
 
-#### 7.2.2 Componentes del sistema e interacción
+#### 7.2.2 Componentes del Sistema e Interacción
 
-##### 7.2.2.1 Descripción de componentes
+##### 7.2.2.1 Descripción de Componentes
+
+El sistema se apoya en dos dependencias transversales que no forman parte del flujo de procesamiento pero condicionan a todos los demás módulos: la configuración centralizada (`settings.py`), que concentra todos los parámetros operativos y de percepción sin intervenir en la lógica del sistema, y el módulo de visualización y métricas, que consume el resultado de cada etapa del ciclo para presentarlo en pantalla y registrar indicadores de rendimiento y calidad de detección. Sobre esa base, el pipeline activo se estructura en cuatro componentes:
+
+1. **Captura:** es el punto de entrada del sistema y el único componente con acceso directo al entorno externo. Se encarga de localizar la ventana del emulador y extraer continuamente la región de imagen correspondiente al área de juego, entregando un frame matricial al resto del pipeline en cada ciclo. Cualquier cambio en la fuente de imagen —resolución, título de ventana— se gestiona exclusivamente aquí, sin afectar a los demás módulos.
+
+2. **Detección:** recibe el frame capturado y aplica sobre él un conjunto de trece detectores especializados que identifican y localizan entidades relevantes del juego —personaje, obstáculos, coleccionables y superficies de apoyo—. Internamente los detectores se distribuyen en dos grupos que se ejecutan en paralelo para reducir la latencia del ciclo, y producen como resultado un conjunto de detecciones estructuradas listas para ser interpretadas. Es el componente de mayor carga computacional del sistema y el principal determinante de la latencia del ciclo completo; su diseño permite incorporar nuevos detectores sin alterar la lógica de decisión.
+
+3. **Decisión:** toma las detecciones producidas por el componente anterior y, en primer lugar, las integra en un modelo de cinco carriles que describe la situación táctica actual del juego —presencia de suelo, proximidad de obstáculos y disponibilidad de elementos especiales por nivel de altura—. Sobre esa representación del estado, un motor de reglas ordenadas por prioridad determina la acción más adecuada para el ciclo actual y devuelve una acción discreta: saltar, planear, dash o ninguna. Al combinar interpretación del estado y toma de decisiones en un único componente, se hace explícita la dependencia directa entre ambas responsabilidades, y el comportamiento del sistema resulta completamente trazable, ya que es posible saber exactamente qué condición del estado disparó cada acción.
+
+4. **Acción:** recibe la acción seleccionada y la traduce en comandos concretos de control sobre el emulador mediante clics y arrastres de ratón. Es el único componente, junto con captura, que tiene efecto en el entorno externo. Gestiona un mecanismo de cooldown para evitar inputs repetidos demasiado rápidos, y puede operar en modo observación —sin ejecutar ninguna acción— para validar el comportamiento del sistema de forma segura antes de habilitar el control real.
 
 <p align="center">
   <img src="diseno/diagramas/DiagramaArquitectura.png" alt="Diagrama Arquitectura" width="700">
 </p>
 
-El sistema se compone de los siguientes componentes principales:
+#### 7.2.2.2 Interacción entre Módulos
 
-**Componente 1: Captura (core/vision/captura/captura.py)**
+Todos los componentes se comunican mediante paso de datos en memoria dentro de un mismo proceso Python, sin dependencias de red ni servicios externos durante la ejecución.
 
-- **Responsabilidad:** Obtener frames del emulador en tiempo real
-- **Entrada:** Nombre de ventana del emulador ("Android Device")
-- **Salida:** Array numpy 960×540×3 (BGR) cada ~33 ms
-- **Técnicas:** Detección de ventana por HWND (Windows API), captura con MSS (mss library)
-- **Latencia típica:** 15-25 ms
-- **Relación con requerimientos:** RF1.1, RF1.2, RF1.3
+El flujo de información recorre el pipeline de forma secuencial: la captura entrega cada frame al módulo de percepción, que produce un conjunto de detecciones que fluyen hacia la representación de estado. El estado consolidado es consumido por el motor de decisión, que produce una acción discreta hacia el módulo de ejecución. Paralelamente, el frame, las detecciones, el estado y la acción son enviados al módulo de visualización para su presentación. La acción ejecutada sobre el emulador modifica el entorno, y ese cambio queda reflejado en el siguiente frame capturado, cerrando el ciclo de retroalimentación.
 
-**Componente 2: Detección (core/vision/detection/)**
-
-Consta de 13 detectores especializados, cada uno responsable de detectar un tipo de elemento:
-
-| Detector                  | Técnica Principal              | Parámetros Clave           | Latencia |
-| ------------------------- | ------------------------------ | -------------------------- | -------- |
-| BananaDetector            | HSV + Contornos                | BANANA_RANGO_BAJO/ALTO     | 8 ms     |
-| TroncoDetector            | HSV + Contornos                | TRONCO_RANGO_BAJO/ALTO     | 8 ms     |
-| ArbustoDetector           | HSV + Contornos                | ARBUSTO_RANGO_BAJO/ALTO    | 8 ms     |
-| AvionDetector             | HSV + Contornos                | AVION_RANGO_BAJO/ALTO      | 8 ms     |
-| ParedDetector             | HSV + Contornos                | PARED_RANGO_BAJO/ALTO      | 8 ms     |
-| RocaDetector              | HSV + Contornos                | ROCA_RANGO_BAJO/ALTO       | 8 ms     |
-| CuevaDetector             | HSV + Contornos                | CUEVA_RANGO_BAJO/ALTO      | 8 ms     |
-| TotemDetector             | HSV + Contornos                | TOTEM_RANGO_BAJO/ALTO      | 8 ms     |
-| TuboDetector              | HSV + Contornos                | TUBO_RANGO_BAJO/ALTO       | 8 ms     |
-| PlataformaDetector        | HSV + Operaciones Morfológicas | PLATAFORMA_RANGO_BAJO/ALTO | 10 ms    |
-| PlataformaAlgodonDetector | Template Matching              | Template + Umbral          | 12 ms    |
-| AguaDetector              | HSV + Dilatación               | AGUA_RANGO_BAJO/ALTO       | 8 ms     |
-| KongDetector              | HSV + Contornos                | KONG_RANGO_BAJO/ALTO       | 8 ms     |
-
-- **Responsabilidad:** Detectar elementos específicos del juego en frame
-- **Entrada:** Frame BGR 960×540
-- **Salida:** Lista de bounding boxes (x, y, w, h) con centroide para cada elemento detectado
-- **Configuración:** Centralizada en `core/config/settings.py`
-- **Latencia total:** ~50-80 ms (ejecutados secuencialmente)
-- **Relación con requerimientos:** RF2.1-RF2.5
-
-**Componente 3: Representación de Estado (core/rules/game_state.py)**
-
-- **Responsabilidad:** Estructurar el resultado de las detecciones en una representación interna del estado del juego
-- **Entrada:** Detecciones de los 13 detectores
-- **Salida:** Objeto `GameState` con propiedades:
-  - `kong_pos`: (x, y) posición actual de Kong
-  - `kong_plataforma`: plataforma en la que está Kong
-  - `obstaculos_cercanos`: lista de obstáculos en rango de colisión
-  - `bananas_visibles`: lista de bananas recolectables
-  - `peligros`: agua, cuevas, etc.
-- **Latencia:** ~2 ms
-- **Relación con requerimientos:** RF3.1
-
-**Componente 4: Motor de Decisión (core/rules/rule_engine.py)**
-
-- **Responsabilidad:** Evaluar reglas sobre el estado actual y determinar acción óptima
-- **Entrada:** `GameState` actual
-- **Salida:** Acción (SALTAR, PLANEAR, BAJAR, DASH, NADA)
-- **Lógica:** Máquina de estados / evaluador de reglas secuencial
-- **Reglas implementadas:**
-  - R1: Si hay obstáculo muy cercano (colisión inminente) → SALTAR
-  - R2: Si hay banana accesible → SALTAR + posicionar
-  - R3: Si Kong cae → PLANEAR (paracaídas)
-  - R4: Si agua debajo → SALTAR o PLANEAR
-  - R5: Si está en plataforma superior → BAJAR (si objetivo está abajo)
-- **Latencia:** ~5 ms
-- **Relación con requerimientos:** RF3.1-RF3.3
-
-**Componente 5: Control / Acciones (core/control/acciones_click.py)**
-
-- **Responsabilidad:** Traducir decisiones en entradas de teclado simuladas
-- **Entrada:** Acción (SALTAR, PLANEAR, etc.)
-- **Salida:** Evento de teclado enviado al emulador
-- **Técnicas:** pyautogui para simulación de mouse
-
-- **Acciones mapeadas:**
-  - SALTAR → tecla 'C'
-  - PLANEAR → tecla 'Space'
-  - BAJAR → tecla 'Down'
-  - DASH → combinación de teclas
-- **Latencia:** ~20-50 ms (latencia del sistema operativo)
-- **Relación con requerimientos:** RF4.1-RF4.4
-
-**Componente 6: Visualización (core/vision/visualizador/visualizador.py)**
-
-- **Responsabilidad:** Mostrar en tiempo real los elementos detectados y estado interno
-- **Entrada:** Frame original + detecciones + estado
-- **Salida:** Frame anotado con rectángulos de color, texto de estado
-- **Información mostrada:** Bounding boxes por tipo de elemento (colores diferentes), centroide de Kong, puntaje actual, FPS
-- **Latencia:** ~10-15 ms
-- **Relación con requerimientos:** RF5.1-RF5.3
-
-**Componente 7: Configuración (core/config/settings.py)**
-
-- **Responsabilidad:** Almacenar y gestionar todos los parámetros del sistema
-- **Contenido:** Rangos HSV, umbrales de área, proporciones mín/máx, nombres de ventanas, rutas de templates, flags de ejecución
-- **Acceso:** Importado como módulo global `settings`
-- **Ventajas:** Modificaciones sin recompilar; fácil experimentación
-- **Relación con requerimientos:** RF6.1-RF6.2
-
-##### 7.2.2.2 Interacción entre módulos
+Cada componente depende únicamente del contrato de datos que le entrega el componente anterior, sin conocer detalles de su implementación interna. La configuración centralizada es la única dependencia transversal: todos los módulos la consultan, pero ninguno la modifica en tiempo de ejecución. Esto resulta en un acoplamiento bajo entre etapas y alta cohesión dentro de cada componente, lo que permite extender el sistema —por ejemplo, agregar nuevos detectores o reglas— sin afectar la arquitectura general.
 
 <p align="center">
   <img src="diseno/diagramas/DiagramaInteraccionEntreModulos.png" alt="Diagrama Interacción entre Módulos" width="700">
 </p>
 
-Todos los módulos se comunican mediante paso de datos en memoria dentro del mismo proceso Python. No existe comunicación por red, sockets ni IPC. El flujo de datos en cada ciclo es el siguiente:
+#### 7.2.2.3 Comportamiento
 
-- **Captura → Detección**: Imagen BGR (array NumPy de 960×540×3).
-- **Detección → Decisión**: Lista de diccionarios `{tipo, bounding_box}` con los elementos detectados que superaron los filtros.
-- **Detección → Visualizador**: Misma lista de bounding boxes para anotación visual.
-- **Decisión → Acción**: Acción discreta (string o enum).
+El sistema arranca con una fase de inicialización en la que valida la disponibilidad del emulador, carga la configuración y pone en marcha los componentes del pipeline antes de entrar al ciclo operativo. Una vez activo, el ciclo se repite continuamente: captura el frame actual, lo analiza para detectar entidades, consolida el estado del juego, selecciona una acción, la ejecuta y registra métricas, todo dentro de una ventana de tiempo compatible con la dinámica del juego.
 
-La configuración de parámetros de detección por elemento (rangos de color, umbrales de área, aspect ratio, zonas) y la configuración del emulador (resolución, nombre de ventana) se gestionan de forma centralizada en un archivo de configuración, sin necesidad de modificar el código fuente.
-
-##### 7.2.2.3 Comportamiento
-
-El sistema presenta el siguiente comportamiento en secuencia temporal:
-
-##### Inicialización
-
-```
-1. Buscar ventana "Android Device"
-2. Si no existe → error y salir
-3. Cargar configuración (settings.py)
-4. Crear instancias de Capturador, Detectores, RuleEngine, Visualizador
-5. Mostrar instrucciones de uso
-6. Esperar tecla SPACE para iniciar captura
-```
-
-##### Ciclo Principal (cada frame)
-
-```
-Δt_inicio ← tiempo_actual()
-
-[ FASE 1: CAPTURA ]
-  frame ← Capturador.capturar()
-  si frame es None → reintentar
-
-[ FASE 2: DETECCIÓN ]
-  detecciones ← {} (diccionario)
-  para cada detector en detectores:
-    detecciones[detector.nombre] ← detector.detectar(frame)
-
-[ FASE 3: ESTADO ]
-  estado ← GameState.actualizar(detecciones)
-
-[ FASE 4: DECISIÓN ]
-  accion ← RuleEngine.evaluar(estado)
-
-[ FASE 5: ACCIÓN ]
-  si EJECUTAR_ACCIONES:
-    ModuloAcciones.ejecutar(accion)
-
-[ FASE 6: VISUALIZACIÓN ]
-  frame_debug ← Visualizador.anotar(frame, detecciones, estado, accion)
-  mostrar(frame_debug)
-
-[ FASE 7: MÉTRICAS ]
-  Δt_ciclo ← tiempo_actual() - Δt_inicio
-  registrar_metricas(Δt_ciclo, detecciones, accion)
-
-[ CONTROL DE FLUJO ]
-  si tecla_presionada('P'): pausar
-  si tecla_presionada('Q'): salir
-```
-
-**Análisis de eficiencia:**
-
-- **Flujo**: Lineal secuencial, sin puntos de espera
-- **Pasos innecesarios**: Mínimos; cada etapa produce datos consumidos por la siguiente
-- **Latencia**: ~80-120 ms pipeline completo (según hardware)
-- **Distribución de latencia:**
-  - Captura: 15-25 ms
-  - Detección: 50-80 ms
-  - Decisión: 5-10 ms
-  - Acción: 20-50 ms
-  - **Total: 90-165 ms** (media ~110 ms)
-
-**Análisis de cuellos de botella:**
-
-- **Bottleneck principal:** Módulo de Detección (~50-80 ms) por ejecución secuencial de 13 detectores
-- **Solución potencial (no implementada):** Paralelizar detectores con threading
-- **Bottleneck secundario:** Latencia del SO en simulación de teclado (pyautogui ~20-50 ms)
-- **Impacto en desempeño:** Latencia total ~110 ms vs. frame-rate del juego ~33 ms → ~3-4 frames de lag percibido
-
-**Evaluación:**
-
-- **¿Flujo es eficiente?** Sí a nivel lógico; línea de producción sin pasos redundantes
-- **¿Existen pasos innecesarios?** No; cada fase contribuye al resultado
-- **¿Hay problemas de latencia?** Sí; latencia acumulada (~110 ms) es significativa pero tolerable para el juego
-- **¿Existen cuellos de botella?** Sí; Detección es el cuello de botella (~70% de latencia)
-- **¿Interacción refleja buen desacoplamiento?** Sí; módulos débilmente acoplados permiten reemplazo/extensión independiente
+El flujo es lineal y sin pasos redundantes: cada etapa consume el resultado de la anterior y produce exactamente lo que necesita la siguiente, lo que lo hace eficiente a nivel arquitectónico. Sin embargo, existe un cuello de botella reconocido en la etapa de percepción visual, que concentra la mayor carga de procesamiento del ciclo y es la principal fuente de latencia acumulada. Esto puede traducirse en reacción tardía ante eventos críticos del juego, aunque en condiciones normales de operación la latencia total es tolerable. El desacoplamiento entre componentes asegura que este cuello de botella sea localizable y abordable de forma independiente, sin necesidad de rediseñar el sistema completo.
 
 <p align="center">
   <img src="diseno/diagramas/SecuenciaTomadeDecision.png" alt="Secuencia Toma de Decisión" width="700">
@@ -604,323 +440,188 @@ El sistema presenta el siguiente comportamiento en secuencia temporal:
 
 ## 8. Implementación
 
-Documenta lo construido hasta el momento, mostrando el avance funcional y técnico del proyecto.
+### 8.1 Stack Tecnológico
 
-### 8.1 Stack tecnológico
+El sistema implementado se construyó con una filosofía de bajo acoplamiento, trazabilidad técnica y latencia controlada, priorizando librerías estables y de propósito específico frente a soluciones pesadas.
 
-**Python 3.x:** Se seleccionó como lenguaje principal debido a su simplicidad, versatilidad y amplio ecosistema de librerías para visión por computador y automatización.
+| Componente | Tecnología usada actualmente | Decisión tomada y motivo |
+|-----------|-------------------------------|---------------------------|
+| Lenguaje | Python 3.13 | Se mantuvo Python por velocidad de iteración, buena legibilidad para reglas y ecosistema robusto para visión clásica. |
+| Visión por computador | OpenCV 4.13 | Se eligió para operaciones de color, morfología, componentes conectados, template matching y visualización en tiempo real en un mismo stack. |
+| Captura de pantalla | mss 10.1.0 | Se adoptó por rendimiento y simplicidad de integración; permitió sostener el ciclo de captura sin introducir dependencias gráficas complejas. |
+| Manipulación numérica | numpy 2.4.2 | Se usa para operar frames y máscaras con bajo overhead. |
+| Detección de ventana | pygetwindow 0.0.9 | Se decidió detectar la ventana por título para evitar coordenadas fijas y permitir reposicionamiento del emulador durante pruebas. |
+| Control de entrada | pyautogui 0.9.54 | Se eligió para ejecutar clic, arrastre y pulsación sostenida con una API uniforme y suficiente para el control requerido por el juego. |
+| Emulación de juego | MuMu Player (resolución objetivo 960x540) | Se mantuvo como entorno controlado y reproducible para calibración visual. |
+| Configuración | `core/config/settings.py` | Se centralizaron todos los umbrales y flags para evitar valores mágicos dispersos y facilitar ajustes sin modificar lógica. |
 
-**OpenCV (cv2):** Utilizado para el procesamiento de imágenes y visión por computador. Permite realizar conversiones de espacios de color, aplicar operaciones morfológicas y detectar contornos.
-
-**mss:** Herramienta de captura de pantalla de alto rendimiento, capaz de obtener frames en aproximadamente 1-2 ms. Permite trabajar en tiempo real con bajo impacto en el rendimiento.
-
-**numpy:** Empleado para la manipulación eficiente de matrices.
-
-**pygetwindow:** Permite detectar automáticamente la ventana del emulador mediante su nombre y obtener sus coordenadas.
-
-**pyautogui:** Utilizado para simular entradas de teclado y mouse sobre el emulador, permitiendo la automatización de acciones dentro del juego.
-
-**keyboard:** Librería que permite detectar entradas de teclado a nivel global, independiente de la ventana activa, lo cual es útil para implementar controles como pausar o finalizar la ejecución del programa.
-
-**MuMu Player (Android):** Emulador de Android utilizado para ejecutar el juego _Banana Kong_ a una resolución de 960x540, proporcionando un entorno controlado para la captura y análisis de imágenes.
+En síntesis, la implementación técnica privilegia un pipeline clásico completamente explicable y ajustable, coherente con el objetivo del proyecto: validar autonomía funcional sin entrenamiento de modelos.
 
 ### 8.2 Componentes (R)
 
-Documenta los componentes o módulos efectivamente implementados, indicando su estado de desarrollo, las funcionalidades que cubren, las decisiones técnicas relevantes tomadas durante su construcción y, cuando aplique, las diferencias entre el diseño propuesto y la implementación realizada.
+Antes de entrar a cada módulo, conviene ver la secuencia completa de funcionamiento en una corrida normal. El sistema inicia validando que puede acceder a la ventana del emulador y, con esa validación, entra en un ciclo continuo. En cada iteración primero toma la imagen actual del juego, luego identifica los elementos visuales relevantes, después transforma esa información en un estado resumido del entorno, decide la acción más conveniente según prioridad de riesgo, ejecuta la acción en el emulador, muestra en pantalla lo que detectó y finalmente registra métricas de rendimiento y calidad de detección. Esta secuencia se repite frame a frame mientras el bot está activo.
 
----
+#### 8.2.1 Núcleo Orquestador (`core/main.py`)
 
-#### 8.2.1 Módulo de Captura (core/vision/captura/captura.py)
+Este módulo coordina todo el proceso de extremo a extremo. Primero crea los componentes de captura, percepción, construcción de estado, decisión, control y visualización. Después entra en un ciclo continuo donde cada iteración sigue siempre la misma secuencia: capturar imagen, detectar elementos, convertir esas detecciones en estado del juego, elegir una acción, ejecutarla y mostrar el resultado.
 
-**Estado:** **Implementado y Funcional**
+El reto principal aquí fue equilibrar velocidad y reacción. Si se detecta todo en todos los frames, sube la latencia; si se detecta con menor frecuencia, se puede perder tiempo de respuesta. La solución fue combinar reutilización de resultados recientes con una detección de emergencia cuando aparece un peligro cercano. Con esa estrategia el flujo mantiene continuidad y, al mismo tiempo, conserva respuesta rápida en eventos críticos.
 
-**Características:**
+Además del ciclo principal, este módulo define el control operativo de la sesión: permite iniciar o detener la detección, pausar sobre un frame fijo para calibración y salir de forma segura. En otras palabras, no solo ejecuta la lógica autónoma, también gobierna el modo de trabajo técnico durante pruebas y ajustes.
 
-- Captura automática de ventana del emulador por nombre
-- Manejo de errores si ventana no existe
-- Caché de posición para evitar búsqueda repetida
-- Soporte para reintentos en caso de captura fallida
+En el plano de diseño, también se decidió que este orquestador no asumiera lógica visual ni lógica de reglas, precisamente para evitar que el control del ciclo terminara mezclado con percepción o decisión. Esa separación hizo posible cambiar calibraciones, reglas o incluso criterios de priorización sin tocar la estructura del loop principal.
 
-**Decisiones técnicas:**
+#### 8.2.2 Módulo de Captura (`core/vision/captura/captura.py`)
 
-- Uso de `mss` por velocidad (15-25 ms vs. 40+ ms con dxcam)
-- Detección de ventana por HWND (Windows API) para máxima precisión
-- Formato de salida: array numpy BGR (compatible con OpenCV)
+La captura se implementó alrededor de la clase `Capturador`, que resuelve primero la ventana del emulador con `pygetwindow` y después obtiene su región activa con `mss`. La decisión de buscar por título, usando `EMULADOR_TITULO`, evitó depender de coordenadas fijas y permitió que el bot siguiera funcionando aunque la ventana se reubicara durante la sesión. Una vez encontrada la ventana, `capturar()` devuelve el frame en formato BGR listo para OpenCV, mientras que `capturar_y_congelar()` conserva el último frame cuando la ejecución entra en pausa.
 
-**Interfaz pública:**
+Durante las pruebas aparecieron errores de captura intermitentes, así que el flujo interno se reforzó con reintentos y con la reutilización del último frame válido cuando una lectura falla. Ese detalle no es menor: si la captura se rompe por un instante, el resto del pipeline sigue operando con una imagen coherente en lugar de detenerse. El modo de frame congelado también se usa para depuración fina, porque permite inspeccionar exactamente la misma escena mientras se ajustan detectores o reglas.
 
-```python
-class Capturador:
-    def __init__(titulo_ventana, refrescar_cada=60)
-    def capturar() -> np.ndarray  # 960x540x3 BGR
-    def obtener_posicion_ventana() -> (x, y)
-```
+En operación, el módulo sigue un flujo bastante directo: localizar ventana, capturar región, convertir la imagen al formato que consume visión y devolverla al orquestador. Si el sistema está en pausa, no produce una imagen nueva sino que entrega el congelado; si hay un fallo puntual, reintenta. Esa combinación mantiene estable el ciclo principal sin meter lógica de decisión dentro de la captura.
 
-#### 8.2.2 Módulo de Detección (core/vision/detection/)
+La decisión de usar `mss` se tomó después de valorar alternativas de captura más pesadas o dependientes de APIs de escritorio menos predecibles. Aquí el costo de cada frame importa, porque unos pocos milisegundos extra se traducen en reacción tardía. Por eso la captura quedó como una operación simple, rápida y fácil de sincronizar con el resto de módulos.
 
-**Estado:** **Implementado y Funcional (13 detectores)**
+#### 8.2.3 Módulo de Detección (`core/vision/detection/`)
 
-**Detectores implementados:**
+La detección se estructuró alrededor de `BaseDetector`, que concentra la parte repetida del trabajo: conversiones de color, creación de máscaras, filtrado geométrico y, cuando corresponde, template matching. Esa base común permitió que cada detector especializado solo tuviera que definir sus umbrales y su zona de interés, sin duplicar la mecánica interna. Encima de eso, `Detector.detectar_todos()` reparte los detectores en dos grupos y los ejecuta en paralelo con `ThreadPoolExecutor`, de manera que el ciclo no espere a que cada elemento se procese uno por uno.
 
-1. BananaDetector - HSV + Contornos
-2. TroncoDetector - HSV + Contornos
-3. ArbustoDetector - HSV + Contornos
-4. AvionDetector - HSV + Contornos
-5. ParedDetector - HSV + Contornos
-6. RocaDetector - HSV + Contornos
-7. CuevaDetector - HSV + Contornos
-8. TotemDetector - HSV + Contornos
-9. TuboDetector - HSV + Contornos
-10. PlataformaDetector - HSV + Operaciones Morfológicas
-11. PlataformaAlgodonDetector - Template Matching
-12. AguaDetector - HSV + Dilatación
-13. KongDetector - HSV + Contornos
+La clase base no solo centraliza el flujo de detección: también define el objeto `Elemento`, que guarda posición, tamaño, centro, área, proporción y tipo. Con eso, el resto del sistema recibe detecciones homogéneas aunque provengan de detectores muy distintos. A nivel de implementación, esa uniformidad es importante porque luego `GameState`, `Visualizador` y `RuleEngine` trabajan con la misma estructura sin depender del detector concreto.
 
-**Decisiones técnicas:**
+Detectores activos en la versión implementada:
 
-- **Patrón Template Method:** Clase base `BaseDetector` define estructura común; subclases sobrescriben `detectar()`
-- **Parámetros centralizados:** Todos los umbrales HSV, áreas, proporciones en `settings.py`
-- **Caché de máscaras:** Almacena máscaras generadas para debug/visualización sin recalcular
-- **Validación geométrica:** Cada contorno debe cumplir área mín/máx y proporción (reduce falsos positivos)
+1. BananaDetector
+2. TroncoDetector
+3. ArbustoDetector
+4. AvionDetector
+5. KongDetector
+6. ParedDetector
+7. AguaDetector
+8. PlataformaMaderaDetector
+9. RocaDetector
+10. CuevaDetector
+11. BarraPotenciadoraDetector
+12. TotemDetector
+13. TuboDetector
 
-**Interfaz pública (BaseDetector):**
 
-```python
-class BaseDetector:
-    def detectar(frame) -> List[BoundingBox]  # [(x,y,w,h), ...]
-    def obtener_mascaras() -> Dict[str, np.ndarray]  # Para debug
-```
+El desafío más fuerte de esta capa fue reducir falsos positivos sin perder objetos útiles en escenas dinámicas. Antes de cerrar la estrategia de percepción se probaron otros espacios de color, pero se terminó manteniendo HSV porque el separador de tono, saturación y brillo encaja mejor con la calibración manual del juego. Además, `BaseDetector` mantiene un caché de conversiones por frame, así que si varios detectores usan el mismo espacio de color no se repite el trabajo completo en cada uno.
 
-**Diferencias vs. diseño:**
+Para resolver la detección por color se sigue siempre la misma secuencia interna en `_detectar_elemento()`: convertir al espacio indicado, aplicar `cv2.inRange` para obtener la máscara, limpiar con erosión o dilatación si el detector lo pide, extraer componentes con `connectedComponentsWithStats` y filtrar por área, proporción y zona Y. Ese orden importa porque primero se separa el color y después se valida si la forma realmente pertenece al objeto que interesa.
 
-- Se implementó **template matching solo para Plataforma Algodón** (las demás son HSV puro)
-- Razón: Plataforma algodón tiene patrón de textura distintivo; HSV puro resultaba en falsos positivos
-- Las demás plataformas se detectan por HSV puro + operaciones morfológicas
+Ese filtrado geométrico no es decorativo. Los rangos de área evitan que ruido mínimo pase como objeto válido, la proporción ancho/alto separa siluetas compatibles con el elemento esperado y la restricción por zona vertical evita detectar cosas fuera de la parte del escenario donde ese elemento realmente puede aparecer. Por eso, por ejemplo, el detector de bananas trabaja con una franja vertical acotada, el tótem usa una dilatación más fuerte para unir fragmentos y el avión expande su caja de detección para no perder la cola.
 
-#### 8.2.3 Módulo de Representación de Estado (core/rules/game_state.py)
+En los casos donde el color no era suficiente, se usó `_detectar_por_template()` con `cv2.matchTemplate` y posterior agrupación de solapes con `cv2.groupRectangles`. Esto se reservó para patrones más estables que su color, como la cueva o la barra potenciadora, porque ahí la forma visual aporta más que el rango HSV. También se aplicaron recortes espaciales y filtros de posición fija para ignorar ruido en zonas que no aportan a la decisión.
 
-**Estado:** **Implementado y Funcional**
+Hubo además una decisión importante de alcance: no todos los objetos del escenario debían detectarse. Los elementos que no cambian de forma directa la supervivencia de Kong se redujeron o se omitieron cuando aumentaban demasiado el costo del ciclo, porque el objetivo era priorizar reacción y no inventariar todo el escenario. En el código eso se traduce en mantener solo los detectores que alimentan reglas reales o que sirven para inferir terreno y peligro.
 
-**Responsabilidad:** Integrar detecciones en representación estructurada del juego
+En ese sentido, también se decidió no construir detectores completos para todas las plataformas. El bot no necesita reconstruir toda la geometría del escenario para operar; le basta con que `GameState` pueda inferir, a partir de los carriles y del suelo detectado, si una zona es transitable. Esa simplificación reduce trabajo en visión y deja que la semántica del terreno la resuelva la capa de estado.
 
-**Estructura:**
+Las plataformas de madera sí se trataron de forma especial, pero tampoco con una detección exhaustiva de cada fragmento. Solo interesaban las que aparecen sobre agua, porque ahí el bot necesita saber con precisión dónde puede seguir vivo. El resto de plataformas superiores se dejó fuera del detector dedicado porque el estado y las reglas ya pueden inferir su uso a partir de la altura, el carril y la acción disponible. Esa decisión ahorró tiempo sin romper el comportamiento en la zona más delicada del juego.
 
-```python
-class GameState:
-    kong_pos: Tuple[int, int]                  # (x, y)
-    kong_plataforma: str                        # "plataforma_1", "agua", etc.
-    obstaculos_cercanos: List[Obstacle]         # Dentro de ~200 px
-    bananas_visibles: List[Banana]              # Accesibles
-    peligros: List[Peligro]                     # Agua, cuevas
-    distancia_salto_requerido: int              # Estimado
-```
+El agua también recibió un tratamiento distinto. No se podía asumir como un objeto de tamaño fijo, porque su extensión visible cambia según el contexto y ocupa una franja variable del escenario. Por eso el detector de agua trabaja con una franja inferior amplia y con una dilatación más agresiva en horizontal y vertical: el objetivo no es dibujar la silueta exacta, sino confirmar que debajo de Kong existe una región de riesgo sin suelo.
 
-**Decisiones técnicas:**
+La misma lógica de especialización aparece en otros detectores: el tubo amplía su caja hacia la izquierda, la plataforma de madera normaliza su altura y restringe la búsqueda a la banda donde realmente aparece sobre agua, y el detector del personaje se excluye del filtro lateral mínimo porque su posición sirve como referencia para todo el resto. Esa forma de ajustar cada clase por su geometría real evita una capa de reglas posteriores más compleja.
 
-- **Caché de Kong:** Se filtra el contorno más grande/central como Kong (reduce falsos positivos)
-- **Definición de "cercano":** Obstáculo dentro de 200px en X y 150px en Y
-- **Definición de "accesible":** Banana visible y no bloqueada por obstáculo
-- **Representación discreta:** Plataforma actual determinada por rango de Y (no cálculo continuo)
+Además, para compensar la ralentización que genera la percepción, se optimizó la lógica del dash. En el código eso se refleja en la regla de impulso crítico, que consume la disponibilidad del dash apenas se usa y se coloca en la cima de prioridad dentro de `rules.py`. La idea fue convertirlo en un mecanismo de escape real frente a la avalancha y frente a peligros inmediatos, no en una acción secundaria que llegue tarde.
 
-**Interfaz pública:**
+Al final de cada iteración de detección, el módulo entrega un paquete consistente para el resto del sistema: listas de elementos detectados por categoría, descartes con su motivo y máscaras de apoyo para depuración visual. Ese formato estandarizado fue clave para desacoplar percepción de estado y de decisión, porque el orquestador solo consume resultados, no detalles internos de cada detector.
 
-```python
-class GameState:
-    @staticmethod
-    def actualizar(detecciones: Dict) -> GameState
+#### 8.2.4 Representación de Estado (`core/rules/game_state.py`)
 
-    def hay_obstaculo_cercano() -> bool
-    def hay_banana_accesible() -> bool
-    def hay_peligro() -> bool
-```
+La capa de estado transforma detecciones crudas en una representación compacta y útil para decidir. En lugar de trabajar con cientos de coordenadas sueltas, `GameState` modela el entorno en cinco carriles verticales y mantiene por cada uno un pequeño diccionario semántico: si hay suelo, cuál banana es la más cercana y cuál obstáculo es el más cercano. Además conserva la información global del personaje, incluida la disponibilidad del impulso especial.
 
-#### 8.2.4 Motor de Decisión (core/rules/rule_engine.py)
+El mapeo de carriles sigue una segmentación fija sobre la coordenada Y: carril 4 por encima de 149 píxeles, carril 3 entre 149 y 250, carril 2 entre 250 y 350, carril 1 entre 350 y 450 y carril 0 por debajo de 450. Esa división no solo organiza el estado: también le da sentido a la transición vertical del personaje, porque las reglas consultan el carril actual y los adyacentes para saber si debe saltar, planear o caer.
 
-**Estado:** **Implementado y Funcional**
+El proceso de actualización sigue una secuencia estable dentro de `actualizar()`: limpiar el estado anterior, ubicar al personaje con `_obtener_carril()`, recalcular suelo según agua y plataformas visibles delante de él, y registrar los elementos más relevantes por proximidad. Este diseño resolvió un problema clave: cuando las reglas operaban con posiciones continuas, el comportamiento era menos estable y más difícil de depurar. Con carriles y proximidad, la interpretación se volvió más robusta y trazable.
 
-**Lógica de reglas:**
+Este módulo actúa como puente semántico entre visión y decisión: reduce ruido visual, conserva solo contexto útil para acción inmediata y entrega un resumen estable del entorno por carril. Gracias a ese resumen, `RuleEngine` puede razonar sobre riesgo y oportunidad sin depender de detalles geométricos de bajo nivel.
 
-```
-SI estado.hay_obstaculo_cercano_INMEDIATO(< 50px):
-    ACCION = SALTAR  [Evasión crítica]
+En la práctica, esta representación también evita que el sistema tenga que decidir a partir de un mapa completo de objetos. Solo se conserva lo que realmente afecta la supervivencia inmediata: si hay suelo, qué hay delante y en qué carril ocurre. Eso hizo la lógica más simple, más rápida y más fácil de ajustar cuando se cambió la calibración de detección o cuando se modificó el conjunto de detectores activos.
 
-SINO SI estado.hay_peligro(agua/cueva):
-    ACCION = SALTAR o PLANEAR  [Evitar peligro]
+#### 8.2.5 Motor de Decisión y Reglas (`core/rules/rule_engine.py` y `core/rules/rules.py`)
 
-SINO SI estado.hay_banana_accesible():
-    ACCION = posicionar_y_saltar  [Recolectar bonus]
+El motor de decisión evalúa reglas en orden de prioridad y ejecuta la primera condición que se cumple. En `RuleEngine.decide()` eso se traduce en una pasada secuencial por la lista `rules`, ordenada por `priority`, y en la devolución de una sola acción por frame. El comportamiento es determinista, repetible y fácil de depurar. La política activa prioriza supervivencia inmediata: primero riesgo crítico con impulso, luego evasión de obstáculo, luego vacío, luego caída peligrosa y finalmente recolección de banana cuando es segura.
 
-SINO SI Kong_cayendo:
-    ACCION = PLANEAR  [Amortizar caída]
+La tabla de reglas activa en `rules.py` quedó intencionalmente corta y muy enfocada. `dash` tiene prioridad 0 porque solo se consume en situaciones críticas y además agota `dash_disponible`; `saltar_obstaculo` atiende obstáculos peligrosos en el carril actual; `saltar_vacio` cubre el caso de perder suelo en el carril 0; `caida_peligrosa` activa `PLANEAR` cuando el carril actual y el inferior ya no sostienen al personaje; y `recolectar_banana` queda al final porque solo se permite cuando no compite con un peligro inmediato. Esta jerarquía refleja la lógica real del juego: primero sobrevivir, luego optimizar recorrido.
 
-SINO:
-    ACCION = NADA  [Seguir corriente]
-```
+En esta fase surgieron dos problemas: respuestas tardías en riesgos cercanos y repetición excesiva de ciertas acciones cuando una condición persistía varios frames. Se mitigó ajustando `OBST_DIST` por tipo de obstáculo, reservando la máxima prioridad para el caso más crítico y consumiendo el impulso especial cuando se usa, para evitar reutilizaciones artificiales en cadena. El resultado fue una política más estable en tiempo real sin perder legibilidad.
 
-**Decisiones técnicas:**
+La salida de este módulo siempre es una acción discreta y única por ciclo. Esa decisión única simplifica el control posterior, evita órdenes contradictorias y mantiene una relación clara entre situación detectada y respuesta ejecutada. Cuando ninguna regla coincide, el sistema devuelve `NADA`, que en control equivale a soltar el botón y dejar al bot en estado neutro.
 
-- **Prioridades explícitas:** Las reglas se evalúan en orden; la primera que se cumple gana
-- **Histéresis (anti-spam):** Se mantiene estado anterior de acción para evitar alternancia rápida
-- **Umbral de reacción:** Se retrasa acción entre frames para evitar respuestas demasiado sensibles
+Dentro de esta lógica también se evaluó qué acciones debían reservarse para casos concretos. El salto se mantiene como respuesta general para obstáculos y cambios de nivel; el planeo se reserva para caídas peligrosas; y el dash se dejó como recurso excepcional para escapar de la avalancha o romper situaciones en las que una acción estándar llega tarde. Esa jerarquía no es decorativa: nació de pruebas donde algunas acciones parecían útiles en teoría pero degradaban el desempeño real si se activaban demasiado pronto o demasiado tarde.
 
-**Interfaz pública:**
+#### 8.2.6 Módulo de Control (`core/control/acciones_click.py`)
 
-```python
-class RuleEngine:
-    def __init__(rules: Dict)
-    def evaluar(estado: GameState) -> Accion
-```
+El control traduce la decisión lógica en interacción física sobre el emulador mediante mouse. En `ModuloAcciones.ejecutar()` cada acción del motor se convierte en una operación concreta: clic para saltar, presión sostenida para planear, arrastre vertical para bajar, arrastre horizontal para impulso, o liberación de botón cuando no corresponde actuar. La clase concentra aquí toda la entrada activa del bot y evita que el resto del sistema tenga que saber cómo se materializa una acción en el emulador.
 
-#### 8.2.5 Módulo de Control (core/control/acciones_click.py)
+El problema más común aquí fue la sincronización fina entre acciones consecutivas. Se añadió una pausa corta global con `pyautogui.PAUSE = 0.05` para estabilizar la entrada y se forzó la liberación del botón antes del impulso horizontal para evitar conflictos entre estados de planeo y dash. Además, se mantuvo un modo seguro para correr todo el pipeline sin ejecutar acciones reales mientras se calibra.
 
-**Estado:** **Implementado y Funcional**
+En términos de flujo, este módulo recibe una acción, la convierte en gesto de mouse y confirma el estado final del botón para que el siguiente ciclo no herede una condición incorrecta. Este detalle fue importante para evitar comportamientos acumulativos no deseados entre iteraciones, sobre todo cuando el control entra en secuencias rápidas de salto, planeo y dash.
 
-**Acciones mapeadas:**
+También aquí se tomó una decisión pragmática: el control debía ser lo bastante simple para no introducir latencia propia. Por eso se evitó añadir capas innecesarias de abstracción y se trabajó directamente con las operaciones mínimas requeridas por el juego, incluyendo el pequeño coste de los arrastres que ya se asumió desde el diseño.
 
-- SALTAR (C) - Salto rápido
-- PLANEAR (Space) - Paracaídas
-- BAJAR (Down) - Bajar en plataforma
-- DASH - Dash rápido
-- NADA - Sin acción
+#### 8.2.7 Visualización (`core/vision/visualizador/visualizador.py`)
 
-**Decisiones técnicas:**
+La visualización se diseñó como herramienta de diagnóstico en tiempo real. Sobre cada frame se dibujan zonas de referencia, rectángulos y centros de los elementos detectados, y opcionalmente se muestran máscaras por detector para inspección más fina de la segmentación. En el código, `Visualizador` funciona como una capa de observabilidad que permite ver en pantalla lo que el detector y el estado están produciendo antes de que el motor de reglas actúe.
 
-- **Duración de pulsación:** ~50 ms (suficiente para que el juego registre)
-- **Delay entre acciones:** ~100 ms (evita spam, el juego tiene cooldown)
-- **Seguridad:** Flag EJECUTAR_ACCIONES permite modo visualización sin actuar
-- **Logging:** Toda acción es registrada para análisis
+El uso de colores fijos por tipo permitió detectar errores de clasificación rápidamente. El agua recibió un tratamiento gráfico diferenciado por su impacto directo en la interpretación de suelo. También se dejó información ampliada en modo depuración para no saturar la vista durante operación normal. Esta capa fue clave para acelerar la calibración y validar que la percepción coincide con la lógica de estado.
 
-**Interfaz pública:**
+Su aporte principal dentro del proceso completo es cerrar el ciclo de validación visual: permite verificar en tiempo real si lo que el bot "cree ver" coincide con lo que realmente aparece en pantalla y, por tanto, detectar rápidamente si el problema está en captura, detección, estado o reglas.
 
-```python
-class ModuloAcciones:
-    def ejecutar(accion: Accion) -> bool
-    def __init__(ventana_titulo=None)
-```
+En la práctica, esta visualización funcionó como una especie de laboratorio sobre el propio juego: al ver los contornos, la zona de interés y las máscaras, se pudieron ajustar umbrales sin adivinar. Eso fue especialmente útil cuando una clase empezaba a confundirse con el fondo o cuando una región variable, como el agua, requería revisar si el detector estaba abarcando demasiado o demasiado poco.
 
-#### 8.2.6 Visualizador (core/vision/visualizador/visualizador.py)
+#### 8.2.8 Configuración Centralizada (`core/config/settings.py`)
 
-**Estado:** **Implementado y Funcional**
+La configuración centralizada resolvió la dispersión de umbrales y constantes entre módulos. En un único archivo se agrupan parámetros del emulador, frecuencia de detección, rangos de color, restricciones geométricas, plantillas, depuración, ejecución de acciones y evaluación. La ventaja técnica es clara: ningún detector ni regla calcula sus propios valores por defecto, sino que todos leen la misma fuente de verdad.
 
-**Información mostrada:**
+En la práctica, ese archivo organiza los ajustes en bloques bastante claros. Un bloque controla la ventana del emulador y el refresco de coordenadas; otro regula la frecuencia de detección y el filtrado espacial; los grupos de rangos, área y proporción definen la forma esperada de cada detector; los parámetros de plantilla configuran la detección basada en coincidencia cuando el color no basta; otro interruptor permite operar en modo observación sin tocar el juego; y los ajustes de depuración abren la trazabilidad visual y textual.
 
-- Rectángulos de color por tipo de elemento (banana=amarillo, tronco=marrón, Kong=rojo, etc.)
-- Centroide de Kong marcado
-- Estado actual (SALTAR, PLANEAR, etc.)
-- Puntaje en tiempo real
-- FPS y latencia del frame
-- Máscaras HSV (opcional, para debug)
+Esto permitió ajustar comportamiento sin modificar lógica interna. En la práctica, la calibración se volvió más rápida y con menor riesgo de inconsistencias entre percepción, reglas y control. Cuando cambiaba un umbral de color o una restricción espacial, no había que tocar el algoritmo, solo el parámetro.
 
-**Decisiones técnicas:**
+También permitió separar claramente dos tipos de cambios: cambios de lógica (código) y cambios de calibración (parámetros). Esa separación redujo errores al iterar, porque la mayoría de ajustes diarios se hizo en parámetros sin tocar la arquitectura.
 
-- **Colores por tipo:** Mapa predefinido de tipo→color para fácil identificación visual
-- **Espesor de línea adaptativo:** Basado en tamaño de objeto (mejor visualización)
-- **Modo debug:** Flag permite mostrar máscaras intermedias sin overhead en modo normal
-
-**Interfaz pública:**
-
-```python
-class Visualizador:
-    def anotar(frame, detecciones, estado, accion) -> np.ndarray
-    def mostrar(frame)
-```
-
-#### 8.2.7 Configuración Centralizada (core/config/settings.py)
-
-**Estado:** **Implementado y Funcional**
-
-**Parámetros:**
-
-- Rango HSV para cada elemento (mín/máx)
-- Umbral de área mín/máx como % de pantalla
-- Proporción alto/ancho mín/máx
-- Nombres de ventana del emulador
-- Rutas a templates de detección
-- Flags de ejecución/debug
-
-**Ejemplo de parametrización (Bananas):**
-
-```python
-BANANA_RANGO_BAJO    = [18, 200, 200]   # Hue=amarillo, Sat>200, Val>200
-BANANA_RANGO_ALTO    = [38, 255, 255]   # Rango amarillo-naranja
-BANANA_AREA_MIN_PCT  = 0.00025           # 0.025% de pantalla (~25 px²)
-BANANA_AREA_MAX_PCT  = 0.003             # 0.3% de pantalla (~3000 px²)
-BANANA_PROP_MIN      = 0.7               # Proporción alto/ancho
-BANANA_PROP_MAX      = 1.6
-```
+Aquí también entró el calibrador HSV. La idea fue tener una herramienta para jugar con tono, saturación y brillo sobre la propia pantalla del emulador, hasta encontrar rangos que separaran de forma confiable cada objeto del fondo. Sin ese apoyo, la calibración habría sido mucho más lenta y menos precisa, sobre todo en elementos con colores cercanos al entorno.
 
 ### 8.3 Integraciones
 
-Explica las conexiones con servicios externos, como APIs, bases de datos, autenticación o terceros, e indica su estado de funcionamiento.
+#### 8.3.1 Integración con MuMu Player
+
+La integración con MuMu Player se resolvió de forma visual y no intrusiva: búsqueda de ventana por título (`EMULADOR_TITULO`), captura de su región y ejecución de acciones por mouse. No se usa API interna del emulador ni acceso al proceso del juego. Durante el desarrollo se comprobó que el acoplamiento por ventana era más robusto que depender de coordenadas absolutas de escritorio, y que mantener resolución estable era clave para conservar la coherencia de umbrales de detección. Por eso el flujo operativo mantiene una etapa de observación (`EJECUTAR_ACCIONES=False`) antes de activar control autónomo.
+
+#### 8.3.2 Integración funcional con Banana Kong
+
+La integración funcional con Banana Kong cubre el ciclo esencial en carrera: detectar, interpretar estado, decidir y actuar. El enfoque se orienta a supervivencia y continuidad de recorrido, no a navegación de menús.
+
+Limitaciones técnicas actuales observadas en implementación:
+
+1. No hay detección explícita de estados globales de UI como menú, pausa del juego o game over.
+2. El desempeño depende de calibración visual (HSV/templates) y puede degradarse ante cambios gráficos relevantes.
+3. La política de decisión es determinista y local al frame; no hay planeación a largo horizonte.
+
+Aun con estas limitaciones, el comportamiento obtenido confirma que el pipeline percepción-decisión-acción puede sostenerse en tiempo real sobre un entorno visual real, con trazabilidad suficiente para seguir iterando calibraciones y reglas.
 
 ---
 
-#### 8.3.1 Integración Emulador MuMu Player
+## 9. Operación Local del Prototipo
 
-**Estado:** **Implementado y Funcional**
+Este proyecto no contempla un despliegue a producción, nube ni infraestructura distribuida. Su operación es local, en un entorno controlado de laboratorio, ejecutando el bot sobre un emulador Android en la misma máquina.
 
-**Descripción:** El bot se comunica con el emulador MuMu Player mediante:
+### 9.1 Entorno Requerido
 
-1. **Captura de pantalla:** Detección de ventana por nombre "Android Device" + MSS
-2. **Simulación de controles:** Envío de eventos de teclado directamente a la ventana del emulador
-3. **Sincronización:** Espera entre acciones para permitir que el emulador procese
-
-**Configuración requerida:**
-
-- Emulador debe estar abierto y ejecutando Banana Kong
-- Ventana debe estar en foco o visible
-- Resolución debe ser 960×540 (configurable en settings)
-
-#### 8.3.2 Integración Juego Banana Kong
-
-**Estado:** **Operativa (con limitaciones conocidas)**
-
-**Descripción:** El bot interactúa con el juego mediante:
-
-1. **Análisis visual:** Captura frames de la pantalla del juego
-2. **Determinación de reglas:** Aplica lógica de decisión basada en visión
-3. **Ejecución de acciones:** Simula controles que Kong responde
-
-**Limitaciones documentadas:**
-
-- **Menús:** Bot no navega menús (inicia desde juego ya en marcha)
-- **Pausas:** Si juego entra en pausa, bot no lo detecta (continuaría buscando acciones)
-- **Game Over:** Bot no detecta automáticamente fin de partida; continúa intentando (mitigado con detección manual por usuario)
-
-**Funcionalidades:**
-
-- Detecta obstáculos y evita colisiones
-- Recolecta bananas accesibles
-- Salta entre plataformas
-- Utiliza paracaídas para amortiguar caídas
-- Mantiene posición dentro de pantalla
-
-## 9. Despliegue y operación (R)
-
-Describe cómo se ejecuta, configura y opera la solución en su entorno previsto, incluyendo aspectos de instalación, infraestructura, dependencias, puesta en marcha y condiciones de operación, según aplique al proyecto.
-
----
-
-### 9.1 Requisitos del Sistema
-
-#### Hardware Mínimo Recomendado
-
+#### Hardware mínimo recomendado
 - **CPU:** Intel i5 / AMD Ryzen 5 (4 núcleos)
 - **RAM:** 4 GB
 - **GPU:** Integrada (no requerida)
-- **Almacenamiento:** 500 MB disponible
-- **Pantalla:** 1920×1080 mínimo para visualizar emulador 960×540
+- **Almacenamiento:** 500 MB disponibles
+- **Pantalla:** 1920×1080 mínimo para visualizar correctamente el emulador en 960×540
 
-#### Software Requerido
-
+#### Software requerido
 - **Sistema Operativo:** Windows 10 / Windows 11 (64-bit)
-- **Python:** 3.9 o superior
-- **Emulador:** MuMu Player (versión reciente)
-- **Juego:** Banana Kong (instalado en emulador)
+- **Python:** 3.13 recomendado (el proyecto indica compatibilidad con 3.13)
+- **Emulador:** MuMu Player
+- **Juego:** Banana Kong instalado en el emulador
 
-### 9.2 Instalación y Configuración
-
-#### Paso 1: Preparar Entorno Python
+### 9.2 Preparación del Entorno Local
 
 ```powershell
 # Navegar a carpeta del proyecto
@@ -936,60 +637,45 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-**Dependencias principales (requirements.txt):**
+Dependencias declaradas actualmente en `requirements.txt`:
 
 ```
-opencv-python==4.5.5.64
-mss==6.1
-pyautogui==0.9.53
-numpy==1.23.5
+opencv-python==4.13.0.92
+numpy==2.4.2
+mss==10.1.0
+pygetwindow==0.0.9
+keyboard==0.13.5
+pyautogui==0.9.54
 ```
 
-#### Paso 2: Configurar Emulador
+Configuración operativa base:
 
-1. Abrir MuMu Player
-2. Instalar Banana Kong si no está presente
-3. Abrir el juego
-4. Verificar resolución: debe ser 960×540 (en `Configuración > Pantalla > Resolución`)
-5. Posicionar ventana de emulador en pantalla
+1. Abrir MuMu Player con Banana Kong en ejecución.
+2. Confirmar que el título de ventana coincide con `EMULADOR_TITULO` en `settings.py`.
+3. Mantener resolución de emulador en 960×540 para conservar calibración visual.
+4. Iniciar en modo seguro (`EJECUTAR_ACCIONES=False`) para validar detección antes de activar acciones reales.
 
-### 9.3 Ejecución del Bot
-
-#### Iniciar el Bot
+### 9.3 Ejecución del Bot en Operación Local
 
 ```powershell
-# Activar entorno si no está activo
+# Activar entorno virtual
 .\.venv\Scripts\Activate.ps1
 
-# Ejecutar bot principal
+# Ejecutar bot
 python core/main.py
 ```
 
-**Salida esperada:**
+Durante la ejecución, el control operativo implementado es:
 
-```
-========================================================
-  BANANA KONG BOT
-========================================================
-  SPACE = iniciar detección
-  P     = pausar / reanudar
-  Q     = salir
-  MODO SEGURO: acciones automáticas desactivadas
+- `SPACE`: iniciar/detener detección
+- `P`: pausar/reanudar sobre frame congelado
+- `Q`: salir
+- `N`, `1`, `2`, `M`, `E`: ciclo y etiquetado de evaluación de detección
 
-Capturador inicializado: ventana "Android Device" encontrada
-Detectores cargados: 13 detectores activos
-RuleEngine inicializado: 5 reglas cargadas
-Presione SPACE para iniciar...
-```
+Modos de operación:
 
-#### Controles Durante Ejecución
-
-| Tecla | Acción                                    |
-| ----- | ----------------------------------------- |
-| SPACE | Iniciar/pausar captura y detección        |
-| P     | Pausar/reanudar (para cambiar parámetros) |
-| Q     | Salir del bot                             |
-| ESC   | Emergencia: detener todas las acciones    |
+1. **Modo observación (recomendado para calibración):** `EJECUTAR_ACCIONES = False`.
+2. **Modo autónomo activo:** `EJECUTAR_ACCIONES = True`.
 
 ## 10. Validación
 
