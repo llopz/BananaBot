@@ -512,7 +512,5 @@ Documente decisiones importantes tomadas durante el desarrollo y la razón detr�
 - Se incorporó estado `dash_disponible` y regla `dash` de prioridad máxima para respuesta en peligros inmediatos.
 - Se centralizó configuración en `settings.py` para evitar valores mágicos dispersos.
 
-## 10. Referencias relacionadas
-
 
 
