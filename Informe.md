@@ -464,7 +464,7 @@ El sistema implementado se construyó con una filosofía de bajo acoplamiento, t
 
 
 
-### 8.2 Componentes (R)
+### 8.2 Componentes
 
 Antes de entrar a cada módulo, conviene ver la secuencia completa de funcionamiento en una corrida normal. El sistema inicia validando que puede acceder a la ventana del emulador y, con esa validación, entra en un ciclo continuo. En cada iteración primero toma la imagen actual del juego, luego identifica los elementos visuales relevantes, después transforma esa información en un estado resumido del entorno, decide la acción más conveniente según prioridad de riesgo, ejecuta la acción en el emulador, muestra en pantalla lo que detectó y finalmente registra métricas de rendimiento y calidad de detección. Esta secuencia se repite frame a frame mientras el bot está activo.
 
@@ -696,7 +696,7 @@ Modos de operación:
 
 ## 10. Validación
 
-### 10.1 Pruebas por componentes (R)
+### 10.1 Pruebas por componentes
 
 Se validaron los componentes de forma aislada con criterios observables y casos representativos del entorno real de juego. Las mediciones se tomaron en sesiones repetidas sobre MuMu Player a 960x540.
 
@@ -731,13 +731,6 @@ Se validaron los componentes de forma aislada con criterios observables y casos 
 
 - Validación: aprobado con observación. Se validaron todas las clases detectadas por el sistema; las caídas aparecen sobre todo en clases no críticas con solapamientos.
 
-#### Módulo de Estado y Carriles
-
-- Prueba realizada: inyección de 180 estados sintéticos para validar asignación de carril, suelo y proximidad de obstáculo.
-- Criterio de aceptación: coincidencia de estado cercana o superior al 80% contra el estado esperado.
-- Resultado obtenido: 81.3% de coincidencia global.
-- Validación: aprobado. Los errores se concentraron en transiciones cercanas al borde entre carriles y eventos de detección tardía.
-
 #### Módulo de Decisión
 
 - Prueba realizada: 160 escenarios controlados con salida esperada por regla de prioridad.
@@ -767,9 +760,9 @@ Resultados globales de integración:
 | Indicador | Resultado |
 |----------|-----------|
 | Sesiones sin caída del proceso | 10/12 (83.3%) |
-| Latencia extremo a extremo (promedio) | 58 ms |
-| Latencia extremo a extremo (p95) | 86 ms |
-| Pico máximo observado | 101 ms |
+| Latencia extremo a extremo (promedio) | 86 ms |
+| Latencia extremo a extremo (p95) | 99 ms |
+| Pico máximo observado | 110 ms |
 | Obstáculos evitados | 80.5% |
 | Supervivencia media por sesión | 49 s |
 | Puntaje medio | 1,980 |
@@ -794,8 +787,8 @@ Resumen cuantitativo:
 | Eje evaluado | Resultado principal |
 |-------------|---------------------|
 | Precisión en clases críticas | F1 entre 0.80 y 0.82 (promedio 0.81) |
-| Latencia extremo a extremo | 58 ms promedio (con picos cercanos a 100 ms) |
-| Obstáculos evitados | 80.5% |
+| Latencia extremo a extremo | 86 ms promedio (con picos cercanos a 110 ms) |
+| Obstáculos evitados de la forma esperada | 80.5% |
 | Mejora sobre línea base manual | +80% aproximadamente |
 
 En términos funcionales, el sistema cumple con el objetivo de ejecutar de forma autónoma la secuencia observar -> decidir -> actuar durante sesiones completas de prueba.
@@ -817,7 +810,7 @@ Resultado, analisis e interpretacion: La precision de vision clasica es adecuada
 Resultado, analisis e interpretacion: El enfoque por reglas es suficiente para autonomia funcional en escenarios previstos (80.5% de obstaculos evitados y 10/12 sesiones estables) porque decide sobre un estado simplificado por carriles y prioridades de riesgo, lo que da respuestas trazables y consistentes; sin embargo, en escenas compuestas con riesgo y oportunidad simultaneos pierde robustez relativa, ya que una politica local por frame no siempre elige la mejor accion de corto plazo.
 
 3. Impacto de la latencia en el desempeno.
-Resultado, analisis e interpretacion: La latencia es manejable para tiempo real (58 ms promedio, operacion tipica entre 50 y 60 ms, p95 de 86 ms y picos cercanos a 100 ms), pero su variabilidad afecta eventos criticos de alta carga; como el mayor costo se concentra en deteccion, los picos se asocian con fallos visibles de reaccion tardia, por lo que la mejora prioritaria no es ampliar reglas sino estabilizar la latencia de percepcion.
+Resultado, analisis e interpretacion: La latencia es manejable para tiempo real (86 ms promedio, operacion tipica entre 82 y 90 ms, p95 de 99 ms y picos cercanos a 110 ms), pero su variabilidad afecta eventos criticos de alta carga; como el mayor costo se concentra en deteccion, los picos se asocian con fallos visibles de reaccion tardia, por lo que la mejora prioritaria no es ampliar reglas sino estabilizar la latencia de percepcion.
 
 4. Principales fuentes de error.
 Resultado, analisis e interpretacion: Las principales fuentes de error son variaciones de iluminacion, ambiguedad visual y perdida de foco de ventana; las dos primeras nacen en percepcion y degradan estado y decision, mientras la tercera ocurre en ejecucion y puede invalidar una decision correcta, por lo que el problema no es solo detectar mejor sino asegurar continuidad del ciclo completo; el valor tecnico es que estos fallos quedaron clasificados y trazables, habilitando mejoras directas en calibracion, filtrado y control de foco.
