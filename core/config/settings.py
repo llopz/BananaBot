@@ -4,6 +4,7 @@
 
 EMULADOR_TITULO         = "Android Device"
 EMULADOR_REFRESCAR_CADA = 60
+DETECCION_X_MIN         = 148
 
 # ─── BANANAS ────────────────────────────────────────────────
 BANANA_ESPACIO       = "HSV"
@@ -143,6 +144,15 @@ BARRA_POTENCIADORA_TOL_Y = 50
 BARRA_POTENCIADORA_ROI_PADDING = 16
 BARRA_POTENCIADORA_ZONA_X_FIN = 300
 BARRA_POTENCIADORA_ZONA_Y_FIN = 200
+
+# ─── GAME OVER ──────────────────────────────────────────────
+GAME_OVER_TEMPLATE_ARCHIVO = "GameOver.png"
+GAME_OVER_TEMPLATE_UMBRAL = 0.75
+GAME_OVER_TEMPLATE_ESCALA = 1.00
+GAME_OVER_ROI_FACTOR_X = 2.0
+GAME_OVER_ROI_FACTOR_Y = 2.0
+GAME_OVER_CLICK_DURACION = 9.0
+GAME_OVER_CLICK_INTERVALO = 0.05
 
 # ─── TOTEM ───────────────────────────────────────────────────
 TOTEM_ESPACIO      = "HSV"

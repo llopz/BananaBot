@@ -41,6 +41,8 @@ def main():
     frame_congelado = None
     ultimo_debug_log = 0.0
     debug_interval_seg = 0.5
+    game_over_click_hasta = 0.0
+    ultimo_click_game_over = 0.0
 
     # ── Métricas ──────────────────────────────────────────────
     VENTANA_METRICAS = 60          # muestras para calcular promedios
@@ -72,8 +74,8 @@ def main():
         "totems":       [],
         "tubos":        [],
         "aguas":        [],
-        "barriles":     [],
         "barras_potenciadoras": [],
+        "game_over":    [],
         "descartados":  [],
         "mascaras":     {},
     }
@@ -137,14 +139,26 @@ def main():
             totems       = resultados.get("totems",      [])
             tubos        = resultados.get("tubos",       [])
             aguas        = resultados.get("aguas",       [])
-            barriles     = resultados.get("barriles",    [])
             barras_potenciadoras = resultados.get("barras_potenciadoras", [])
+            game_over = resultados.get("game_over", [])
             descartados  = resultados.get("descartados", [])
             mascaras     = resultados.get("mascaras",    {})
 
+            ahora_game_over = time.perf_counter()
+            if game_over and ahora_game_over >= game_over_click_hasta:
+                game_over_click_hasta = ahora_game_over + float(getattr(settings, "GAME_OVER_CLICK_DURACION", 9.0))
+
+            if ahora_game_over < game_over_click_hasta:
+                intervalo_click = float(getattr(settings, "GAME_OVER_CLICK_INTERVALO", 0.05))
+                if ahora_game_over - ultimo_click_game_over >= intervalo_click:
+                    acciones.ejecutar(SALTAR)
+                    ultimo_click_game_over = ahora_game_over
+            else:
+                game_over_click_hasta = 0.0
+
             # 3. ACTUALIZAR ESTADO DEL JUEGO
             t0 = time.perf_counter()
-            estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos, barriles, barras_potenciadoras)
+            estado_juego.actualizar(kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos, barras_potenciadoras)
             tiempos_estado.append(time.perf_counter() - t0)
 
             # 4. DECIDIR ACCIÓN
@@ -167,8 +181,8 @@ def main():
 
             cv2.imshow("Banana Kong Bot", frame_debug)
 
-            mascara_plataforma_madera = mascaras.get("plataformas_madera")
-            visualizador.mostrar_mascara("plataformas_madera", mascara_plataforma_madera)
+            #mascara_plataforma_madera = mascaras.get("plataformas_madera")
+            #visualizador.mostrar_mascara("plataformas_madera", mascara_plataforma_madera)
 
             if deteccion_activa and settings.DEBUG:
                 ahora = time.time()

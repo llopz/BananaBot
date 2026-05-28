@@ -1,10 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Callable, List, Tuple
-from .base_detector import BaseDetector, Elemento
+from .base_detector import Elemento
 from .detectors import (
     BananaDetector, TroncoDetector, ArbustoDetector, AvionDetector,
-    KongDetector, ParedDetector, AguaDetector, PlataformaDetector,
-    PlataformaMaderaDetector, RocaDetector, CuevaDetector, BarrilDetector, BarraPotenciadoraDetector, TotemDetector, TuboDetector
+    KongDetector, ParedDetector, AguaDetector,
+    PlataformaMaderaDetector, RocaDetector, CuevaDetector, BarraPotenciadoraDetector, GameOverDetector, TotemDetector, TuboDetector
 )
 
 
@@ -30,8 +30,8 @@ class Detector:
         self._registrar("plataformas_madera", PlataformaMaderaDetector(self.config).detectar)
         self._registrar("rocas",       RocaDetector(self.config).detectar)
         self._registrar("cuevas",      CuevaDetector(self.config).detectar)
-        # self._registrar("barriles",    BarrilDetector(self.config).detectar)
         self._registrar("barras_potenciadoras", BarraPotenciadoraDetector(self.config).detectar)
+        self._registrar("game_over",   GameOverDetector(self.config).detectar)
         self._registrar("totems",      TotemDetector(self.config).detectar)
         self._registrar("tubos",       TuboDetector(self.config).detectar)
 
@@ -103,9 +103,9 @@ class Detector:
             "aguas":       resultados.get("aguas", []),
             "plataformas_madera": resultados.get("plataformas_madera", []),
             "rocas":       resultados.get("rocas", []),
-            "barriles":    resultados.get("barriles", []),
             "cuevas":      resultados.get("cuevas", []),
             "barras_potenciadoras": resultados.get("barras_potenciadoras", []),
+            "game_over":   resultados.get("game_over", []),
             "totems":      resultados.get("totems", []),
             "tubos":       resultados.get("tubos", []),
             "descartados": todos_descartados,

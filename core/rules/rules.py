@@ -3,15 +3,15 @@ from control.acciones_click import NADA, SALTAR, PLANEAR, BAJAR, DASH
 
 # Definicion de reglas
 obst_dist = {
-    "tronco": (200, 40),
-    "arbusto": (200, 50),
-    "avion": (220, 50),
-    "pared": (200, 50),
-    "roca": (280, 40),
-    "cueva": (280, 50),
-    "totem": (200, 50),
-    "tubo": (220, 50),
-    "barril": (200, 50),
+    "tronco": (212, 52),
+    "arbusto": (212, 62),
+    "avion": (232, 62),
+    "pared": (212, 62),
+    "roca": (292, 52),
+    "cueva": (292, 62),
+    "totem": (212, 62),
+    "tubo": (232, 62),
+    "barril": (212, 62),
 }
 
 # Prueba
@@ -141,7 +141,7 @@ def banana_rule_up(state):
 
     if data and not obstacle(state.carriles[carril + 1]["obstaculo_cercano"]):
         banana, dx, dy = data
-        return dx < 160
+        return dx < 172
 
 # Regla: PLANEAR para recolectar una banana que está en el mismo carril y no hay obstáculo peligroso
 

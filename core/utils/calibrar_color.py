@@ -4,7 +4,7 @@
 # ============================================================
 #
 # Ejecuta este script cuando:
-# - Quieres detectar un elemento nuevo (obstáculos, barriles, etc.)
+# - Quieres detectar un elemento nuevo (obstáculos, etc.)
 # - La detección actual tiene muchos falsos positivos
 # - El juego actualizó sus colores
 #

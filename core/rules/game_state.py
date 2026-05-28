@@ -22,7 +22,7 @@ class GameState:
         self.Kong = Kong
         self.Dash = Dash
 
-    def actualizar(self, kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos, barriles, barras_potenciadoras):
+    def actualizar(self, kong, bananas, troncos, arbustos, aviones, paredes, plataformas, rocas, aguas, cuevas, totems, tubos, barras_potenciadoras):
         
         if not kong:
             kong_x = self.Kong.centro_x if self.Kong else 0
@@ -86,7 +86,7 @@ class GameState:
             self.banana_carril = self.obtener_carril(banana_objetivo[0].centro_y)       
 
         # Obstaculos
-        for obj in chain(troncos, arbustos, aviones, paredes, rocas, cuevas, totems, tubos, barriles):
+        for obj in chain(troncos, arbustos, aviones, paredes, rocas, cuevas, totems, tubos):
             dx = obj.centro_x - kong_x
             dy = obj.centro_y - kong_y
             if 0 < dx < 400:
